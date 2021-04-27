@@ -1,0 +1,566 @@
+{
+  "schema": {
+    "type": "object",
+    "oneOf": [
+      {
+        "title": "CancelReservationRequest",
+        "properties": {
+          "reservationId": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "reservationId"
+        ]
+      },
+      {
+        "title": "ChangeAvailabilityRequest",
+        "properties": {
+          "connectorId": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "Inoperative",
+              "Operative"
+            ]
+          }
+        },
+        "required": [
+          "connectorId",
+          "type"
+        ]
+      },
+      {
+        "title": "ChangeConfigurationRequest",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "value": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ]
+      },
+      {
+        "title": "ClearCacheRequest",
+        "properties": {}
+      },
+      {
+        "title": "ClearChargingProfileRequest",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "connectorId": {
+            "type": "integer"
+          },
+          "chargingProfilePurpose": {
+            "type": "string",
+            "enum": [
+              "ChargePointMaxProfile",
+              "TxDefaultProfile",
+              "TxProfile"
+            ]
+          },
+          "stackLevel": {
+            "type": "integer"
+          }
+        }
+      },
+      {
+        "title": "DataTransferRequest",
+        "properties": {
+          "vendorId": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "messageId": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "data": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "vendorId"
+        ]
+      },
+      {
+        "title": "GetCompositeScheduleRequest",
+        "properties": {
+          "connectorId": {
+            "type": "integer"
+          },
+          "duration": {
+            "type": "integer"
+          },
+          "chargingRateUnit": {
+            "type": "string",
+            "enum": [
+              "A",
+              "W"
+            ]
+          }
+        },
+        "required": [
+          "connectorId",
+          "duration"
+        ]
+      },
+      {
+        "title": "GetConfigurationRequest",
+        "properties": {
+          "key": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "title": "GetDiagnosticsRequest",
+        "properties": {
+          "location": {
+            "type": "string",
+            "format": "uri"
+          },
+          "retries": {
+            "type": "integer"
+          },
+          "retryInterval": {
+            "type": "integer"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stopTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "location"
+        ]
+      },
+      {
+        "title": "GetLocalListVersionRequest",
+        "properties": {}
+      },
+      {
+        "title": "RemoteStartTransactionRequest",
+        "properties": {
+          "connectorId": {
+            "type": "integer"
+          },
+          "idTag": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "chargingProfile": {
+            "type": "object",
+            "properties": {
+              "chargingProfileId": {
+                "type": "integer"
+              },
+              "transactionId": {
+                "type": "integer"
+              },
+              "stackLevel": {
+                "type": "integer"
+              },
+              "chargingProfilePurpose": {
+                "type": "string",
+                "enum": [
+                  "ChargePointMaxProfile",
+                  "TxDefaultProfile",
+                  "TxProfile"
+                ]
+              },
+              "chargingProfileKind": {
+                "type": "string",
+                "enum": [
+                  "Absolute",
+                  "Recurring",
+                  "Relative"
+                ]
+              },
+              "recurrencyKind": {
+                "type": "string",
+                "enum": [
+                  "Daily",
+                  "Weekly"
+                ]
+              },
+              "validFrom": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "validTo": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "chargingSchedule": {
+                "type": "object",
+                "properties": {
+                  "duration": {
+                    "type": "integer"
+                  },
+                  "startSchedule": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "chargingRateUnit": {
+                    "type": "string",
+                    "enum": [
+                      "A",
+                      "W"
+                    ]
+                  },
+                  "chargingSchedulePeriod": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "startPeriod": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "number",
+                          "multipleOf": 0.1
+                        },
+                        "numberPhases": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "startPeriod",
+                        "limit"
+                      ]
+                    }
+                  },
+                  "minChargingRate": {
+                    "type": "number",
+                    "multipleOf": 0.1
+                  }
+                },
+                "required": [
+                  "chargingRateUnit",
+                  "chargingSchedulePeriod"
+                ]
+              }
+            },
+            "required": [
+              "chargingProfileId",
+              "stackLevel",
+              "chargingProfilePurpose",
+              "chargingProfileKind",
+              "chargingSchedule"
+            ]
+          }
+        },
+        "required": [
+          "idTag"
+        ]
+      },
+      {
+        "title": "RemoteStopTransactionRequest",
+        "properties": {
+          "transactionId": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "transactionId"
+        ]
+      },
+      {
+        "title": "ReserveNowRequest",
+        "properties": {
+          "connectorId": {
+            "type": "integer"
+          },
+          "expiryDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idTag": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "parentIdTag": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "reservationId": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "connectorId",
+          "expiryDate",
+          "idTag",
+          "reservationId"
+        ]
+      },
+      {
+        "title": "ResetRequest",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Hard",
+              "Soft"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      {
+        "title": "SendLocalListRequest",
+        "properties": {
+          "listVersion": {
+            "type": "integer"
+          },
+          "localAuthorizationList": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "idTag": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "idTagInfo": {
+                  "type": "object",
+                  "properties": {
+                    "expiryDate": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "parentIdTag": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "Accepted",
+                        "Blocked",
+                        "Expired",
+                        "Invalid",
+                        "ConcurrentTx"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              },
+              "required": [
+                "idTag"
+              ]
+            }
+          },
+          "updateType": {
+            "type": "string",
+            "enum": [
+              "Differential",
+              "Full"
+            ]
+          }
+        },
+        "required": [
+          "listVersion",
+          "updateType"
+        ]
+      },
+      {
+        "title": "SetChargingProfileRequest",
+        "properties": {
+          "connectorId": {
+            "type": "integer"
+          },
+          "csChargingProfiles": {
+            "type": "object",
+            "properties": {
+              "chargingProfileId": {
+                "type": "integer"
+              },
+              "transactionId": {
+                "type": "integer"
+              },
+              "stackLevel": {
+                "type": "integer"
+              },
+              "chargingProfilePurpose": {
+                "type": "string",
+                "enum": [
+                  "ChargePointMaxProfile",
+                  "TxDefaultProfile",
+                  "TxProfile"
+                ]
+              },
+              "chargingProfileKind": {
+                "type": "string",
+                "enum": [
+                  "Absolute",
+                  "Recurring",
+                  "Relative"
+                ]
+              },
+              "recurrencyKind": {
+                "type": "string",
+                "enum": [
+                  "Daily",
+                  "Weekly"
+                ]
+              },
+              "validFrom": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "validTo": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "chargingSchedule": {
+                "type": "object",
+                "properties": {
+                  "duration": {
+                    "type": "integer"
+                  },
+                  "startSchedule": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "chargingRateUnit": {
+                    "type": "string",
+                    "enum": [
+                      "A",
+                      "W"
+                    ]
+                  },
+                  "chargingSchedulePeriod": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "startPeriod": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "number",
+                          "multipleOf" : 0.1
+                        },
+                        "numberPhases": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "startPeriod",
+                        "limit"
+                      ]
+                    }
+                  },
+                  "minChargingRate": {
+                    "type": "number",
+                    "multipleOf" : 0.1
+                  }
+                },
+                "required": [
+                  "chargingRateUnit",
+                  "chargingSchedulePeriod"
+                ]
+              }
+            },
+            "required": [
+              "chargingProfileId",
+              "stackLevel",
+              "chargingProfilePurpose",
+              "chargingProfileKind",
+              "chargingSchedule"
+            ]
+          }
+        },
+        "required": [
+          "connectorId",
+          "csChargingProfiles"
+        ]
+      },
+      {
+        "title": "TriggerMessageRequest",
+        "properties": {
+          "requestedMessage": {
+            "type": "string",
+            "enum": [
+              "BootNotification",
+              "DiagnosticsStatusNotification",
+              "FirmwareStatusNotification",
+              "Heartbeat",
+              "MeterValues",
+              "StatusNotification"
+            ]
+          },
+          "connectorId": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "requestedMessage"
+        ]
+      },
+      {
+        "title": "UnlockConnectorRequest",
+        "properties": {
+          "connectorId": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "connectorId"
+        ]
+      },
+      {
+        "title": "UpdateFirmwareRequest",
+        "properties": {
+          "location": {
+            "type": "string",
+            "format": "uri"
+          },
+          "retries": {
+            "type": "integer"
+          },
+          "retrieveDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retryInterval": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "location",
+          "retrieveDate"
+        ]
+      }
+    ]
+  },
+  "model": {}
+}
