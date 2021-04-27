@@ -2,33 +2,262 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Hello world</title>
+    <title>OCPP Server web client</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    <!-- jQuery library -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <!-- Latest compiled JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
-<script>
-
-</script>
 <body>
-<nav class="navbar navbar-inverse">
-    <div class="container-fluid">
-        <div class="navbar-header">
-            <span style="color: white">Select Occp server</span>
+<div class="container">
+    <div class="header clearfix">
+        <h3 class="text-muted">OCPP Server web client</h3>
+    </div>
+    <hr>
+    <div class="row marketing">
+        <div class="col-lg-5">
+            <form></form>
+            <div id="res" class="alert"></div>
         </div>
-        <div class="glyphicon-log-in">
-                <label for="chargers">Select charger: </label>
-                <select name="chargers" id="chargers">
-                    {{#each available_chargers}}
-                    <option value="{{ this.ip_address }}">{{ this.serial_id }}</option>
-                    {{/each}}
-                </select>
+        <div class="col-lg-7">
+            <div class="form-group">
+                <label for="ServerLog">Server Log:</label>
+                <textarea id="ServerLog" class="form-control font-weight-light" rows="35" style="resize: none" wrap="soft" readonly>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse a placerat dui, id eleifend dolor. Vivamus commodo tortor at lacus fermentum finibus eget elementum mauris. Ut sit amet consectetur nulla. Etiam at leo quis metus dapibus vehicula. Etiam ut felis quis ligula tempor ullamcorper. Duis eget tincidunt felis. Etiam leo nisi, mattis et metus vitae, dignissim ornare quam. Mauris et velit blandit, tempor velit a, hendrerit urna. Sed blandit pulvinar eros sit amet congue. Duis diam felis, vehicula in pulvinar sit amet, tempus in mi. Nam ac purus aliquam nisl sollicitudin ultrices. Quisque justo ligula, dignissim sit amet laoreet non, condimentum eget lorem. Phasellus fermentum ornare felis. Morbi pretium eros vitae odio elementum, vel consectetur orci porta. Vivamus sagittis varius ante et imperdiet. Interdum et malesuada fames ac ante ipsum primis in faucibus.
+Vestibulum non nunc nec magna facilisis efficitur. Morbi elementum mi non nisl aliquet commodo. Quisque dapibus est turpis, sed condimentum ex consectetur eu. Donec pretium vitae felis nec fermentum. Ut in massa nec nibh viverra lacinia. Sed blandit, lectus quis commodo scelerisque, augue mauris eleifend eros, feugiat pellentesque eros arcu vel elit. Aliquam sed dolor aliquam, ullamcorper velit quis, pretium ex. Praesent imperdiet urna risus, sed facilisis nunc efficitur quis. Duis ultricies est justo. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nullam hendrerit leo eu nisi egestas placerat. Proin vel massa augue. Suspendisse placerat nibh enim, et convallis est placerat sit amet. Nulla facilisi. Nunc egestas, diam at viverra dignissim, felis nibh pellentesque velit, et rhoncus diam sem id lorem.
+Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Aenean viverra auctor luctus. Praesent justo eros, pretium et justo at, sodales ultricies quam. Morbi lorem dolor, vestibulum vel lectus id, imperdiet congue neque. Sed pretium condimentum mi, sed varius quam pulvinar id. Nullam condimentum augue vitae augue finibus, et facilisis massa ullamcorper. Fusce ac lectus vulputate, mollis turpis vel, laoreet velit.
+Vivamus nibh quam, tristique placerat elit ut, euismod efficitur tellus. Aliquam nec ex dignissim, ornare augue eu, cursus nulla. Curabitur vel urna tincidunt, malesuada nisl sit amet, porta nunc. Donec tristique erat in augue interdum, eu tempus nulla fringilla. Vivamus in commodo magna. Nam quis magna at risus fermentum tempus. Pellentesque tristique turpis a enim rhoncus, nec iaculis diam imperdiet. Integer sed metus pharetra dui lobortis finibus ac sed turpis. Vivamus elementum sapien at eleifend fermentum.
+Vivamus sed posuere nisl, id scelerisque turpis. Maecenas euismod, lectus in condimentum ultricies, urna tortor accumsan nisi, a maximus metus eros consectetur ex. Proin tortor sapien, blandit scelerisque felis non, fermentum bibendum odio. Integer eu odio suscipit, elementum magna eu, sodales nisi. Sed nec sem massa. Praesent sed imperdiet nisl. Maecenas hendrerit urna nisl, et egestas velit vestibulum ac. Mauris gravida at lorem vitae efficitur. Aliquam ut sapien urna. Duis dapibus rutrum ex, non dignissim velit tristique vel.
+
+
+                </textarea>
+            </div>
         </div>
     </div>
-</nav>
+    <footer class="blockquote-footer">
+        <p>&copy; ABB Company 2021</p>
+    </footer>
+</div>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></script>
+<script type="text/javascript" src="https://unpkg.com/JSV@4.0.2/lib/jsv.js"></script>
+<script type="text/javascript" src="https://unpkg.com/jsonform@2.2.1/lib/jsonform.js"></script>
+<script type="text/javascript">
+    $('form').jsonForm(
+        {
+        schema: {
+            charge_point: {
+                type: 'string',
+                enum: ['ORAC2-KR1-0001-013']
+            }
+            ,
+            choice: {
+                type: "string",
+                enum: ['cancel_reservation', 'change_availability', 'change_configuration', 'clear_cache',
+                       'clear_charging_profile', 'data_transfer', 'get_composite_schedule', 'get_configuration',
+                       'get_diagnostics']
+            },
+            cancel_reservation: {
+                type: "object",
+                title: "Cancel reservation request",
+                properties: {
+                    reservationId: {
+                        type: 'integer',
+                        title: 'reservationId'
+                    }
+                }
+            },
+            change_availability: {
+                type: 'object',
+                title: 'Change availability request',
+                properties: {
+                    connectorId: {
+                        type: 'integer',
+                        title: 'connectorId',
+                        required: true
+                    },
+                    type: {
+                        type: 'string',
+                        title: 'type',
+                        enum: ['Inoperative', 'Operative'],
+                        required: true
+                    }
+                }
+            },
+            change_configuration: {
+                type: 'object',
+                title: "Change configuration request",
+                properties: {
+                    key: {
+                        type: 'string',
+                        title: 'key',
+                        maxLength: 50,
+                        required: true
+                    },
+                    value: {
+                        type: 'string',
+                        title: 'value',
+                        maxLength: 500,
+                        required: true
+                    }
+                }
+            },
+            clear_cache: {
+                type: "object",
+                title: "Clear cache",
+                properties: {}
+            },
+            clear_charging_profile: {
+                type: "object",
+                title: "Clear charging profile",
+                properties: {
+                    id: {
+                        title: 'id',
+                        type: 'integer',
+                    },
+                    connectorId: {
+                        title: 'connectorId',
+                        type: 'integer'
+                    },
+                    chargingProfilePurpose: {
+                        title: 'chargingProfilePurpose',
+                        type: 'string',
+                        enum: ["ChargePointMaxProfile", "TxDefaultProfile", "TxProfile"]
+                    },
+                    stackLevel: {
+                        title: 'stackLevel',
+                        type: 'integer'
+                    }
+                }
+            },
+            data_transfer: {
+                type: "object",
+                title: "data transfer",
+                properties: {
+                    vendorId: {
+                        type: "string",
+                        title: 'vendorId',
+                        maxLength: 255,
+                        required: true
+                    },
+                    messageId: {
+                        type: "string",
+                        title: 'messageId',
+                        maxLength: 50
+                    },
+                    data: {
+                        type: "string",
+                        title: "data"
+                    }
+                }
+            },
+            get_composite_schedule: {
+                type: "object",
+                title: "GetCompositeSchedule",
+                properties: {
+                    connectorId: {
+                        type: 'integer',
+                        title: 'connectorId',
+                        required: true
+                    },
+                    duration: {
+                        type: 'integer',
+                        title: 'duration',
+                        required: true
+                    },
+                    chargingRateUnit: {
+                        type: 'string',
+                        title: 'chargingRateUnit',
+                        enum: ['A', 'W']
+                    }
+                }
+            },
+            get_configuration: {
+                type: "object",
+                title: "GetConfiguration",
+                properties: {
+                    key: {
+                        type: 'array',
+                        title: 'keys',
+                        items: {
+                            type: 'string',
+                            title: 'key {{ idx }}',
+                            maxLength: 50
+                        }
+                    }
+                }
+            },
+            get_diagnostics: {
+                type: 'object',
+                title: "GetDiagnostics",
+                properties: {
+                    location: {
+                        type: "string",
+                        title: "location",
+                        format: "uri",
+                        required: true
+                    },
+                    retries: {
+                        title: "retires",
+                        type: "integer"
+                    },
+                    retryInterval: {
+                        title: "retryInterval",
+                        type: "integer"
+                    },
+                    startTime: {
+                        type: "string",
+                        title: "startTime",
+                        format: "dateTime"
+                    },
+                    stopTime: {
+                        type: "string",
+                        title: "stopTime",
+                        format: "dateTime"
+                    }
+                }
+            }
+
+
+        },
+        "form":
+            [
+                {
+                    "key": "charge_point",
+                    "title": "Select Charge Point by serial ID"
+                },
+                {
+                    "type": "selectfieldset",
+                    "key": "choice",
+                    "title": "Select request",
+                    "titleMap": {
+                        "cancel_reservation": "CancelReservation",
+                        "change_availability": "ChangeAvailability",
+                        "change_configuration": "ChangeConfiguration",
+                        "clear_cache": "ClearCache",
+                        "clear_charging_profile": "ClearChargingProfile",
+                        "data_transfer": "DataTransfer",
+                        'get_composite_schedule': "GetCompositeSchedule",
+                        'get_configuration': "GetConfiguration",
+                        'get_diagnostics': "GetDiagnostics"
+                    },
+                    "items": [
+                        "cancel_reservation",
+                        "change_availability",
+                        "change_configuration",
+                        "clear_cache",
+                        "clear_charging_profile",
+                        "data_transfer",
+                        'get_composite_schedule',
+                        'get_configuration',
+                        'get_diagnostics'
+                    ]
+                },
+                {
+                    "type": "submit",
+                    "value": "Submit"
+                }
+            ]
+    });
+</script>
 </body>
 </html>
