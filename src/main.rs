@@ -1,8 +1,6 @@
 use std::time::{Duration, Instant};
 use actix::prelude::*;
-use actix::actors;
-use actix_files::Files;
-use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
+use actix_web::{get, web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use dotenv;
 use serde::{Deserialize, Serialize};
@@ -15,6 +13,7 @@ mod responses;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
+const ALLOWED_SUBPROTOCOLS: [&'static str; 3] = ["ocpp1.6", "ocpp2.0", "ocpp2.0.1"];
 
 struct MyWebSocket {
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT)
@@ -77,9 +76,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
     }
 }
 
+#[get("/ws/{charger_id}")]
 async fn ws_index(r: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
     println!("{:?}", r);
-    let res = ws::start(MyWebSocket::new(), &r, stream);
+    let res = ws::start_with_protocols(MyWebSocket::new(), &ALLOWED_SUBPROTOCOLS, &r, stream);
     println!("{:?}", res);
     res
 }
@@ -99,6 +99,6 @@ async fn main() -> std::io::Result<()> {
         App::new()
             //.data(pool.clone())
             .service(web::resource("/").route(web::get().to(index)))
-            .service(web::resource("/ws/").route(web::get().to(ws_index)))
+            .service(ws_index)
     }).bind(format!("{}:{}", config.server.host, config.server.port))?.run().await
 }
