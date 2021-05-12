@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use validator_derive::Validate;
 
 const CALL: u8 = 3;
@@ -29,7 +29,7 @@ pub struct BootNotificationRequest {
     pub meter_type: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct CancelReservationRequest {
     #[serde(rename = "reservationId")]
     pub reservation_id: i64,
@@ -439,6 +439,14 @@ pub struct UpdateFirmwareRequest {
     #[serde(rename = "retryInterval")]
     pub retry_interval: Option<i64>,
 }
+///////////////////////////////////////////////////////////////////////////////////////////////////
+#[derive(Deserialize)]
+pub struct ApiCancelReservation {
+    pub charge_point: String,
+    pub choice: String,
+    pub cancel_reservation: CancelReservationRequest
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 

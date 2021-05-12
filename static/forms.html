@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset=utf-8>
+  <title>Forms</title>
+</head>
+<body>
+<h3>Cancel reservation</h3>
+<form action=/cancel-reservation>
+  <label>
+    ChargePoint:
+    <input name="chargePoint">
+  </label>
+  <label>
+    reservationId:
+    <input type="number" name="reservationId">
+  </label>
+  <button type=submit>Submit form</button>
+</form>
+
+<hr>
+
+<h3>Will hit handle_post_2</h3>
+<form action=/post2 method=POST>
+  <label>
+    Name:
+    <input name="name">
+  </label>
+  <button type=submit>Submit form</button>
+</form>
+
+<hr>
+
+<h3>Will hit handle_post_3</h3>
+<form action=/post3 method=POST>
+  <label>
+    Name:
+    <input name="name">
+  </label>
+  <button type=submit>Submit form</button>
+</form>
+</body>
+</html>

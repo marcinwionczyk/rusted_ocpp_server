@@ -1,69 +1,104 @@
-#[macro_use]
-extern crate diesel;
-
+use std::time::{Duration, Instant};
+use actix::prelude::*;
+use actix::actors;
 use actix_files::Files;
-use actix_web::{http, web, App, Error, HttpResponse, HttpServer};
-//use awmp::Parts;
-//use std::collections::HashMap;
+use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
+use actix_web_actors::ws;
 use dotenv;
-use diesel::prelude::*;
-use diesel::mysql::MysqlConnection;
-use diesel::r2d2::{self, ConnectionManager};
-use serde::{Serialize};
-use self::models::*;
-use handlebars::Handlebars;
+use serde::{Deserialize, Serialize};
 
+use crate::requests::*;
+
+mod config;
 mod requests;
 mod responses;
-mod schema;
-mod models;
 
-use self::schema::available_chargers::dsl::*;
+const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
+const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
-type DbPool = r2d2::Pool<ConnectionManager<MysqlConnection>>;
-
-#[derive(Serialize)]
-struct IndexTemplateData {
-    available_chargers: Vec<self::models::AvailableCharger>
+struct MyWebSocket {
+    /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT)
+    /// otherwise the connection will b e dropped
+    hb: Instant,
 }
 
-async fn index(hb: web::Data<Handlebars<'_>>, pool: web::Data<DbPool>)
-               -> Result<HttpResponse, Error> {
-    let connection = pool.get().expect("Can't get db connection from pool");
-    let available_chargers_data = web::block(move ||
-        available_chargers.load::<AvailableCharger>(&connection))
-        .await
-        .map_err(|_| {
-            HttpResponse::InternalServerError().finish()
-        })?;
-    let data = IndexTemplateData {
-        available_chargers: available_chargers_data
-    };
-    let body = hb.render("index", &data).unwrap();
-    Ok(HttpResponse::Ok().body(body))
+impl Actor for MyWebSocket {
+    type Context = ws::WebsocketContext<Self>;
+    /// Method is called on actor start. We start the heartbeat process here.
+    fn started(&mut self, ctx: &mut Self::Context) {
+        self.hb(ctx);
+    }
+}
+
+impl MyWebSocket {
+    fn new() -> Self {
+        Self { hb: Instant::now() }
+    }
+    /// helper method that sends ping to client every second.
+    /// also this method checks heartbeats from client
+    fn hb(&self, ctx: &mut <Self as Actor>::Context) {
+        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
+            // check client heartbeats
+            if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
+                // heartbeat timed out
+                println!("Websocket Client heartbeat failed, disconnecting!");
+
+                // stop actor
+                ctx.stop();
+
+                // don't try to send a ping
+                return;
+            }
+
+            ctx.ping(b"");
+        });
+    }
+}
+
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+        println!("WS: {:?}", msg);
+        match msg {
+            Ok(ws::Message::Ping(msg)) => {
+                self.hb = Instant::now();
+                ctx.pong(&msg);
+            }
+            Ok(ws::Message::Pong(_)) => {
+                self.hb = Instant::now();
+            }
+            Ok(ws::Message::Text(text)) => ctx.text(text),
+            Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
+            Ok(ws::Message::Close(reason)) => {
+                ctx.close(reason);
+                ctx.stop();
+            }
+            _ => ctx.stop()
+        }
+    }
+}
+
+async fn ws_index(r: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
+    println!("{:?}", r);
+    let res = ws::start(MyWebSocket::new(), &r, stream);
+    println!("{:?}", res);
+    res
+}
+
+async fn index() -> Result<HttpResponse, Error> {
+    Ok(HttpResponse::Ok().content_type("text/html; charset=utf-8")
+        .body(include_str!("../static/forms.html")))
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let mut handlebars = Handlebars::new();
-    handlebars
-        .register_templates_directory(".html", "./static/").unwrap();
-    let handlebars_ref = web::Data::new(handlebars);
     dotenv::from_filename("settings.env").ok();
-    let env_database_url = dotenv::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
-    let env_ip_address = dotenv::var("IP_ADDRESS").expect("IP_ADDRESS must be set");
-    let env_port = dotenv::var("PORT").expect("PORT must be set");
-    let manager = ConnectionManager::<MysqlConnection>::new(&env_database_url);
-    let pool = r2d2::Pool::builder()
-        .build(manager)
-        .expect("Failed to create DB connection pool.");
-
-    println!("server is listening on ip address {} and port {}", &env_ip_address, &env_port);
+    let config = crate::config::Config::from_env().unwrap();
+    println!("server is listening on ip address {} and port {}",
+             config.server.host, config.server.port);
     HttpServer::new(move || {
-        App::new().app_data(handlebars_ref.clone())
-            .data(pool.clone())
-            .service(Files::new("/static", "static").show_files_listing())
-            .route("/", web::get().to(index))
-    }).bind(format!("{}:{}", &env_ip_address, &env_port))?.run().await
+        App::new()
+            //.data(pool.clone())
+            .service(web::resource("/").route(web::get().to(index)))
+            .service(web::resource("/ws/").route(web::get().to(ws_index)))
+    }).bind(format!("{}:{}", config.server.host, config.server.port))?.run().await
 }
