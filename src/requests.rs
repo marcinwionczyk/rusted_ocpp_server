@@ -1,7 +1,52 @@
 use serde::{Serialize, Deserialize};
 use validator_derive::Validate;
+use std::collections::HashMap;
+use serde_json::Value;
 
 const CALL: u8 = 3;
+/// Use example:
+/// let boot_notification_request = "[2,\"8:1\",\"BootNotification\",{\"chargePointModel\":\"MD_HVC_CAR\",\"chargePointSerialNumber\":\"ORAC2-KR1-0001-013\",\"chargePointVendor\":\"ABB\",\"firmwareVersion\":\"1.6.0.27\"}]";
+//     match unpack(boot_notification_request) {
+//         Ok(unpacked) => {
+//             println!("MessageTypeId: {}", unpacked.get("MessageTypeId").unwrap());
+//             println!("MessageId: {}", unpacked.get("MessageId").unwrap());
+//             println!("Action: {}", unpacked.get("Action").unwrap());
+//             println!("Payload: {}", unpacked.get("Payload").unwrap());
+//         }
+//         Err(e) => {println!("{}", e)}
+//     }
+
+///
+fn unpack(msg: &str) -> Result<HashMap<&str, String>, String>{
+    let mut hash: HashMap<&str, String> = HashMap::new();
+    let json: Value = serde_json::from_str(msg).expect("JSON string is fucked up");
+    let message_type_id = json.get(0).unwrap().as_u64();
+    match message_type_id {
+        Some(2) => {
+            hash.insert("MessageTypeId", "2".to_string());
+            hash.insert("MessageId", (*json.get(1).unwrap()).to_string());
+            hash.insert("Action", (*json.get(2).unwrap()).to_string());
+            hash.insert("Payload", (*json.get(3).unwrap()).to_string());
+            Ok(hash.clone())
+        }
+        Some(3) => {
+            hash.insert("MessageTypeId", "3".to_string());
+            hash.insert("MessageId", (*json.get(1).unwrap()).to_string());
+            hash.insert("Payload", (*json.get(2).unwrap()).to_string());
+            Ok(hash.clone())
+        }
+        Some(4) => {
+            hash.insert("MessageTypeId", "4".to_string());
+            hash.insert("MessageId", (*json.get(1).unwrap()).to_string());
+            hash.insert("ErrorCode", (*json.get(2).unwrap()).to_string());
+            hash.insert("ErrorDescription", (*json.get(3).unwrap()).to_string());
+            hash.insert("ErrorDetails", (*json.get(4).unwrap()).to_string());
+            Ok(hash.clone())
+        }
+        None => Err(format!("[4, {}, \"MessageTypeNotSupported\", ]", *json.get(1).unwrap())),
+        _ => Err(format!("[4, {}, \"MessageTypeNotSupported\", ]", *json.get(1).unwrap()))
+    }
+}
 
 #[derive(Deserialize)]
 pub struct AuthorizeRequest {

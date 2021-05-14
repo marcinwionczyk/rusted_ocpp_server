@@ -1,5 +1,5 @@
 use serde::Serialize;
-
+use crate::requests;
 const CALL_RESULT: u8 = 3;
 const CALL_ERROR: u8 = 4;
 
@@ -68,6 +68,10 @@ fn wrap_call_error_result(msg_id: &str, error_code: ErrorCode, error_details: &s
     }
 }
 
+/// example request_msg: [2,\"8:1\",\"BootNotification\",{\"chargePointModel\":\"MD_HVC_CAR\",\"chargePointSerialNumber\":\"ORAC2-KR1-0001-013\",\"chargePointVendor\":\"ABB\",\"firmwareVersion\":\"1.6.0.27\"}]"
+fn boot_notification_response(request_msg: String){
+
+}
 
 #[derive(Serialize)]
 pub struct AuthorizeResponse {
