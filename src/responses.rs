@@ -1,22 +1,22 @@
-use serde::Serialize;
 use crate::requests;
+use serde::Serialize;
 const CALL_RESULT: u8 = 3;
 const CALL_ERROR: u8 = 4;
 
 pub enum ErrorCode {
-    NotImplemented, // Requested Action is not known by receiver
-    NotSupported, // Requested Action is recognized but not supported by receiver
+    NotImplemented,                // Requested Action is not known by receiver
+    NotSupported,                  // Requested Action is recognized but not supported by receiver
     InternalError, // An internal error occurred and the receiver was not able to process the requested Action successfully
     ProtocolError, // Payload for Action is incomplete
     SecurityError, // During the processing of Action a security issue occurred preventing receiver from completing the Action successfully
     FormationViolation, // Payload for Action is syntactically incorrect or not conform the PDU structure for Action
     PropertyConstraintViolation, // Payload is syntactically correct but at least one field contains an invalid value
     OccurrenceConstraintViolation, // Payload for Action is syntactically correct but at least one of the fields violates occurrence constraints
-    TypeConstraintViolation // Payload for Action is syntactically correct but at least one of the fields violates data type constraints (e.g. “somestring”: 12)
+    TypeConstraintViolation, // Payload for Action is syntactically correct but at least one of the fields violates data type constraints (e.g. “somestring”: 12)
 }
 
 // [<MessageTypeId>, "<UniqueId>", {<Payload>}]
-fn wrap_call_result(msg_id: &str, payload: &str) -> String {
+pub(crate) fn wrap_call_result(msg_id: &str, payload: String) -> String {
     format!("[{}, \"{}\", {}]", CALL_RESULT, msg_id, payload)
 }
 
@@ -24,36 +24,52 @@ fn wrap_call_result(msg_id: &str, payload: &str) -> String {
 fn wrap_call_error_result(msg_id: &str, error_code: ErrorCode, error_details: &str) -> String {
     match error_code {
         ErrorCode::NotImplemented => {
-            format!("[{}, \"{}\", \"NotImplemented\", \"Requested Action is not known by \
-            receiver\", {}]", CALL_ERROR, msg_id, error_details)
+            format!(
+                "[{}, \"{}\", \"NotImplemented\", \"Requested Action is not known by \
+            receiver\", {}]",
+                CALL_ERROR, msg_id, error_details
+            )
         }
         ErrorCode::NotSupported => {
-            format!("[{}, \"{}\", \"NotSupported\", \"Requested Action is recognized but not \
-            supported by receiver\", {}]", CALL_ERROR, msg_id, error_details)
+            format!(
+                "[{}, \"{}\", \"NotSupported\", \"Requested Action is recognized but not \
+            supported by receiver\", {}]",
+                CALL_ERROR, msg_id, error_details
+            )
         }
         ErrorCode::InternalError => {
-            format!("[{}, \"{}\", \"InternalError\", \"An internal error occurred and the receiver \
+            format!(
+                "[{}, \"{}\", \"InternalError\", \"An internal error occurred and the receiver \
             was not able to process the requested Action successfully\", {}]",
-                    CALL_ERROR, msg_id, error_details)
+                CALL_ERROR, msg_id, error_details
+            )
         }
         ErrorCode::ProtocolError => {
-            format!("[{}, \"{}\", \"ProtocolError\", \"Payload for Action is incomplete\", {}]",
-                    CALL_ERROR, msg_id, error_details)
+            format!(
+                "[{}, \"{}\", \"ProtocolError\", \"Payload for Action is incomplete\", {}]",
+                CALL_ERROR, msg_id, error_details
+            )
         }
         ErrorCode::SecurityError => {
-            format!("[{}, \"{}\", \"SecurityError\", \"During the processing of Action a security \
+            format!(
+                "[{}, \"{}\", \"SecurityError\", \"During the processing of Action a security \
             issue occurred preventing receiver from completing the Action successfully\", {}]",
-                    CALL_ERROR, msg_id, error_details)
+                CALL_ERROR, msg_id, error_details
+            )
         }
         ErrorCode::FormationViolation => {
-            format!("[{}, \"{}\", \"FormationViolation\", \"Payload for Action is syntactically \
+            format!(
+                "[{}, \"{}\", \"FormationViolation\", \"Payload for Action is syntactically \
             incorrect or not conform the PDU structure for Action\", {}]",
-                    CALL_ERROR, msg_id, error_details)
+                CALL_ERROR, msg_id, error_details
+            )
         }
         ErrorCode::PropertyConstraintViolation => {
-            format!("[{}, \"{}\", \"PropertyConstraintViolation\", \"Payload is syntactically \
+            format!(
+                "[{}, \"{}\", \"PropertyConstraintViolation\", \"Payload is syntactically \
             correct but at least one field contains an invalid value\", {}]",
-                    CALL_ERROR, msg_id, error_details)
+                CALL_ERROR, msg_id, error_details
+            )
         }
         ErrorCode::OccurrenceConstraintViolation => {
             format!("[{}, \"{}\", \"OccurrenceConstraintViolation\", \"Payload for Action is \
@@ -61,17 +77,17 @@ fn wrap_call_error_result(msg_id: &str, error_code: ErrorCode, error_details: &s
             {}]", CALL_ERROR, msg_id, error_details)
         }
         ErrorCode::TypeConstraintViolation => {
-            format!("[{}, \"{}\", \"PropertyConstraintViolation\", \"Payload for Action is \
+            format!(
+                "[{}, \"{}\", \"PropertyConstraintViolation\", \"Payload for Action is \
             syntactically correct but at least one of the fields violates data type constraints \
-            (e.g. “somestring”: 12)\", {}]", CALL_ERROR, msg_id, error_details)
+            (e.g. “somestring”: 12)\", {}]",
+                CALL_ERROR, msg_id, error_details
+            )
         }
     }
 }
 
 /// example request_msg: [2,\"8:1\",\"BootNotification\",{\"chargePointModel\":\"MD_HVC_CAR\",\"chargePointSerialNumber\":\"ORAC2-KR1-0001-013\",\"chargePointVendor\":\"ABB\",\"firmwareVersion\":\"1.6.0.27\"}]"
-fn boot_notification_response(request_msg: String){
-
-}
 
 #[derive(Serialize)]
 pub struct AuthorizeResponse {
@@ -128,12 +144,10 @@ pub struct DataTransferResponse {
 }
 
 #[derive(Serialize)]
-pub struct DiagnosticsStatusNotificationResponse {
-}
+pub struct DiagnosticsStatusNotificationResponse {}
 
 #[derive(Serialize)]
-pub struct FirmwareStatusNotificationResponse {
-}
+pub struct FirmwareStatusNotificationResponse {}
 
 #[derive(Serialize)]
 pub struct GetCompositeScheduleResponse {
@@ -202,8 +216,7 @@ pub struct HeartbeatResponse {
 }
 
 #[derive(Serialize)]
-pub struct MeterValuesResponse {
-}
+pub struct MeterValuesResponse {}
 
 #[derive(Serialize)]
 pub struct RemoteStartTransactionResponse {
@@ -244,8 +257,7 @@ pub struct StartTransactionResponse {
 }
 
 #[derive(Serialize)]
-pub struct StatusNotificationResponse {
-}
+pub struct StatusNotificationResponse {}
 
 #[derive(Serialize)]
 pub struct StopTransactionResponse {
@@ -264,9 +276,7 @@ pub struct UnlockConnectorResponse {
 }
 
 #[derive(Serialize)]
-pub struct UpdateFirmwareResponse {
-}
-
+pub struct UpdateFirmwareResponse {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -274,7 +284,7 @@ pub struct UpdateFirmwareResponse {
 pub enum BootNotificationResponseStatus {
     Accepted,
     Pending,
-    Rejected
+    Rejected,
 }
 
 #[derive(Serialize)]
@@ -283,20 +293,20 @@ pub enum IdTagInfoStatus {
     Blocked,
     ConcurrentTx,
     Expired,
-    Invalid
+    Invalid,
 }
 
 #[derive(Serialize)]
 pub enum AcceptedRejectedStatus {
     Accepted,
-    Rejected
+    Rejected,
 }
 
 #[derive(Serialize)]
 pub enum ChangeAvailabilityResponseStatus {
     Accepted,
     Rejected,
-    Scheduled
+    Scheduled,
 }
 
 #[derive(Serialize)]
@@ -304,19 +314,19 @@ pub enum ChangeConfigurationResponseStatus {
     Accepted,
     NotSupported,
     RebootRequired,
-    Rejected
+    Rejected,
 }
 
 #[derive(Serialize)]
 pub enum ClearCacheResponseStatus {
     Accepted,
-    Rejected
+    Rejected,
 }
 
 #[derive(Serialize)]
 pub enum ClearChargingProfileResponseStatus {
     Accepted,
-    Unknown
+    Unknown,
 }
 
 #[derive(Serialize)]
@@ -324,13 +334,13 @@ pub enum DataTransferResponseStatus {
     Accepted,
     Rejected,
     UnknownMessageId,
-    UnknownVendorId
+    UnknownVendorId,
 }
 
 #[derive(Serialize)]
 pub enum ChargingRateUnit {
     A,
-    W
+    W,
 }
 
 #[derive(Serialize)]
@@ -339,7 +349,7 @@ pub enum ReserveNowResponseStatus {
     Faulted,
     Occupied,
     Rejected,
-    Unavailable
+    Unavailable,
 }
 
 #[derive(Serialize)]
@@ -347,14 +357,14 @@ pub enum SendLocalListResponseStatus {
     Accepted,
     Failed,
     NotSupported,
-    VersionMismatch
+    VersionMismatch,
 }
 
 #[derive(Serialize)]
 pub enum SetChargingProfileResponseStatus {
     Accepted,
     NotSupported,
-    Rejected
+    Rejected,
 }
 
 #[derive(Serialize)]

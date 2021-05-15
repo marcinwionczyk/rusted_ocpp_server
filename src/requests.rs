@@ -1,7 +1,7 @@
-use serde::{Serialize, Deserialize};
-use validator_derive::Validate;
-use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
+use validator_derive::Validate;
 
 const CALL: u8 = 3;
 /// Use example:
@@ -17,7 +17,7 @@ const CALL: u8 = 3;
 //     }
 
 ///
-fn unpack(msg: &str) -> Result<HashMap<&str, String>, String>{
+pub(crate) fn unpack(msg: &String) -> Result<HashMap<&str, String>, String> {
     let mut hash: HashMap<&str, String> = HashMap::new();
     let json: Value = serde_json::from_str(msg).expect("JSON string is fucked up");
     let message_type_id = json.get(0).unwrap().as_u64();
@@ -43,8 +43,14 @@ fn unpack(msg: &str) -> Result<HashMap<&str, String>, String>{
             hash.insert("ErrorDetails", (*json.get(4).unwrap()).to_string());
             Ok(hash.clone())
         }
-        None => Err(format!("[4, {}, \"MessageTypeNotSupported\", ]", *json.get(1).unwrap())),
-        _ => Err(format!("[4, {}, \"MessageTypeNotSupported\", ]", *json.get(1).unwrap()))
+        None => Err(format!(
+            "[4, {}, \"MessageTypeNotSupported\", ]",
+            *json.get(1).unwrap()
+        )),
+        _ => Err(format!(
+            "[4, {}, \"MessageTypeNotSupported\", ]",
+            *json.get(1).unwrap()
+        )),
     }
 }
 
@@ -87,7 +93,6 @@ pub struct ChangeAvailabilityRequest {
     #[serde(rename = "type")]
     pub change_availability_request_type: ChangeAvailabilityRequestType,
 }
-
 
 #[derive(Deserialize)]
 pub struct ChangeConfigurationRequest {
@@ -135,7 +140,6 @@ pub enum DiagnosticsStatusNotificationRequestStatus {
 pub struct FirmwareStatusNotificationRequest {
     pub status: FirmwareStatusNotificationRequestStatus,
 }
-
 
 #[derive(Deserialize)]
 pub struct GetCompositeScheduleRequest {
@@ -489,9 +493,8 @@ pub struct UpdateFirmwareRequest {
 pub struct ApiCancelReservation {
     pub charge_point: String,
     pub choice: String,
-    pub cancel_reservation: CancelReservationRequest
+    pub cancel_reservation: CancelReservationRequest,
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -510,7 +513,6 @@ pub enum ChangeAvailabilityRequestType {
     Inoperative,
     Operative,
 }
-
 
 #[derive(Deserialize)]
 pub enum ChargingProfileKind {
