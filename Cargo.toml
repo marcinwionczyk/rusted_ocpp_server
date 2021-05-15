@@ -25,12 +25,12 @@ version = "3.3.2"
 features = ["derive"]
 version = "1.0.125"
 
-[dependencies.serde_qs]
-features = ["actix"]
-version = "0.8.3"
+# [dependencies.serde_qs]
+# features = ["actix"]
+# version = "0.8.3"
 # r2d2 = "0.8.9"
-serde = { version = "1.0.125", features=["derive"] }
-serde_json = "1.0.64"
-serde_qs = { version = "0.8.3", features=["actix"] }
-validator = "0.13.0"
-validator_derive = "0.13.0"
+# serde = { version = "1.0.125", features=["derive"] }
+# serde_json = "1.0.64"
+# serde_qs = { version = "0.8.3", features=["actix"] }
+# validator = "0.13.0"
+# validator_derive = "0.13.0"

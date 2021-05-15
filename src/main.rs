@@ -5,16 +5,15 @@ use dotenv;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant, SystemTime};
 use chrono::prelude::*;
-use crate::requests::*;
-use crate::responses::BootNotificationResponse;
+use std::convert::TryInto;
+use crate::messages::{HEARTBEAT_INTERVAL, CLIENT_TIMEOUT, unpack};
 
 mod config;
-mod requests;
+mod messages;
 mod responses;
+mod requests;
 
-const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(15);
-const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
-const ALLOWED_SUBPROTOCOLS: [&'static str; 3] = ["ocpp1.6", "ocpp2.0", "ocpp2.0.1"];
+const ALLOWED_SUBPROTOCOLS: [&'static str; 1] = ["ocpp2.0.1"];
 
 struct MyWebSocket {
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT)
@@ -37,7 +36,7 @@ impl MyWebSocket {
     /// helper method that sends ping to client every second.
     /// also this method checks heartbeats from client
     fn hb(&self, ctx: &mut <Self as Actor>::Context) {
-        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
+        ctx.run_interval(messages::HEARTBEAT_INTERVAL, |act, ctx| {
             // check client heartbeats
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
                 // heartbeat timed out
@@ -67,25 +66,19 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
                 self.hb = Instant::now();
             }
             Ok(ws::Message::Text(text)) => {
-                match requests::unpack(&text) {
+                match unpack(&text) {
                     Ok(unpacked) => {
                         match unpacked.get("MessageTypeId").unwrap().as_str() {
                             "2" => {
                                 match unpacked.get("Action").unwrap().as_str() {
                                     "BootNotification" => {
-                                        let now : chrono::DateTime<Utc> = Utc::now();
-                                        let boot_response: BootNotificationResponse = BootNotificationResponse{
-                                            current_time: now.to_rfc3339(),
-                                            interval: HEARTBEAT_INTERVAL.as_secs() as i64,
-                                            status: responses::BootNotificationResponseStatus::Accepted
-                                        }; 
-                                        ctx.text(responses::wrap_call_result(
+                                        ctx.text(messages::boot_notification_response(
                                             unpacked.get("MessageId").unwrap(),
-                                            serde_json::to_string(&boot_response).unwrap()));
-                                    }
+                                            HEARTBEAT_INTERVAL.as_secs() as i64,
+                                            responses::BootNotificationResponseStatus::Accepted
+                                        ))},
                                     _ => {}
                                 }
-
                             },
                             "3" => {
 
@@ -93,14 +86,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
                             "4" => {
 
                             }
-                            _ => {}
+                            _ => { ctx.text(text)}
                         }
                     }
-                    Err(e) => {
-
-                    }
+                    Err(_) => {}
                 }
-                ctx.text(text)
             },
             Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
             Ok(ws::Message::Close(reason)) => {
