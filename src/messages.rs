@@ -106,20 +106,6 @@ pub fn wrap_call_error_result(msg_id: &String, error_code: ErrorCode, error_deta
     }
 }
 
-
-/// Use example:
-/// let boot_notification_request = "[2,\"8:1\",\"BootNotification\",{\"chargePointModel\":\"MD_HVC_CAR\",\"chargePointSerialNumber\":\"ORAC2-KR1-0001-013\",\"chargePointVendor\":\"ABB\",\"firmwareVersion\":\"1.6.0.27\"}]";
-//     match unpack(boot_notification_request) {
-//         Ok(unpacked) => {
-//             println!("MessageTypeId: {}", unpacked.get("MessageTypeId").unwrap());
-//             println!("MessageId: {}", unpacked.get("MessageId").unwrap());
-//             println!("Action: {}", unpacked.get("Action").unwrap());
-//             println!("Payload: {}", unpacked.get("Payload").unwrap());
-//         }
-//         Err(e) => {println!("{}", e)}
-//     }
-
-///
 pub fn unpack(msg: &String) -> Result<HashMap<&str, String>, String> {
     let mut hash: HashMap<&str, String> = HashMap::new();
     let json: Value = serde_json::from_str(msg).expect("JSON string is fucked up");
@@ -159,13 +145,20 @@ pub fn unpack(msg: &String) -> Result<HashMap<&str, String>, String> {
 
 /// example request_msg: [2,\"8:1\",\"BootNotification\",{\"chargePointModel\":\"MD_HVC_CAR\",\"chargePointSerialNumber\":\"ORAC2-KR1-0001-013\",\"chargePointVendor\":\"ABB\",\"firmwareVersion\":\"1.6.0.27\"}]"
 pub fn boot_notification_response(message_id: &String, payload: &String) -> String {
-    let at_now:DateTime<Utc> = Utc::now();
-    let boot_response: responses::BootNotificationResponse = responses::BootNotificationResponse {
-        current_time: at_now.to_rfc3339(),
-        interval: HEARTBEAT_INTERVAL.as_secs() as i64,
-        status: responses::BootNotificationResponseStatus::Accepted,
-    };
-    wrap_call_result(message_id, serde_json::to_string(&boot_response).unwrap())
+    match serde_json::from_str(&payload) as Result<requests::BootNotificationRequest, serde_json::Error> {
+        Ok(_) => {
+            let at_now:DateTime<Utc> = Utc::now();
+            let boot_response: responses::BootNotificationResponse = responses::BootNotificationResponse {
+                current_time: at_now.to_rfc3339(),
+                interval: HEARTBEAT_INTERVAL.as_secs() as i64,
+                status: responses::BootNotificationResponseStatus::Accepted,
+            };
+            wrap_call_result(message_id, serde_json::to_string(&boot_response).unwrap())
+        }
+        Err(_) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, payload)
+        }
+    }
 }
 
 pub fn status_notification_response(message_id: &String, payload: &String) -> String {
