@@ -13,7 +13,7 @@ mod messages;
 mod responses;
 mod requests;
 
-const ALLOWED_SUBPROTOCOLS: [&'static str; 1] = ["ocpp2.0.1"];
+const ALLOWED_SUBPROTOCOLS: [&'static str; 2] = ["ocpp1.6", "ocpp2.0"];
 
 struct MyWebSocket {
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT)
@@ -68,22 +68,38 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
             Ok(ws::Message::Text(text)) => {
                 match unpack(&text) {
                     Ok(unpacked) => {
-                        match unpacked.get("MessageTypeId").unwrap().as_str() {
-                            "2" => {
-                                match unpacked.get("Action").unwrap().as_str() {
+                        let message_type_id: u8 = unpacked.get("MessageTypeId").unwrap().parse().unwrap();                        
+			            println!("Identified message_type_id: {}", message_type_id);
+                        match message_type_id {
+                            2 => {
+                                let action: &str = &unpacked.get("Action").unwrap().as_str().replace("\"", "");
+
+                                println!("Identified Action: {}", action);
+                                match action {
                                     "BootNotification" => {
-                                        ctx.text(messages::boot_notification_response(
+                                        let response = messages::boot_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             HEARTBEAT_INTERVAL.as_secs() as i64,
-                                            responses::BootNotificationResponseStatus::Accepted
-                                        ))},
+                                            responses::BootNotificationResponseStatus::Accepted);
+                                        println!("response: {}", response);
+                                        ctx.text(response)},
+                                    "StatusNotification" => {
+                                        let response = messages::status_notification_response(unpacked.get("MessageId").unwrap());
+                                        println!("response: {}", response);
+                                        ctx.text(response);
+                                    },
+                                    "Heartbeat" => {
+                                        let response = messages::heartbeat_response(unpacked.get("MessageId").unwrap());
+                                        println!("response: {}", response);
+                                        ctx.text(response);
+                                    }
                                     _ => {}
                                 }
                             },
-                            "3" => {
+                            3 => {
 
                             },
-                            "4" => {
+                            4 => {
 
                             }
                             _ => { ctx.text(text)}

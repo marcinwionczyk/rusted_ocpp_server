@@ -43,63 +43,63 @@ pub enum ErrorCode {
 
 // [<MessageTypeId>, "<UniqueId>", {<Payload>}]
 pub fn wrap_call_result(msg_id: &String, payload: String) -> String {
-    format!("[{}, \"{}\", {}]", CALL_RESULT, msg_id, payload)
+    format!("[{}, {}, {}]", CALL_RESULT, msg_id, payload)
 }
 
 // [<MessageTypeId>, "<UniqueId>", "<errorCode>", "<errorDescription>", {<errorDetails>}]
 pub fn wrap_call_error_result(msg_id: String, error_code: ErrorCode, error_details: String) -> String {
     match error_code {
         ErrorCode::FormatViolation => {
-            format!("[4, \"{}\", \"FormationViolation\", \"Payload for Action is syntactically \
+            format!("[4, {}, \"FormationViolation\", \"Payload for Action is syntactically \
                 incorrect or not conform the PDU structure for Action\", {}]", msg_id, error_details)
         }
         ErrorCode::GenericError => {
-            format!("[4, \"{}\", \"GenericError\", \"Non specific error\", {}]",
+            format!("[4, {}, \"GenericError\", \"Non specific error\", {}]",
                     msg_id, error_details)
         }
         ErrorCode::InternalError => {
-            format!("[4, \"{}\", \"InternalError\", \"An internal error occurred and the receiver \
+            format!("[4, {}, \"InternalError\", \"An internal error occurred and the receiver \
                 was not able to process the requested Action successfully\", {}]",
                     msg_id, error_details)
         }
         ErrorCode::MessageTypeNotSupported => {
-            format!("[4, \"{}\", \"MessageTypeNotSupported\", \"A message with an Message Type \
+            format!("[4, {}, \"MessageTypeNotSupported\", \"A message with an Message Type \
                 Number received that is not supported by this implementation\", {}]",
                     msg_id, error_details)
         }
         ErrorCode::NotImplemented => {
-            format!("[4, \"{}\", \"NotImplemented\", \"Requested Action is not known by receiver\", {}]",
+            format!("[4, {}, \"NotImplemented\", \"Requested Action is not known by receiver\", {}]",
                     msg_id, error_details)
         }
         ErrorCode::NotSupported => {
-            format!("[4, \"{}\", \"NotSupported\", \"Requested Action is recognized but not supported \
+            format!("[4, {}, \"NotSupported\", \"Requested Action is recognized but not supported \
                 by the receiver\", {}]", msg_id, error_details)
         }
         ErrorCode::OccurrenceConstraintViolation => {
-            format!("[4, \"{}\", \"OccurrenceConstraintViolation\", \"Payload for Action is \
+            format!("[4, {}, \"OccurrenceConstraintViolation\", \"Payload for Action is \
                 syntactically correct but at least one of the fields violates occurrence \
                 constraints\", {}]", msg_id, error_details)
         }
         ErrorCode::PropertyConstraintViolation => {
-            format!("[4, \"{}\", \"PropertyConstraintViolation\", \"Payload for Action is \
+            format!("[4, {}, \"PropertyConstraintViolation\", \"Payload for Action is \
                 syntactically correct but at least one of the fields violates occurrence \
                 constraints\", {}]", msg_id, error_details)
         }
         ErrorCode::ProtocolError => {
-            format!("[4, \"{}\", \"ProtocolError\", \"Payload for Action is not conform the PDU \
+            format!("[4, {}, \"ProtocolError\", \"Payload for Action is not conform the PDU \
                 structure\", {}]", msg_id, error_details)
         }
         ErrorCode::RpcFrameworkError => {
-            format!("[4, \"{}\", \"RpcFrameworkError\", \"Content of the call is not a valid RPC Request, \
+            format!("[4, {}, \"RpcFrameworkError\", \"Content of the call is not a valid RPC Request, \
             for example: MessageId could not be read.\", {}]", msg_id, error_details)
         }
         ErrorCode::SecurityError => {
-            format!("[4, \"{}\", \"SecurityError\", \"During the processing of Action a security issue \
+            format!("[4, {}, \"SecurityError\", \"During the processing of Action a security issue \
             occurred preventing receiver from completing the Action successfully\", {}]",
                     msg_id, error_details)
         }
         ErrorCode::TypeConstraintViolation => {
-            format!("[4, \"{}\", \"TypeConstraintViolation\", \"Payload for Action is syntactically \
+            format!("[4, {}, \"TypeConstraintViolation\", \"Payload for Action is syntactically \
             correct but at least one of the fields violates data type constraints\", {}]",
                     msg_id, error_details)
         }
@@ -159,11 +159,23 @@ pub fn unpack(msg: &String) -> Result<HashMap<&str, String>, String> {
 
 /// example request_msg: [2,\"8:1\",\"BootNotification\",{\"chargePointModel\":\"MD_HVC_CAR\",\"chargePointSerialNumber\":\"ORAC2-KR1-0001-013\",\"chargePointVendor\":\"ABB\",\"firmwareVersion\":\"1.6.0.27\"}]"
 pub fn boot_notification_response(message_id: &String, interval: i64, status: BootNotificationResponseStatus) -> String {
-    let at_now:DateTime<Utc> = SystemTime::now().into();
+    let at_now:DateTime<Utc> = Utc::now();
     let boot_response: BootNotificationResponse = BootNotificationResponse {
         current_time: at_now.to_rfc3339(),
         interval,
         status,
     };
     wrap_call_result(message_id, serde_json::to_string(&boot_response).unwrap())
+}
+
+pub fn status_notification_response(message_id: &String) -> String {
+    wrap_call_result(message_id, String::from("{}"))
+}
+
+pub fn heartbeat_response(message_id: &String) -> String {
+    let at_now:DateTime<Utc> = Utc::now();
+    let heartbeat_resp: HeartbeatResponse = HeartbeatResponse {
+        current_time: at_now.to_rfc3339()
+    };
+    wrap_call_result(message_id, serde_json::to_string(&heartbeat_resp).unwrap())
 }
