@@ -3,8 +3,8 @@ use std::time::{Duration, Instant, SystemTime};
 
 use serde_json::Value;
 
-use crate::requests::*;
-use crate::responses::*;
+use crate::requests;
+use crate::responses;
 use chrono::{DateTime, Utc};
 
 pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(15);
@@ -47,7 +47,7 @@ pub fn wrap_call_result(msg_id: &String, payload: String) -> String {
 }
 
 // [<MessageTypeId>, "<UniqueId>", "<errorCode>", "<errorDescription>", {<errorDetails>}]
-pub fn wrap_call_error_result(msg_id: String, error_code: ErrorCode, error_details: String) -> String {
+pub fn wrap_call_error_result(msg_id: &String, error_code: ErrorCode, error_details: &String) -> String {
     match error_code {
         ErrorCode::FormatViolation => {
             format!("[4, {}, \"FormationViolation\", \"Payload for Action is syntactically \
@@ -148,34 +148,55 @@ pub fn unpack(msg: &String) -> Result<HashMap<&str, String>, String> {
         }
         None => {
             let message_id = (*json.get(1).unwrap()).to_string();
-            Err(wrap_call_error_result(message_id, ErrorCode::MessageTypeNotSupported, msg.clone()))
+            Err(wrap_call_error_result(&message_id, ErrorCode::MessageTypeNotSupported, msg))
         }
         _ => {
             let message_id = (*json.get(1).unwrap()).to_string();
-            Err(wrap_call_error_result(message_id, ErrorCode::MessageTypeNotSupported, msg.clone()))
+            Err(wrap_call_error_result(&message_id, ErrorCode::MessageTypeNotSupported, msg))
         }
     }
 }
 
 /// example request_msg: [2,\"8:1\",\"BootNotification\",{\"chargePointModel\":\"MD_HVC_CAR\",\"chargePointSerialNumber\":\"ORAC2-KR1-0001-013\",\"chargePointVendor\":\"ABB\",\"firmwareVersion\":\"1.6.0.27\"}]"
-pub fn boot_notification_response(message_id: &String, interval: i64, status: BootNotificationResponseStatus) -> String {
+pub fn boot_notification_response(message_id: &String, payload: &String) -> String {
     let at_now:DateTime<Utc> = Utc::now();
-    let boot_response: BootNotificationResponse = BootNotificationResponse {
+    let boot_response: responses::BootNotificationResponse = responses::BootNotificationResponse {
         current_time: at_now.to_rfc3339(),
-        interval,
-        status,
+        interval: HEARTBEAT_INTERVAL.as_secs() as i64,
+        status: responses::BootNotificationResponseStatus::Accepted,
     };
     wrap_call_result(message_id, serde_json::to_string(&boot_response).unwrap())
 }
 
-pub fn status_notification_response(message_id: &String) -> String {
-    wrap_call_result(message_id, String::from("{}"))
+pub fn status_notification_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::StatusNotificationRequest, serde_json::Error> {
+        Ok(_) => {
+            wrap_call_result(message_id, String::from("{}"))
+        }
+        Err(_) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, payload)
+        }
+    }
+    
 }
 
 pub fn heartbeat_response(message_id: &String) -> String {
     let at_now:DateTime<Utc> = Utc::now();
-    let heartbeat_resp: HeartbeatResponse = HeartbeatResponse {
+    let heartbeat_resp: responses::HeartbeatResponse = responses::HeartbeatResponse {
         current_time: at_now.to_rfc3339()
     };
     wrap_call_result(message_id, serde_json::to_string(&heartbeat_resp).unwrap())
+}
+
+pub fn authorize_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::AuthorizeRequest, serde_json::Error> {
+        Ok(_) => {
+            let authorize_resp: responses::AuthorizeResponse = responses::AuthorizeResponse{ id_tag_info: 
+                responses::IdTagInfo {expiry_date: None, parent_id_tag: None, status: responses::IdTagInfoStatus::Accepted}};
+            wrap_call_result(message_id, serde_json::to_string(&authorize_resp).unwrap())
+        },
+        Err(_) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, payload)
+        }
+    }
 }

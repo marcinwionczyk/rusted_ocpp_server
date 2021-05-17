@@ -2,10 +2,7 @@ use actix::prelude::*;
 use actix_web::{get, web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use dotenv;
-use serde::{Deserialize, Serialize};
-use std::time::{Duration, Instant, SystemTime};
-use chrono::prelude::*;
-use std::convert::TryInto;
+use std::time::Instant;
 use crate::messages::{HEARTBEAT_INTERVAL, CLIENT_TIMEOUT, unpack};
 
 mod config;
@@ -69,7 +66,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
                 match unpack(&text) {
                     Ok(unpacked) => {
                         let message_type_id: u8 = unpacked.get("MessageTypeId").unwrap().parse().unwrap();                        
-			            println!("Identified message_type_id: {}", message_type_id);
+			            // println!("Identified message_type_id: {}", message_type_id);
                         match message_type_id {
                             2 => {
                                 let action: &str = &unpacked.get("Action").unwrap().as_str().replace("\"", "");
@@ -78,19 +75,22 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
                                 match action {
                                     "BootNotification" => {
                                         let response = messages::boot_notification_response(
-                                            unpacked.get("MessageId").unwrap(),
-                                            HEARTBEAT_INTERVAL.as_secs() as i64,
-                                            responses::BootNotificationResponseStatus::Accepted);
+                                            unpacked.get("MessageId").unwrap(), unpacked.get("Payload").unwrap());
                                         println!("response: {}", response);
                                         ctx.text(response)},
                                     "StatusNotification" => {
-                                        let response = messages::status_notification_response(unpacked.get("MessageId").unwrap());
-                                        println!("response: {}", response);
+                                        let response = messages::status_notification_response(
+                                            unpacked.get("MessageId").unwrap(), unpacked.get("Payload").unwrap());
                                         ctx.text(response);
                                     },
                                     "Heartbeat" => {
                                         let response = messages::heartbeat_response(unpacked.get("MessageId").unwrap());
                                         println!("response: {}", response);
+                                        ctx.text(response);
+                                    },
+                                    "Authorize" => {
+                                        let response = messages::authorize_response(unpacked.get("MessageId").unwrap(), 
+                                            unpacked.get("Payload").unwrap());
                                         ctx.text(response);
                                     }
                                     _ => {}
