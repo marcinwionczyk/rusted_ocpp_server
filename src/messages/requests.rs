@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use validator_derive::Validate;
 
 
-
 #[derive(Deserialize)]
 pub struct AuthorizeRequest {
     #[serde(rename = "idTag")]
@@ -437,6 +436,7 @@ pub struct UpdateFirmwareRequest {
     #[serde(rename = "retryInterval")]
     pub retry_interval: Option<i64>,
 }
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #[derive(Deserialize)]
 pub struct ApiCancelReservation {

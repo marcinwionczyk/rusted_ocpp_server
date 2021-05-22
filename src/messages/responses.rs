@@ -1,6 +1,5 @@
 use serde::Serialize;
 
-
 #[derive(Serialize)]
 pub struct AuthorizeResponse {
     #[serde(rename = "idTagInfo")]

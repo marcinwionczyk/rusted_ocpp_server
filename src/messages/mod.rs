@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::time::{Duration, Instant, SystemTime};
 
+use chrono::{DateTime, Utc};
 use serde_json::Value;
 
-use crate::requests;
-use crate::responses;
-use chrono::{DateTime, Utc};
+pub mod requests;
+pub mod responses;
 
 pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(15);
 pub const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
@@ -108,36 +108,36 @@ pub fn wrap_call_error_result(msg_id: &String, error_code: ErrorCode, error_deta
 
 pub fn unpack(msg: &String) -> Result<HashMap<&str, String>, String> {
     let mut hash: HashMap<&str, String> = HashMap::new();
-    let json: Value = serde_json::from_str(msg).expect("JSON string is fucked up");
+    let json: Value = serde_json::from_str(msg).expect("JSON string is wrong");
     let message_type_id = json.get(0).unwrap().as_u64();
     match message_type_id {
         Some(2) => {
             hash.insert("MessageTypeId", "2".to_string());
-            hash.insert("MessageId", (*json.get(1).unwrap()).to_string());
-            hash.insert("Action", (*json.get(2).unwrap()).to_string());
-            hash.insert("Payload", (*json.get(3).unwrap()).to_string());
+            hash.insert("MessageId", (json.get(1).unwrap()).to_string());
+            hash.insert("Action", (json.get(2).unwrap()).to_string());
+            hash.insert("Payload", (json.get(3).unwrap()).to_string());
             Ok(hash.clone())
         }
         Some(3) => {
             hash.insert("MessageTypeId", "3".to_string());
-            hash.insert("MessageId", (*json.get(1).unwrap()).to_string());
-            hash.insert("Payload", (*json.get(2).unwrap()).to_string());
+            hash.insert("MessageId", (json.get(1).unwrap()).to_string());
+            hash.insert("Payload", (json.get(2).unwrap()).to_string());
             Ok(hash.clone())
         }
         Some(4) => {
             hash.insert("MessageTypeId", "4".to_string());
-            hash.insert("MessageId", (*json.get(1).unwrap()).to_string());
-            hash.insert("ErrorCode", (*json.get(2).unwrap()).to_string());
-            hash.insert("ErrorDescription", (*json.get(3).unwrap()).to_string());
-            hash.insert("ErrorDetails", (*json.get(4).unwrap()).to_string());
+            hash.insert("MessageId", (json.get(1).unwrap()).to_string());
+            hash.insert("ErrorCode", (json.get(2).unwrap()).to_string());
+            hash.insert("ErrorDescription", (json.get(3).unwrap()).to_string());
+            hash.insert("ErrorDetails", (json.get(4).unwrap()).to_string());
             Ok(hash.clone())
         }
         None => {
-            let message_id = (*json.get(1).unwrap()).to_string();
+            let message_id = (json.get(1).unwrap()).to_string();
             Err(wrap_call_error_result(&message_id, ErrorCode::MessageTypeNotSupported, msg))
         }
         _ => {
-            let message_id = (*json.get(1).unwrap()).to_string();
+            let message_id = (json.get(1).unwrap()).to_string();
             Err(wrap_call_error_result(&message_id, ErrorCode::MessageTypeNotSupported, msg))
         }
     }
@@ -170,7 +170,6 @@ pub fn status_notification_response(message_id: &String, payload: &String) -> St
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, payload)
         }
     }
-    
 }
 
 pub fn heartbeat_response(message_id: &String) -> String {
@@ -184,8 +183,8 @@ pub fn heartbeat_response(message_id: &String) -> String {
 pub fn authorize_response(message_id: &String, payload: &String) -> String {
     match serde_json::from_str(&payload) as Result<requests::AuthorizeRequest, serde_json::Error> {
         Ok(_) => {
-            let authorize_resp: responses::AuthorizeResponse = responses::AuthorizeResponse{ id_tag_info: 
-                responses::IdTagInfo {expiry_date: None, parent_id_tag: None, status: responses::IdTagInfoStatus::Accepted}};
+            let authorize_resp: responses::AuthorizeResponse = responses::AuthorizeResponse{ id_tag_info:
+            responses::IdTagInfo {expiry_date: None, parent_id_tag: None, status: responses::IdTagInfoStatus::Accepted}};
             wrap_call_result(message_id, serde_json::to_string(&authorize_resp).unwrap())
         },
         Err(_) => {
