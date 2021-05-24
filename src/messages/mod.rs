@@ -40,7 +40,6 @@ pub enum ErrorCode {
     TypeConstraintViolation, // Payload for Action is syntactically correct but at least one of the fields violates data type constraints
 }
 
-
 // [<MessageTypeId>, "<UniqueId>", {<Payload>}]
 pub fn wrap_call_result(msg_id: &String, payload: String) -> String {
     format!("[{}, {}, {}]", CALL_RESULT, msg_id, payload)
@@ -143,15 +142,16 @@ pub fn unpack(msg: &String) -> Result<HashMap<&str, String>, String> {
     }
 }
 
-/// example request_msg: [2,\"8:1\",\"BootNotification\",{\"chargePointModel\":\"MD_HVC_CAR\",\"chargePointSerialNumber\":\"ORAC2-KR1-0001-013\",\"chargePointVendor\":\"ABB\",\"firmwareVersion\":\"1.6.0.27\"}]"
 pub fn boot_notification_response(message_id: &String, payload: &String) -> String {
     match serde_json::from_str(&payload) as Result<requests::BootNotificationRequest, serde_json::Error> {
         Ok(_) => {
             let at_now:DateTime<Utc> = Utc::now();
             let boot_response: responses::BootNotificationResponse = responses::BootNotificationResponse {
                 current_time: at_now.to_rfc3339(),
+                custom_data: None,
                 interval: HEARTBEAT_INTERVAL.as_secs() as i64,
-                status: responses::BootNotificationResponseStatus::Accepted,
+                status: responses::RegistrationStatusEnumType::Accepted,
+                status_info: None
             };
             wrap_call_result(message_id, serde_json::to_string(&boot_response).unwrap())
         }
@@ -183,8 +183,21 @@ pub fn heartbeat_response(message_id: &String) -> String {
 pub fn authorize_response(message_id: &String, payload: &String) -> String {
     match serde_json::from_str(&payload) as Result<requests::AuthorizeRequest, serde_json::Error> {
         Ok(_) => {
-            let authorize_resp: responses::AuthorizeResponse = responses::AuthorizeResponse{ id_tag_info:
-            responses::IdTagInfo {expiry_date: None, parent_id_tag: None, status: responses::IdTagInfoStatus::Accepted}};
+            let authorize_resp: responses::AuthorizeResponse = responses::AuthorizeResponse{
+                certificate_status: None,
+                custom_data: None,
+                id_token_info: responses::IdTokenInfoType{
+                    cache_expiry_date_time: None,
+                    charging_priority: None,
+                    custom_data: None,
+                    evse_id: None,
+                    group_id_token: None,
+                    language1: None,
+                    language2: None,
+                    personal_message: None,
+                    status: responses::AuthorizationStatusEnumType::Accepted
+                }
+            };
             wrap_call_result(message_id, serde_json::to_string(&authorize_resp).unwrap())
         },
         Err(_) => {

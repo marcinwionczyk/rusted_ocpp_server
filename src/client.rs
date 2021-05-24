@@ -126,6 +126,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargePointWebSoc
                                         let response = heartbeat_response(
                                             unpacked.get("MessageId").unwrap());
                                         println!("{}: response: {}", self.name, response);
+                                        self.hb = Instant::now();
                                         ctx.text(response);
                                     }
                                     "Authorize" => {

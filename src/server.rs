@@ -14,13 +14,13 @@ use actix::dev::MessageResponse;
 //|charge_point | |charge_point | |charge_point |
 //`-------------' `-------------' `-------------'
 
-/// Ocpp server receives this messages from websocket session
-// #[derive(Message)]
-// #[rtype(result = "()")]
-// pub struct MessageFromChargePoint {
-//     pub serial_id: String,
-//     pub msg: String,
-//}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct WebClientMessage {
+    pub serial_id: String,
+    pub text: String,
+}
 
 /// Ocpp server sends this messages to websocket session
 #[derive(Message)]
@@ -35,7 +35,7 @@ pub struct Connect {
 }
 
 #[derive(Message)]
-#[rtype(String)]
+#[rtype(result = "()")]
 pub struct Disconnect {
     pub serial_id: String,
 }
@@ -75,17 +75,18 @@ impl Handler<Connect> for OcppServer {
 }
 
 impl Handler<Disconnect> for OcppServer {
-    type Result = String;
+    type Result = ();
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) -> Self::Result {
         self.websocket_sessions.remove(msg.serial_id.as_str());
-        msg.serial_id
     }
 }
 
-// impl Handler<MessageFromChargePoint> for OcppServer {
-//     type Result = ();
-//
-//     fn handle(&mut self, msg: MessageFromChargePoint, ctx: &mut Context<Self>) -> Self::Result {
-//         todo!()
-//     }
-// }
+impl Handler<WebClientMessage> for OcppServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: WebClientMessage, _: &mut Context<Self>) -> Self::Result {
+        println!("sending message to: {}", msg.serial_id);
+        self.send_message(&msg.serial_id, &msg.text);
+    }
+}
+
