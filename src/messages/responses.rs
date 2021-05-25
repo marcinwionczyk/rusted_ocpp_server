@@ -6,8 +6,10 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize)]
 pub struct AuthorizeResponse {
     #[serde(rename = "certificateStatus")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub certificate_status: Option<AuthorizeCertificateStatusEnumType>,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     #[serde(rename = "idTokenInfo")]
     pub id_token_info: IdTokenInfoType,
@@ -33,32 +35,40 @@ pub struct IdTokenInfoType {
     /// urn:x-oca:ocpp:uid:1:569373
     /// Date and Time after which the token must be considered invalid.
     #[serde(rename = "cacheExpiryDateTime")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub cache_expiry_date_time: Option<String>,
     /// Priority from a business point of view. Default priority is 0, The range is from -9 to 9.
     /// Higher values indicate a higher priority. The chargingPriority in
     /// &lt;&lt;transactioneventresponse,TransactionEventResponse&gt;&gt; overrules this one.
     #[serde(rename = "chargingPriority")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub charging_priority: Option<i64>,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// Only used when the IdToken is only valid for one or more specific EVSEs, not for the
     /// entire Charging Station.
     #[serde(rename = "evseId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub evse_id: Option<Vec<i64>>,
     #[serde(rename = "groupIdToken")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub group_id_token: Option<IdTokenType>,
     /// ID_ Token. Language1. Language_ Code
     /// urn:x-oca:ocpp:uid:1:569374
     /// Preferred user interface language of identifier user. Contains a language code as defined
     /// in &lt;&lt;ref-RFC5646,[RFC5646]&gt;&gt;.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub language1: Option<String>,
     /// ID_ Token. Language2. Language_ Code
     /// urn:x-oca:ocpp:uid:1:569375
     /// Second preferred user interface language of identifier user. Don’t use when language1 is
     /// omitted, has to be different from language1. Contains a language code as defined in
     /// &lt;&lt;ref-RFC5646,[RFC5646]&gt;&gt;.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub language2: Option<String>,
     #[serde(rename = "personalMessage")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub personal_message: Option<MessageContentType>,
     pub status: AuthorizationStatusEnumType,
 }
@@ -68,8 +78,10 @@ pub struct IdTokenInfoType {
 #[derive(Serialize, Deserialize)]
 pub struct IdTokenType {
     #[serde(rename = "additionalInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub additional_info: Option<Vec<AdditionalInfoType>>,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// IdToken is case insensitive. Might hold the hidden id of an RFID tag, but can for example
     /// also contain a UUID.
@@ -87,6 +99,7 @@ pub struct AdditionalInfoType {
     #[serde(rename = "additionalIdToken")]
     pub additional_id_token: String,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// This defines the type of the additionalIdToken. This is a custom type, so the
     /// implementation needs to be agreed upon by all involved parties.
@@ -104,12 +117,14 @@ pub struct MessageContentType {
     /// Message contents.
     pub content: String,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub format: MessageFormatEnumType,
     /// Message_ Content. Language. Language_ Code
     /// urn:x-enexis:ecdm:uid:1:570849
     /// Message language identifier. Contains a language code as defined in
     /// &lt;&lt;ref-RFC5646,[RFC5646]&gt;&gt;.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub language: Option<String>,
 }
 
@@ -184,6 +199,7 @@ pub struct BootNotificationResponse {
     #[serde(rename = "currentTime")]
     pub current_time: String,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// When &lt;&lt;cmn_registrationstatusenumtype,Status&gt;&gt; is Accepted, this contains the
     /// heartbeat interval in seconds. If the CSMS returns something other than Accepted, the
@@ -192,6 +208,7 @@ pub struct BootNotificationResponse {
     pub interval: i64,
     pub status: RegistrationStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -200,8 +217,10 @@ pub struct BootNotificationResponse {
 pub struct StatusInfoType {
     /// Additional text to provide detailed information.
     #[serde(rename = "additionalInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub additional_info: Option<String>,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// A predefined code for the reason why the status is returned in this response. The string
     /// is case-insensitive.
@@ -223,9 +242,11 @@ pub enum RegistrationStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct CancelReservationResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: CancelReservationStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -241,9 +262,11 @@ pub enum CancelReservationStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct CertificateSignedResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: CertificateSignedStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -259,9 +282,11 @@ pub enum CertificateSignedStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct ChangeAvailabilityResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: ChangeAvailabilityStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -278,9 +303,11 @@ pub enum ChangeAvailabilityStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct ClearCacheResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: ClearCacheStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -296,9 +323,11 @@ pub enum ClearCacheStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct ClearChargingProfileResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: ClearChargingProfileStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -314,9 +343,11 @@ pub enum ClearChargingProfileStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct ClearDisplayMessageResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: ClearMessageStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -332,6 +363,7 @@ pub enum ClearMessageStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct ClearedChargingLimitResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -342,17 +374,20 @@ pub struct ClearVariableMonitoringResponse {
     #[serde(rename = "clearMonitoringResult")]
     pub clear_monitoring_result: Vec<ClearMonitoringResultType>,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ClearMonitoringResultType {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// Id of the monitor of which a clear was requested.
     pub id: i64,
     pub status: ClearMonitoringStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -369,6 +404,7 @@ pub enum ClearMonitoringStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct CostUpdatedResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -377,9 +413,11 @@ pub struct CostUpdatedResponse {
 #[derive(Serialize, Deserialize)]
 pub struct CustomerInformationResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: CustomerInformationStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -396,11 +434,14 @@ pub enum CustomerInformationStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct DataTransferResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// Data without specified length or format, in response to request.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<serde_json::Value>,
     pub status: DataTransferStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -418,9 +459,11 @@ pub enum DataTransferStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct DeleteCertificateResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: DeleteCertificateStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -437,6 +480,7 @@ pub enum DeleteCertificateStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct FirmwareStatusNotificationResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -445,12 +489,14 @@ pub struct FirmwareStatusNotificationResponse {
 #[derive(Serialize, Deserialize)]
 pub struct Get15118EvCertificateResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// Raw CertificateInstallationRes response for the EV, Base64 encoded.
     #[serde(rename = "exiResponse")]
     pub exi_response: String,
     pub status: Iso15118EvCertificateStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -466,9 +512,11 @@ pub enum Iso15118EvCertificateStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct GetBaseReportResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: GenericDeviceModelStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -486,14 +534,17 @@ pub enum GenericDeviceModelStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct GetCertificateStatusResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// OCSPResponse class as defined in &lt;&lt;ref-ocpp_security_24, IETF RFC 6960&gt;&gt;. DER
     /// encoded (as defined in &lt;&lt;ref-ocpp_security_24, IETF RFC 6960&gt;&gt;), and then
     /// base64 encoded. MAY only be omitted when status is not Accepted.
     #[serde(rename = "ocspResult")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ocsp_result: Option<String>,
     pub status: GetCertificateStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -510,9 +561,11 @@ pub enum GetCertificateStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct GetChargingProfilesResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: GetChargingProfileStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -529,10 +582,13 @@ pub enum GetChargingProfileStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct GetCompositeScheduleResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub schedule: Option<CompositeScheduleType>,
     pub status: GenericStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -545,6 +601,7 @@ pub struct CompositeScheduleType {
     #[serde(rename = "chargingSchedulePeriod")]
     pub charging_schedule_period: Vec<ChargingSchedulePeriodType>,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// Duration of the schedule in seconds.
     pub duration: i64,
@@ -568,6 +625,7 @@ pub struct CompositeScheduleType {
 #[derive(Serialize, Deserialize)]
 pub struct ChargingSchedulePeriodType {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// Charging_ Schedule_ Period. Limit. Measure
     /// urn:x-oca:ocpp:uid:1:569241
@@ -579,12 +637,14 @@ pub struct ChargingSchedulePeriodType {
     /// The number of phases that can be used for charging. If a number of phases is needed,
     /// numberPhases=3 will be assumed unless another number is given.
     #[serde(rename = "numberPhases")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub number_phases: Option<i64>,
     /// Values: 1..3, Used if numberPhases=1 and if the EVSE is capable of switching the phase
     /// connected to the EV, i.e. ACPhaseSwitchingSupported is defined and true. It’s not allowed
     /// unless both conditions above are true. If both conditions are true, and phaseToUse is
     /// omitted, the Charging Station / EVSE will make the selection on its own.
     #[serde(rename = "phaseToUse")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub phase_to_use: Option<i64>,
     /// Charging_ Schedule_ Period. Start_ Period. Elapsed_ Time
     /// urn:x-oca:ocpp:uid:1:569240
@@ -615,9 +675,11 @@ pub enum GenericStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct GetDisplayMessagesResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: GetDisplayMessagesStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -634,11 +696,14 @@ pub enum GetDisplayMessagesStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct GetInstalledCertificateIdsResponse {
     #[serde(rename = "certificateHashDataChain")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub certificate_hash_data_chain: Option<Vec<CertificateHashDataChainType>>,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: GetInstalledCertificateStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -649,14 +714,17 @@ pub struct CertificateHashDataChainType {
     #[serde(rename = "certificateType")]
     pub certificate_type: GetCertificateIdUseEnumType,
     #[serde(rename = "childCertificateHashData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub child_certificate_hash_data: Option<Vec<CertificateHashDataType>>,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct CertificateHashDataType {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     #[serde(rename = "hashAlgorithm")]
     pub hash_algorithm: HashAlgorithmEnumType,
@@ -706,6 +774,7 @@ pub enum GetInstalledCertificateStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct GetLocalListVersionResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// This contains the current version number of the local authorization list in the Charging
     /// Station.
@@ -718,12 +787,15 @@ pub struct GetLocalListVersionResponse {
 #[derive(Serialize, Deserialize)]
 pub struct GetLogResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// This contains the name of the log file that will be uploaded. This field is not present
     /// when no logging information is available.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
     pub status: LogStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -740,9 +812,11 @@ pub enum LogStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct GetMonitoringReportResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: GenericDeviceModelStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -751,9 +825,11 @@ pub struct GetMonitoringReportResponse {
 #[derive(Serialize, Deserialize)]
 pub struct GetReportResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: GenericDeviceModelStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -762,12 +838,14 @@ pub struct GetReportResponse {
 #[derive(Serialize, Deserialize)]
 pub struct GetTransactionStatusResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// Whether there are still message to be delivered.
     #[serde(rename = "messagesInQueue")]
     pub messages_in_queue: bool,
     /// Whether the transaction is still ongoing.
     #[serde(rename = "ongoingIndicator")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ongoing_indicator: Option<bool>,
 }
 
@@ -776,6 +854,7 @@ pub struct GetTransactionStatusResponse {
 #[derive(Serialize, Deserialize)]
 pub struct GetVariablesResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     #[serde(rename = "getVariableResult")]
     pub get_variable_result: Vec<GetVariableResultType>,
@@ -787,8 +866,10 @@ pub struct GetVariableResultType {
     #[serde(rename = "attributeStatus")]
     pub attribute_status: GetVariableStatusEnumType,
     #[serde(rename = "attributeStatusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub attribute_status_info: Option<StatusInfoType>,
     #[serde(rename = "attributeType")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub attribute_type: Option<AttributeEnumType>,
     /// Value of requested attribute type of component-variable. This field can only be empty
     /// when the given status is NOT accepted.
@@ -798,9 +879,11 @@ pub struct GetVariableResultType {
     /// GetVariableResult.attributeValue, VariableAttribute.value and EventData.actualValue. The
     /// max size of these values will always remain equal.
     #[serde(rename = "attributeValue")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub attribute_value: Option<String>,
     pub component: ComponentType,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub variable: VariableType,
 }
@@ -809,10 +892,13 @@ pub struct GetVariableResultType {
 #[derive(Serialize, Deserialize)]
 pub struct ComponentType {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub evse: Option<EvseType>,
     /// Name of instance in case the component exists as multiple instances. Case Insensitive.
     /// strongly advised to use Camel Case.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub instance: Option<String>,
     /// Name of the component. Name should be taken from the list of standardized component names
     /// whenever possible. Case Insensitive. strongly advised to use Camel Case.
@@ -826,8 +912,10 @@ pub struct ComponentType {
 pub struct EvseType {
     /// An id to designate a specific connector (on an EVSE) by connector index number.
     #[serde(rename = "connectorId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub connector_id: Option<i64>,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// Identified_ Object. MRID. Numeric_ Identifier
     /// urn:x-enexis:ecdm:uid:1:569198
@@ -840,9 +928,11 @@ pub struct EvseType {
 #[derive(Serialize, Deserialize)]
 pub struct VariableType {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// Name of instance in case the variable exists as multiple instances. Case Insensitive.
     /// strongly advised to use Camel Case.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub instance: Option<String>,
     /// Name of the variable. Name should be taken from the list of standardized variable names
     /// whenever possible. Case Insensitive. strongly advised to use Camel Case.
@@ -876,6 +966,7 @@ pub struct HeartbeatResponse {
     #[serde(rename = "currentTime")]
     pub current_time: String,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -884,9 +975,11 @@ pub struct HeartbeatResponse {
 #[derive(Serialize, Deserialize)]
 pub struct InstallCertificateResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: InstallCertificateStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -903,6 +996,7 @@ pub enum InstallCertificateStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct LogStatusNotificationResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -911,6 +1005,7 @@ pub struct LogStatusNotificationResponse {
 #[derive(Serialize, Deserialize)]
 pub struct MeterValuesResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -919,6 +1014,7 @@ pub struct MeterValuesResponse {
 #[derive(Serialize, Deserialize)]
 pub struct NotifyChargingLimitResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -935,6 +1031,7 @@ pub struct NotifyCustomerInformationResponse {
 #[derive(Serialize, Deserialize)]
 pub struct NotifyDisplayMessagesResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -943,9 +1040,11 @@ pub struct NotifyDisplayMessagesResponse {
 #[derive(Serialize, Deserialize)]
 pub struct NotifyEvChargingNeedsResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: NotifyEvChargingNeedsStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -963,9 +1062,11 @@ pub enum NotifyEvChargingNeedsStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct NotifyEvChargingScheduleResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: GenericStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -974,6 +1075,7 @@ pub struct NotifyEvChargingScheduleResponse {
 #[derive(Serialize, Deserialize)]
 pub struct NotifyEventResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -982,6 +1084,7 @@ pub struct NotifyEventResponse {
 #[derive(Serialize, Deserialize)]
 pub struct NotifyMonitoringReportResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -990,6 +1093,7 @@ pub struct NotifyMonitoringReportResponse {
 #[derive(Serialize, Deserialize)]
 pub struct NotifyReportResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -1000,6 +1104,7 @@ pub struct PublishFirmwareRequest {
     /// The MD5 checksum over the entire firmware file as a hexadecimal string of length 32.
     pub checksum: String,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// This contains a string containing a URI pointing to a
     /// location from which to retrieve the firmware.
@@ -1010,6 +1115,7 @@ pub struct PublishFirmwareRequest {
     /// This specifies how many times Charging Station must try
     /// to download the firmware before giving up. If this field is not
     /// present, it is left to Charging Station to decide how many times it wants to retry.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub retries: Option<i64>,
     /// The interval in seconds
     /// after which a retry may be
@@ -1018,6 +1124,7 @@ pub struct PublishFirmwareRequest {
     /// Station to decide how long to wait
     /// between attempts.
     #[serde(rename = "retryInterval")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub retry_interval: Option<i64>,
 }
 
@@ -1026,9 +1133,11 @@ pub struct PublishFirmwareRequest {
 #[derive(Serialize, Deserialize)]
 pub struct PublishFirmwareResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: GenericStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1037,6 +1146,7 @@ pub struct PublishFirmwareResponse {
 #[derive(Serialize, Deserialize)]
 pub struct PublishFirmwareStatusNotificationResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -1045,6 +1155,7 @@ pub struct PublishFirmwareStatusNotificationResponse {
 #[derive(Serialize, Deserialize)]
 pub struct ReportChargingProfilesResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -1053,14 +1164,17 @@ pub struct ReportChargingProfilesResponse {
 #[derive(Serialize, Deserialize)]
 pub struct RequestStartTransactionResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: RequestStartStopStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
     /// When the transaction was already started by the Charging Station before the
     /// RequestStartTransactionRequest was received, for example: cable plugged in first. This
     /// contains the transactionId of the already started transaction.
     #[serde(rename = "transactionId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub transaction_id: Option<String>,
 }
 
@@ -1076,9 +1190,11 @@ pub enum RequestStartStopStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct RequestStopTransactionResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: RequestStartStopStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1087,6 +1203,7 @@ pub struct RequestStopTransactionResponse {
 #[derive(Serialize, Deserialize)]
 pub struct ReservationStatusUpdateResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -1095,9 +1212,11 @@ pub struct ReservationStatusUpdateResponse {
 #[derive(Serialize, Deserialize)]
 pub struct ReserveNowResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: ReserveNowStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1116,9 +1235,11 @@ pub enum ReserveNowStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct ResetResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: ResetStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1135,6 +1256,7 @@ pub enum ResetStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct SecurityEventNotificationResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -1143,9 +1265,11 @@ pub struct SecurityEventNotificationResponse {
 #[derive(Serialize, Deserialize)]
 pub struct SendLocalListResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: SendLocalListStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1163,9 +1287,11 @@ pub enum SendLocalListStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct SetChargingProfileResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: ChargingProfileStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1183,9 +1309,11 @@ pub enum ChargingProfileStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct SetDisplayMessageResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: DisplayMessageStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1205,9 +1333,11 @@ pub enum DisplayMessageStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct SetMonitoringBaseResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: GenericDeviceModelStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1216,9 +1346,11 @@ pub struct SetMonitoringBaseResponse {
 #[derive(Serialize, Deserialize)]
 pub struct SetMonitoringLevelResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: GenericStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1227,9 +1359,11 @@ pub struct SetMonitoringLevelResponse {
 #[derive(Serialize, Deserialize)]
 pub struct SetNetworkProfileResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: SetNetworkProfileStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1246,6 +1380,7 @@ pub enum SetNetworkProfileStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct SetVariableMonitoringResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     #[serde(rename = "setMonitoringResult")]
     pub set_monitoring_result: Vec<SetMonitoringResultType>,
@@ -1256,11 +1391,13 @@ pub struct SetVariableMonitoringResponse {
 pub struct SetMonitoringResultType {
     pub component: ComponentType,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     /// Id given to the VariableMonitor by the Charging Station. The Id is only returned when
     /// status is accepted. Installed VariableMonitors should have unique id's but the id's of
     /// removed Installed monitors should have unique id's but the id's of removed monitors MAY
     /// be reused.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<i64>,
     /// The severity that will be assigned to an event that is triggered by this monitor. The
     /// severity range is 0-9, with 0 as the highest and 9 as the lowest severity level.
@@ -1293,6 +1430,7 @@ pub struct SetMonitoringResultType {
     pub severity: i64,
     pub status: SetMonitoringStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
     #[serde(rename = "type")]
     pub set_monitoring_result_type_type: MonitorEnumType,
@@ -1326,6 +1464,7 @@ pub enum SetMonitoringStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct SetVariablesResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     #[serde(rename = "setVariableResult")]
     pub set_variable_result: Vec<SetVariableResultType>,
@@ -1336,11 +1475,14 @@ pub struct SetVariableResultType {
     #[serde(rename = "attributeStatus")]
     pub attribute_status: SetVariableStatusEnumType,
     #[serde(rename = "attributeStatusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub attribute_status_info: Option<StatusInfoType>,
     #[serde(rename = "attributeType")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub attribute_type: Option<AttributeEnumType>,
     pub component: ComponentType,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub variable: VariableType,
 }
@@ -1361,9 +1503,11 @@ pub enum SetVariableStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct SignCertificateResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: GenericStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1372,6 +1516,7 @@ pub struct SignCertificateResponse {
 #[derive(Serialize, Deserialize)]
 pub struct StatusNotificationResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
 }
 
@@ -1387,18 +1532,23 @@ pub struct TransactionEventResponse {
     /// &lt;&lt;transactioneventresponse,TransactionEventResponse&gt;&gt; overrules the one in
     /// &lt;&lt;cmn_idtokeninfotype,IdTokenInfoType&gt;&gt;.
     #[serde(rename = "chargingPriority")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub charging_priority: Option<i64>,
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     #[serde(rename = "idTokenInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id_token_info: Option<IdTokenInfoType>,
     /// SHALL only be sent when charging has ended. Final total cost of this transaction,
     /// including taxes. In the currency configured with the Configuration Variable:
     /// &lt;&lt;configkey-currency,`Currency`&gt;&gt;. When omitted, the transaction was NOT
     /// free. To indicate a free transaction, the CSMS SHALL send 0.00.
     #[serde(rename = "totalCost")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub total_cost: Option<f64>,
     #[serde(rename = "updatedPersonalMessage")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_personal_message: Option<MessageContentType>,
 }
 
@@ -1407,9 +1557,11 @@ pub struct TransactionEventResponse {
 #[derive(Serialize, Deserialize)]
 pub struct TriggerMessageResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: TriggerMessageStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1426,9 +1578,11 @@ pub enum TriggerMessageStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct UnlockConnectorResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: UnlockStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 
@@ -1446,6 +1600,7 @@ pub enum UnlockStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct UnpublishFirmwareResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: UnpublishFirmwareStatusEnumType,
 }
@@ -1463,9 +1618,11 @@ pub enum UnpublishFirmwareStatusEnumType {
 #[derive(Serialize, Deserialize)]
 pub struct UpdateFirmwareResponse {
     #[serde(rename = "customData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_data: Option<CustomDataType>,
     pub status: UpdateFirmwareStatusEnumType,
     #[serde(rename = "statusInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status_info: Option<StatusInfoType>,
 }
 

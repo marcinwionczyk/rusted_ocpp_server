@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 // structures created with the help of https://app.quicktype.io/ and json schema provided by
 // https://www.openchargealliance.org/
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct AuthorizeRequest {
     /// The X.509 certificated presented by EV and encoded in PEM format.
     pub certificate: Option<String>,
@@ -17,7 +17,7 @@ pub struct AuthorizeRequest {
 
 /// This class does not get 'AdditionalProperties = false' in the schema generation, so it
 /// can be extended with arbitrary JSON properties to allow adding custom data.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct CustomDataType {
     #[serde(rename = "vendorId")]
     pub vendor_id: String,
@@ -25,7 +25,7 @@ pub struct CustomDataType {
 
 /// Contains a case insensitive identifier to use for the authorization and the type of
 /// authorization to support multiple forms of identifiers.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct IdTokenType {
     #[serde(rename = "additionalInfo")]
     pub additional_info: Option<Vec<AdditionalInfoType>>,
@@ -41,7 +41,7 @@ pub struct IdTokenType {
 
 /// Contains a case insensitive identifier to use for the authorization and the type of
 /// authorization to support multiple forms of identifiers.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct AdditionalInfoType {
     /// This field specifies the additional IdToken.
     #[serde(rename = "additionalIdToken")]
@@ -54,7 +54,7 @@ pub struct AdditionalInfoType {
     pub additional_info_type_type: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct OcspRequestDataType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -75,7 +75,7 @@ pub struct OcspRequestDataType {
 }
 
 /// Enumeration of possible idToken types.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub enum IdTokenEnumType {
     Central,
     #[serde(rename = "eMAID")]
@@ -91,7 +91,7 @@ pub enum IdTokenEnumType {
 }
 
 /// Used algorithms for the hashes provided.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub enum HashAlgorithmEnumType {
     #[serde(rename = "SHA256")]
     Sha256,
@@ -102,7 +102,7 @@ pub enum HashAlgorithmEnumType {
 }
 
 //=================================================================================================
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct BootNotificationRequest {
     #[serde(rename = "chargingStation")]
     pub charging_station: ChargingStationType,
@@ -114,7 +114,7 @@ pub struct BootNotificationRequest {
 /// Charge_ Point
 /// urn:x-oca:ocpp:uid:2:233122
 /// The physical system where an Electrical Vehicle (EV) can be charged.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ChargingStationType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -144,7 +144,7 @@ pub struct ChargingStationType {
 /// urn:x-oca:ocpp:uid:2:233306
 /// Defines parameters required for initiating and maintaining wireless communication with
 /// other devices.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ModemType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -159,7 +159,7 @@ pub struct ModemType {
 }
 
 /// This contains the reason for sending this message to the CSMS.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub enum BootReasonEnumType {
     ApplicationReset,
     FirmwareUpdate,
@@ -174,7 +174,7 @@ pub enum BootReasonEnumType {
 
 //=================================================================================================
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct CancelReservationRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -184,7 +184,7 @@ pub struct CancelReservationRequest {
 }
 
 //=================================================================================================
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct CertificateSignedRequest {
     /// The signed PEM encoded X.509 certificate. This can also contain the necessary sub CA
     /// certificates. In that case, the order of the bundle should follow the certificate chain,
@@ -207,7 +207,7 @@ pub struct CertificateSignedRequest {
 /// in the &lt;&lt;signcertificaterequest,SignCertificateRequest&gt;&gt; that requested this
 /// certificate to be signed AND both the 15118 connection and the Charging Station
 /// connection are implemented.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub enum CertificateSigningUseEnumType {
     ChargingStationCertificate,
     V2GCertificate,
@@ -215,7 +215,7 @@ pub enum CertificateSigningUseEnumType {
 
 //=================================================================================================
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ChangeAvailabilityRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -227,7 +227,7 @@ pub struct ChangeAvailabilityRequest {
 /// EVSE
 /// urn:x-oca:ocpp:uid:2:233123
 /// Electric Vehicle Supply Equipment
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct EvseType {
     /// An id to designate a specific connector (on an EVSE) by connector index number.
     #[serde(rename = "connectorId")]
@@ -242,7 +242,7 @@ pub struct EvseType {
 }
 
 /// This contains the type of availability change that the Charging Station should perform.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub enum OperationalStatusEnumType {
     Inoperative,
     Operative,
@@ -250,7 +250,7 @@ pub enum OperationalStatusEnumType {
 
 //=================================================================================================
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ClearCacheRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -258,7 +258,7 @@ pub struct ClearCacheRequest {
 
 //=================================================================================================
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ClearChargingProfileRequest {
     #[serde(rename = "chargingProfileCriteria")]
     pub charging_profile_criteria: Option<ClearChargingProfileType>,
@@ -273,7 +273,7 @@ pub struct ClearChargingProfileRequest {
 /// urn:x-oca:ocpp:uid:2:233255
 /// A ChargingProfile consists of a ChargingSchedule, describing the amount of power or
 /// current that can be delivered per time interval.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ClearChargingProfileType {
     #[serde(rename = "chargingProfilePurpose")]
     pub charging_profile_purpose: Option<ChargingProfilePurposeEnumType>,
@@ -299,7 +299,7 @@ pub struct ClearChargingProfileType {
 /// urn:x-oca:ocpp:uid:1:569231
 /// Specifies to purpose of the charging profiles that will be cleared, if they meet the
 /// other criteria in the request.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub enum ChargingProfilePurposeEnumType {
     ChargingStationExternalConstraints,
     ChargingStationMaxProfile,

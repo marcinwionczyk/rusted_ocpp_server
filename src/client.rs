@@ -112,20 +112,20 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargePointWebSoc
                                         let response = boot_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{}: response: {}", self.name, response);
+                                        println!("{} session: response: {}", self.name, response);
                                         ctx.text(response)
                                     }
                                     "StatusNotification" => {
                                         let response = status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{}: response: {}", self.name, response);
+                                        println!("{} session: response: {}", self.name, response);
                                         ctx.text(response);
                                     }
                                     "Heartbeat" => {
                                         let response = heartbeat_response(
                                             unpacked.get("MessageId").unwrap());
-                                        println!("{}: response: {}", self.name, response);
+                                        println!("{} session: response: {}", self.name, response);
                                         self.hb = Instant::now();
                                         ctx.text(response);
                                     }
@@ -133,7 +133,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargePointWebSoc
                                         let response = authorize_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{}: response: {}", self.name, response);
+                                        println!("{} session: response: {}", self.name, response);
                                         ctx.text(response);
                                     }
                                     _ => {

@@ -57,6 +57,14 @@ impl OcppServer {
             let _ = session.do_send(MessageToChargePoint(message.to_owned()));
         }
     }
+
+    fn list_chargers(&self) -> String {
+        let mut serial_ids:Vec<String> = Vec::new();
+        for key in self.websocket_sessions.keys(){
+            serial_ids.push(key.clone());
+        }
+        format!("[{}]", serial_ids.join(", "))
+    }
 }
 
 impl Actor for OcppServer {
@@ -70,6 +78,7 @@ impl Handler<Connect> for OcppServer {
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
         self.websocket_sessions.insert(msg.serial_id.clone(), msg.addr);
+        println!("OcppServer: Inserting: {}", msg.serial_id);
         msg.serial_id
     }
 }
@@ -77,6 +86,7 @@ impl Handler<Connect> for OcppServer {
 impl Handler<Disconnect> for OcppServer {
     type Result = ();
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) -> Self::Result {
+        println!("OcppServer: Removing: {}", msg.serial_id);
         self.websocket_sessions.remove(msg.serial_id.as_str());
     }
 }

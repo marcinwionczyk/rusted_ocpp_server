@@ -164,7 +164,8 @@ pub fn boot_notification_response(message_id: &String, payload: &String) -> Stri
 pub fn status_notification_response(message_id: &String, payload: &String) -> String {
     match serde_json::from_str(&payload) as Result<requests::StatusNotificationRequest, serde_json::Error> {
         Ok(_) => {
-            wrap_call_result(message_id, String::from("{}"))
+            let response = responses::StatusNotificationResponse{ custom_data: None };
+            wrap_call_result(message_id, serde_json::to_string(&response).unwrap())
         }
         Err(_) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, payload)
@@ -175,7 +176,8 @@ pub fn status_notification_response(message_id: &String, payload: &String) -> St
 pub fn heartbeat_response(message_id: &String) -> String {
     let at_now:DateTime<Utc> = Utc::now();
     let heartbeat_resp: responses::HeartbeatResponse = responses::HeartbeatResponse {
-        current_time: at_now.to_rfc3339()
+        current_time: at_now.to_rfc3339(),
+        custom_data: None
     };
     wrap_call_result(message_id, serde_json::to_string(&heartbeat_resp).unwrap())
 }

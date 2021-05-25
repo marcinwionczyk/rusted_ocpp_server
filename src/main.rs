@@ -33,6 +33,11 @@ async fn ws_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr<serv
         None => Err(Error::from(HttpResponse::BadRequest()))
     }
 }
+#[get("/chargers")]
+async fn get_chargers(r: HttpRequest, srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, Error> {
+    let list_of_chargers = format!("[{}]", srv.list_chargers().join(", "));
+    Ok(HttpResponse::Ok().body(list_of_chargers))
+}
 
 #[get("/")]
 async fn index(r: HttpRequest, srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, Error> {
@@ -70,6 +75,7 @@ async fn main() -> std::io::Result<()> {
             //.data(pool.clone())
             //.service(web::resource("/").route(web::get().to(index)))
             .service(index)
+            .service(get_chargers)
             .service(ws_index)
     })
         .bind(format!("{}:{}", config.server.host, config.server.port))?
