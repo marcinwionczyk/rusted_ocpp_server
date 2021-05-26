@@ -1,7 +1,8 @@
 use actix::prelude::*;
 use std::collections::HashMap;
+use serde::Serialize;
 use crate::client;
-use actix::dev::MessageResponse;
+
 
 // Code below is for handling multiple websocket sessions between Ocpp server and charge points
 //                 _____________
@@ -14,12 +15,12 @@ use actix::dev::MessageResponse;
 //|charge_point | |charge_point | |charge_point |
 //`-------------' `-------------' `-------------'
 
-
+/// a OCPP message to OCPP server from web client
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct WebClientMessage {
-    pub serial_id: String,
-    pub text: String,
+    pub serial_id: String, // target Charge point
+    pub text: String, // OCPP message
 }
 
 /// Ocpp server sends this messages to websocket session
@@ -27,6 +28,7 @@ pub struct WebClientMessage {
 #[rtype(result = "()")]
 pub struct MessageToChargePoint(pub String);
 
+/// New Chargepoint websocket session is created
 #[derive(Message)]
 #[rtype(String)]
 pub struct Connect {
@@ -34,12 +36,19 @@ pub struct Connect {
     pub serial_id: String,
 }
 
+/// Chargepoint websocket session is disconnected
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Disconnect {
     pub serial_id: String,
 }
 
+#[derive(Serialize)]
+pub struct GetChargers;
+
+impl actix::Message for GetChargers { type Result = Vec<String>; }
+
+/// `OcppServer` manages charge point websocket sessions
 pub struct OcppServer {
     websocket_sessions: HashMap<String, Recipient<MessageToChargePoint>>,
 }
@@ -48,22 +57,12 @@ impl OcppServer {
     pub fn new() -> OcppServer {
         OcppServer { websocket_sessions: HashMap::new() }
     }
-}
 
-impl OcppServer {
-    /// Send message at given serial_id
+    /// Send message at charge point with specified serial_id
     fn send_message(&self, serial_id: &String, message: &String) {
         if let Some(session) = self.websocket_sessions.get(serial_id) {
             let _ = session.do_send(MessageToChargePoint(message.to_owned()));
         }
-    }
-
-    fn list_chargers(&self) -> String {
-        let mut serial_ids:Vec<String> = Vec::new();
-        for key in self.websocket_sessions.keys(){
-            serial_ids.push(key.clone());
-        }
-        format!("[{}]", serial_ids.join(", "))
     }
 }
 
@@ -90,6 +89,19 @@ impl Handler<Disconnect> for OcppServer {
         self.websocket_sessions.remove(msg.serial_id.as_str());
     }
 }
+
+impl Handler<GetChargers> for OcppServer {
+    type Result = MessageResult<GetChargers>;
+
+    fn handle(&mut self, _: GetChargers, _: &mut Context<Self>) -> Self::Result {
+        let mut chargers = Vec::new();
+        for key in self.websocket_sessions.keys() {
+            chargers.push(key.to_owned())
+        }
+        MessageResult(chargers)
+    }
+}
+
 
 impl Handler<WebClientMessage> for OcppServer {
     type Result = ();
