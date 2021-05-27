@@ -60,8 +60,11 @@ async fn index(r: HttpRequest, srv: web::Data<Addr<server::OcppServer>>) -> Resu
 }
 
 #[get("/get-chargers")]
-async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> HttpResponse {
-    todo!()
+async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Json<Vec<String>> {
+    match srv.send(GetChargers).await {
+        Ok(chargers) => web::Json(chargers),
+        Err(_) => web::Json(vec![])
+    }
 }
 
 #[actix_web::main]
