@@ -126,11 +126,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargePointWebSoc
                                         let response = heartbeat_response(
                                             unpacked.get("MessageId").unwrap());
                                         println!("{} session: response: {}", self.name, response);
-                                        self.hb = Instant::now();
                                         ctx.text(response);
                                     }
                                     "Authorize" => {
                                         let response = authorize_response(
+                                            unpacked.get("MessageId").unwrap(),
+                                            unpacked.get("Payload").unwrap());
+                                        println!("{} session: response: {}", self.name, response);
+                                        ctx.text(response);
+                                    }
+                                    "NotifyEvent" => {
+                                        let response = notify_event_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
                                         println!("{} session: response: {}", self.name, response);
@@ -142,8 +148,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargePointWebSoc
                                                 unpacked.get("MessageId").unwrap(),
                                                 ErrorCode::NotImplemented,
                                                 &String::from(
-                                                    "Not all messages are implemented yet. \
-                                                    Ocpp server is still in development"));
+                                                    "\"Not all messages are implemented yet. \
+                                                    Ocpp server is still in development\""));
                                         ctx.text(response);
                                     }
                                 }

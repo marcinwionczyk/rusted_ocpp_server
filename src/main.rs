@@ -1,27 +1,28 @@
 use std::collections::HashMap;
 use std::time::Instant;
 
-use actix::{Actor, Addr, WrapFuture, ActorFuture, MailboxError, ContextFutureSpawner};
+use actix::{Actor, ActorFuture, Addr, ContextFutureSpawner, MailboxError, WrapFuture};
 use actix::dev::{MessageResponse, Request};
-use actix_web::{App, Error, get, HttpRequest, HttpResponse, HttpServer, Responder, web};
+use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, Responder, web};
+use actix_web::web::Json;
 use actix_web_actors::ws;
 use dotenv;
 use qstring::QString;
-
+use serde::Serialize;
 use crate::messages::{CLIENT_TIMEOUT, HEARTBEAT_INTERVAL, unpack};
-use crate::server::{WebClientMessage, GetChargers, OcppServer};
-use serde_json::Value;
-use actix_web::web::Json;
+use crate::server::{GetChargers, OcppServer, WebClientMessage};
 
 mod config;
 mod messages;
 mod server;
 mod client;
+mod error;
 
-const ALLOWED_SUB_PROTOCOLS: [&'static str; 2] = ["ocpp2.0", "ocpp2.0.1"];
+const ALLOWED_SUB_PROTOCOLS: [&'static str; 1] = ["ocpp2.0.1"];
+
 
 #[get("/ocpp/{serial_id}")]
-async fn ws_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, Error> {
+async fn ws_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, ActixWebError> {
     match r.match_info().get("serial_id") {
         Some(serial_id) => {
             let res = ws::start_with_protocols(
@@ -32,12 +33,12 @@ async fn ws_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr<serv
                 }, &ALLOWED_SUB_PROTOCOLS, &r, stream);
             res
         }
-        None => Err(Error::from(HttpResponse::BadRequest()))
+        None => Err(ActixWebError::from(HttpResponse::BadRequest()))
     }
 }
 
 #[get("/")]
-async fn index(r: HttpRequest, srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, Error> {
+async fn index(r: HttpRequest, srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, ActixWebError> {
     let q = r.query_string();
     if q.len() > 0 {
         println!("query string: {}", r.query_string());
@@ -60,10 +61,10 @@ async fn index(r: HttpRequest, srv: web::Data<Addr<server::OcppServer>>) -> Resu
 }
 
 #[get("/get-chargers")]
-async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Json<Vec<String>> {
+async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Result<Json<Vec<String>>, error::Error> {
     match srv.send(GetChargers).await {
-        Ok(chargers) => web::Json(chargers),
-        Err(_) => web::Json(vec![])
+        Ok(chargers) => Ok(web::Json(chargers)),
+        Err(_) => Err(error::Error{ message: "Unable to get list of chargers".to_string(), status: 500 })
     }
 }
 

@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 // structures created with the help of https://app.quicktype.io/ and json schema provided by
 // https://www.openchargealliance.org/
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AuthorizeRequest {
     /// The X.509 certificated presented by EV and encoded in PEM format.
     pub certificate: Option<String>,
@@ -17,7 +17,7 @@ pub struct AuthorizeRequest {
 
 /// This class does not get 'AdditionalProperties = false' in the schema generation, so it
 /// can be extended with arbitrary JSON properties to allow adding custom data.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CustomDataType {
     #[serde(rename = "vendorId")]
     pub vendor_id: String,
@@ -25,7 +25,7 @@ pub struct CustomDataType {
 
 /// Contains a case insensitive identifier to use for the authorization and the type of
 /// authorization to support multiple forms of identifiers.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct IdTokenType {
     #[serde(rename = "additionalInfo")]
     pub additional_info: Option<Vec<AdditionalInfoType>>,
@@ -41,7 +41,7 @@ pub struct IdTokenType {
 
 /// Contains a case insensitive identifier to use for the authorization and the type of
 /// authorization to support multiple forms of identifiers.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AdditionalInfoType {
     /// This field specifies the additional IdToken.
     #[serde(rename = "additionalIdToken")]
@@ -54,7 +54,7 @@ pub struct AdditionalInfoType {
     pub additional_info_type_type: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct OcspRequestDataType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -75,7 +75,7 @@ pub struct OcspRequestDataType {
 }
 
 /// Enumeration of possible idToken types.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum IdTokenEnumType {
     Central,
     #[serde(rename = "eMAID")]
@@ -91,7 +91,7 @@ pub enum IdTokenEnumType {
 }
 
 /// Used algorithms for the hashes provided.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum HashAlgorithmEnumType {
     #[serde(rename = "SHA256")]
     Sha256,
@@ -102,7 +102,7 @@ pub enum HashAlgorithmEnumType {
 }
 
 //=================================================================================================
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct BootNotificationRequest {
     #[serde(rename = "chargingStation")]
     pub charging_station: ChargingStationType,
@@ -114,7 +114,7 @@ pub struct BootNotificationRequest {
 /// Charge_ Point
 /// urn:x-oca:ocpp:uid:2:233122
 /// The physical system where an Electrical Vehicle (EV) can be charged.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ChargingStationType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -144,7 +144,7 @@ pub struct ChargingStationType {
 /// urn:x-oca:ocpp:uid:2:233306
 /// Defines parameters required for initiating and maintaining wireless communication with
 /// other devices.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ModemType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -159,7 +159,7 @@ pub struct ModemType {
 }
 
 /// This contains the reason for sending this message to the CSMS.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum BootReasonEnumType {
     ApplicationReset,
     FirmwareUpdate,
@@ -174,7 +174,7 @@ pub enum BootReasonEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CancelReservationRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -184,7 +184,7 @@ pub struct CancelReservationRequest {
 }
 
 //=================================================================================================
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CertificateSignedRequest {
     /// The signed PEM encoded X.509 certificate. This can also contain the necessary sub CA
     /// certificates. In that case, the order of the bundle should follow the certificate chain,
@@ -207,7 +207,7 @@ pub struct CertificateSignedRequest {
 /// in the &lt;&lt;signcertificaterequest,SignCertificateRequest&gt;&gt; that requested this
 /// certificate to be signed AND both the 15118 connection and the Charging Station
 /// connection are implemented.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum CertificateSigningUseEnumType {
     ChargingStationCertificate,
     V2GCertificate,
@@ -215,7 +215,7 @@ pub enum CertificateSigningUseEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ChangeAvailabilityRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -227,7 +227,7 @@ pub struct ChangeAvailabilityRequest {
 /// EVSE
 /// urn:x-oca:ocpp:uid:2:233123
 /// Electric Vehicle Supply Equipment
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct EvseType {
     /// An id to designate a specific connector (on an EVSE) by connector index number.
     #[serde(rename = "connectorId")]
@@ -242,7 +242,7 @@ pub struct EvseType {
 }
 
 /// This contains the type of availability change that the Charging Station should perform.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum OperationalStatusEnumType {
     Inoperative,
     Operative,
@@ -250,7 +250,7 @@ pub enum OperationalStatusEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ClearCacheRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -258,7 +258,7 @@ pub struct ClearCacheRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ClearChargingProfileRequest {
     #[serde(rename = "chargingProfileCriteria")]
     pub charging_profile_criteria: Option<ClearChargingProfileType>,
@@ -273,7 +273,7 @@ pub struct ClearChargingProfileRequest {
 /// urn:x-oca:ocpp:uid:2:233255
 /// A ChargingProfile consists of a ChargingSchedule, describing the amount of power or
 /// current that can be delivered per time interval.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ClearChargingProfileType {
     #[serde(rename = "chargingProfilePurpose")]
     pub charging_profile_purpose: Option<ChargingProfilePurposeEnumType>,
@@ -299,7 +299,7 @@ pub struct ClearChargingProfileType {
 /// urn:x-oca:ocpp:uid:1:569231
 /// Specifies to purpose of the charging profiles that will be cleared, if they meet the
 /// other criteria in the request.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ChargingProfilePurposeEnumType {
     ChargingStationExternalConstraints,
     ChargingStationMaxProfile,
@@ -309,7 +309,7 @@ pub enum ChargingProfilePurposeEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ClearDisplayMessageRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -319,7 +319,7 @@ pub struct ClearDisplayMessageRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ClearedChargingLimitRequest {
     #[serde(rename = "chargingLimitSource")]
     pub charging_limit_source: ChargingLimitSourceEnumType,
@@ -331,7 +331,7 @@ pub struct ClearedChargingLimitRequest {
 }
 
 /// Source of the charging limit.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ChargingLimitSourceEnumType {
     #[serde(rename = "CSO")]
     Cso,
@@ -344,7 +344,7 @@ pub enum ChargingLimitSourceEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ClearVariableMonitoringRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -354,7 +354,7 @@ pub struct ClearVariableMonitoringRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CostUpdatedRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -370,7 +370,7 @@ pub struct CostUpdatedRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CustomerInformationRequest {
     /// Flag indicating whether the Charging Station should clear all information about the
     /// customer referred to.
@@ -396,7 +396,7 @@ pub struct CustomerInformationRequest {
     pub request_id: i64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CertificateHashDataType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -415,7 +415,7 @@ pub struct CertificateHashDataType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DataTransferRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -432,7 +432,7 @@ pub struct DataTransferRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DeleteCertificateRequest {
     #[serde(rename = "certificateHashData")]
     pub certificate_hash_data: CertificateHashDataType,
@@ -442,7 +442,7 @@ pub struct DeleteCertificateRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FirmwareStatusNotificationRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -456,7 +456,7 @@ pub struct FirmwareStatusNotificationRequest {
 }
 
 /// This contains the progress status of the firmware installation.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum FirmwareStatusEnumType {
     DownloadFailed,
     DownloadPaused,
@@ -476,7 +476,7 @@ pub enum FirmwareStatusEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Get15118EvCertificateRequest {
     pub action: CertificateActionEnumType,
     #[serde(rename = "customData")]
@@ -491,7 +491,7 @@ pub struct Get15118EvCertificateRequest {
 }
 
 /// Defines whether certificate needs to be installed or updated.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum CertificateActionEnumType {
     Install,
     Update,
@@ -499,7 +499,7 @@ pub enum CertificateActionEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetBaseReportRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -511,7 +511,7 @@ pub struct GetBaseReportRequest {
 }
 
 /// This field specifies the report base.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ReportBaseEnumType {
     ConfigurationInventory,
     FullInventory,
@@ -520,7 +520,7 @@ pub enum ReportBaseEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetCertificateStatusRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -530,7 +530,7 @@ pub struct GetCertificateStatusRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetChargingProfilesRequest {
     #[serde(rename = "chargingProfile")]
     pub charging_profile: ChargingProfileCriterionType,
@@ -552,7 +552,7 @@ pub struct GetChargingProfilesRequest {
 /// urn:x-oca:ocpp:uid:2:233255
 /// A ChargingProfile consists of ChargingSchedule, describing the amount of power or current
 /// that can be delivered per time interval.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ChargingProfileCriterionType {
     /// For which charging limit sources, charging profiles SHALL be reported. If omitted, the
     /// Charging Station SHALL not filter on chargingLimitSource.
@@ -578,7 +578,7 @@ pub struct ChargingProfileCriterionType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetCompositeScheduleRequest {
     #[serde(rename = "chargingRateUnit")]
     pub charging_rate_unit: Option<ChargingRateUnitEnumType>,
@@ -593,7 +593,7 @@ pub struct GetCompositeScheduleRequest {
 }
 
 /// Can be used to force a power or current profile.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ChargingRateUnitEnumType {
     A,
     W,
@@ -601,7 +601,7 @@ pub enum ChargingRateUnitEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetDisplayMessagesRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -618,7 +618,7 @@ pub struct GetDisplayMessagesRequest {
 
 /// If provided the Charging Station shall return Display Messages with the given priority
 /// only.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum MessagePriorityEnumType {
     AlwaysFront,
     InFront,
@@ -626,7 +626,7 @@ pub enum MessagePriorityEnumType {
 }
 
 /// If provided the Charging Station shall return Display Messages with the given state only.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum MessageStateEnumType {
     Charging,
     Faulted,
@@ -636,7 +636,7 @@ pub enum MessageStateEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetInstalledCertificateIdsRequest {
     /// Indicates the type of certificates requested. When omitted, all certificate types are
     /// requested.
@@ -646,7 +646,7 @@ pub struct GetInstalledCertificateIdsRequest {
     pub custom_data: Option<CustomDataType>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum GetCertificateIdUseEnumType {
     #[serde(rename = "CSMSRootCertificate")]
     CsmsRootCertificate,
@@ -659,7 +659,7 @@ pub enum GetCertificateIdUseEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetLocalListVersionRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -667,7 +667,7 @@ pub struct GetLocalListVersionRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetLogRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -690,7 +690,7 @@ pub struct GetLogRequest {
 /// Log
 /// urn:x-enexis:ecdm:uid:2:233373
 /// Generic class for the configuration of logging entries.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct LogParametersType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -715,7 +715,7 @@ pub struct LogParametersType {
 
 /// This contains the type of log file that the Charging Station
 /// should send.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum LogEnumType {
     DiagnosticsLog,
     SecurityLog,
@@ -723,7 +723,7 @@ pub enum LogEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetMonitoringReportRequest {
     #[serde(rename = "componentVariable")]
     pub component_variable: Option<Vec<ComponentVariableType>>,
@@ -738,7 +738,7 @@ pub struct GetMonitoringReportRequest {
 }
 
 /// Class to report components, variables and variable attributes and characteristics.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ComponentVariableType {
     pub component: ComponentType,
     #[serde(rename = "customData")]
@@ -747,7 +747,7 @@ pub struct ComponentVariableType {
 }
 
 /// A physical or logical component
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ComponentType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -761,7 +761,7 @@ pub struct ComponentType {
 }
 
 /// Reference key to a component-variable.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct VariableType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -773,7 +773,7 @@ pub struct VariableType {
     pub name: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum MonitoringCriterionEnumType {
     DeltaMonitoring,
     PeriodicMonitoring,
@@ -782,7 +782,7 @@ pub enum MonitoringCriterionEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetReportRequest {
     /// This field contains criteria for components for which a report is requested
     #[serde(rename = "componentCriteria")]
@@ -796,7 +796,7 @@ pub struct GetReportRequest {
     pub request_id: i64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ComponentCriterionEnumType {
     Active,
     Available,
@@ -806,7 +806,7 @@ pub enum ComponentCriterionEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetTransactionStatusRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -817,7 +817,7 @@ pub struct GetTransactionStatusRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetVariablesRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -826,7 +826,7 @@ pub struct GetVariablesRequest {
 }
 
 /// Class to hold parameters for GetVariables request.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetVariableDataType {
     #[serde(rename = "attributeType")]
     pub attribute_type: Option<AttributeEnumType>,
@@ -837,7 +837,7 @@ pub struct GetVariableDataType {
 }
 
 /// Attribute type for which value is requested. When absent, default Actual is assumed.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum AttributeEnumType {
     Actual,
     MaxSet,
@@ -847,7 +847,7 @@ pub enum AttributeEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct HeartbeatRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -855,7 +855,7 @@ pub struct HeartbeatRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct InstallCertificateRequest {
     /// A PEM encoded X.509 certificate.
     pub certificate: String,
@@ -866,7 +866,7 @@ pub struct InstallCertificateRequest {
 }
 
 /// Indicates the certificate type that is sent.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum InstallCertificateUseEnumType {
     #[serde(rename = "CSMSRootCertificate")]
     CsmsRootCertificate,
@@ -878,7 +878,7 @@ pub enum InstallCertificateUseEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct LogStatusNotificationRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -892,7 +892,7 @@ pub struct LogStatusNotificationRequest {
 }
 
 /// This contains the status of the log upload.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum UploadLogStatusEnumType {
     AcceptedCanceled,
     BadMessage,
@@ -908,7 +908,7 @@ pub enum UploadLogStatusEnumType {
 
 /// Request_ Body
 /// urn:x-enexis:ecdm:uid:2:234744
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct MeterValuesRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -926,7 +926,7 @@ pub struct MeterValuesRequest {
 /// urn:x-oca:ocpp:uid:2:233265
 /// Collection of one or more sampled values in MeterValuesRequest and TransactionEvent. All
 /// sampled values in a MeterValue are sampled at the same point in time.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct MeterValueType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -945,7 +945,7 @@ pub struct MeterValueType {
 /// To save on mobile data usage, default values of all of the optional fields are such that.
 /// The value without any additional fields will be interpreted, as a register reading of
 /// active import energy in Wh (Watt-hour) units.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SampledValueType {
     pub context: Option<ReadingContextEnumType>,
     #[serde(rename = "customData")]
@@ -964,7 +964,7 @@ pub struct SampledValueType {
 }
 
 /// Represent a signed version of the meter value.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SignedMeterValueType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -984,7 +984,7 @@ pub struct SignedMeterValueType {
 }
 
 /// Represents a UnitOfMeasure with a multiplier
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct UnitOfMeasureType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1001,7 +1001,7 @@ pub struct UnitOfMeasureType {
 /// Sampled_ Value. Context. Reading_ Context_ Code
 /// urn:x-oca:ocpp:uid:1:569261
 /// Type of detail value: start, end or sample. Default = "Sample.Periodic"
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ReadingContextEnumType {
     #[serde(rename = "Interruption.Begin")]
     InterruptionBegin,
@@ -1022,7 +1022,7 @@ pub enum ReadingContextEnumType {
 /// Sampled_ Value. Location. Location_ Code
 /// urn:x-oca:ocpp:uid:1:569265
 /// Indicates where the measured value has been sampled. Default =  "Outlet"
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum LocationEnumType {
     Body,
     Cable,
@@ -1035,7 +1035,7 @@ pub enum LocationEnumType {
 /// Sampled_ Value. Measurand. Measurand_ Code
 /// urn:x-oca:ocpp:uid:1:569263
 /// Type of measurement. Default = "Energy.Active.Import.Register"
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum MeasurandEnumType {
     #[serde(rename = "Current.Export")]
     CurrentExport,
@@ -1091,7 +1091,7 @@ pub enum MeasurandEnumType {
 /// Indicates how the measured value is to be interpreted. For instance between L1 and
 /// neutral (L1-N) Please note that not all values of phase are applicable to all Measurands.
 /// When phase is absent, the measured value is interpreted as an overall value.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum PhaseEnumType {
     L1,
     #[serde(rename = "L1-L2")]
@@ -1113,7 +1113,7 @@ pub enum PhaseEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyChargingLimitRequest {
     #[serde(rename = "chargingLimit")]
     pub charging_limit: ChargingLimitType,
@@ -1129,7 +1129,7 @@ pub struct NotifyChargingLimitRequest {
 
 /// Charging_ Limit
 /// urn:x-enexis:ecdm:uid:2:234489
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ChargingLimitType {
     #[serde(rename = "chargingLimitSource")]
     pub charging_limit_source: ChargingLimitSourceEnumType,
@@ -1146,7 +1146,7 @@ pub struct ChargingLimitType {
 /// urn:x-oca:ocpp:uid:2:233256
 /// Charging schedule structure defines a list of charging periods, as used in:
 /// GetCompositeSchedule.conf and ChargingProfile.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ChargingScheduleType {
     #[serde(rename = "chargingRateUnit")]
     pub charging_rate_unit: ChargingRateUnitEnumType,
@@ -1183,7 +1183,7 @@ pub struct ChargingScheduleType {
 /// Charging_ Schedule_ Period
 /// urn:x-oca:ocpp:uid:2:233257
 /// Charging schedule period structure defines a time period in a charging schedule.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ChargingSchedulePeriodType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1216,7 +1216,7 @@ pub struct ChargingSchedulePeriodType {
 /// urn:x-oca:ocpp:uid:2:233272
 /// NOTE: This dataType is based on dataTypes from &lt;&lt;ref-ISOIEC15118-2,ISO
 /// 15118-2&gt;&gt;.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SalesTariffType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1243,7 +1243,7 @@ pub struct SalesTariffType {
 
 /// Sales_ Tariff_ Entry
 /// urn:x-oca:ocpp:uid:2:233271
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SalesTariffEntryType {
     #[serde(rename = "consumptionCost")]
     pub consumption_cost: Option<Vec<ConsumptionCostType>>,
@@ -1262,7 +1262,7 @@ pub struct SalesTariffEntryType {
 
 /// Consumption_ Cost
 /// urn:x-oca:ocpp:uid:2:233259
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ConsumptionCostType {
     pub cost: Vec<CostType>,
     #[serde(rename = "customData")]
@@ -1277,7 +1277,7 @@ pub struct ConsumptionCostType {
 
 /// Cost
 /// urn:x-oca:ocpp:uid:2:233258
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CostType {
     /// Cost. Amount. Amount
     /// urn:x-oca:ocpp:uid:1:569244
@@ -1297,7 +1297,7 @@ pub struct CostType {
 
 /// Relative_ Timer_ Interval
 /// urn:x-oca:ocpp:uid:2:233270
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RelativeTimeIntervalType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1314,7 +1314,7 @@ pub struct RelativeTimeIntervalType {
 /// Cost. Cost_ Kind. Cost_ Kind_ Code
 /// urn:x-oca:ocpp:uid:1:569243
 /// The kind of cost referred to in the message element amount
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum CostKindEnumType {
     CarbonDioxideEmission,
     RelativePricePercentage,
@@ -1323,7 +1323,7 @@ pub enum CostKindEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyCustomerInformationRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1346,7 +1346,7 @@ pub struct NotifyCustomerInformationRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyDisplayMessagesRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1364,7 +1364,7 @@ pub struct NotifyDisplayMessagesRequest {
 /// Message_ Info
 /// urn:x-enexis:ecdm:uid:2:233264
 /// Contains message details, for a message to be displayed on a Charging Station.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct MessageInfoType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1398,7 +1398,7 @@ pub struct MessageInfoType {
 /// Message_ Content
 /// urn:x-enexis:ecdm:uid:2:234490
 /// Contains message details, for a message to be displayed on a Charging Station.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct MessageContentType {
     /// Message_ Content. Content. Message
     /// urn:x-enexis:ecdm:uid:1:570852
@@ -1417,7 +1417,7 @@ pub struct MessageContentType {
 /// Message_ Content. Format. Message_ Format_ Code
 /// urn:x-enexis:ecdm:uid:1:570848
 /// Format of the message.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum MessageFormatEnumType {
     #[serde(rename = "ASCII")]
     Ascii,
@@ -1431,7 +1431,7 @@ pub enum MessageFormatEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyEvChargingNeedsRequest {
     #[serde(rename = "chargingNeeds")]
     pub charging_needs: ChargingNeedsType,
@@ -1447,7 +1447,7 @@ pub struct NotifyEvChargingNeedsRequest {
 
 /// Charging_ Needs
 /// urn:x-oca:ocpp:uid:2:233249
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ChargingNeedsType {
     #[serde(rename = "acChargingParameters")]
     pub ac_charging_parameters: Option<AcChargingParametersType>,
@@ -1467,7 +1467,7 @@ pub struct ChargingNeedsType {
 /// AC_ Charging_ Parameters
 /// urn:x-oca:ocpp:uid:2:233250
 /// EV AC charging parameters.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AcChargingParametersType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1497,7 +1497,7 @@ pub struct AcChargingParametersType {
 /// DC_ Charging_ Parameters
 /// urn:x-oca:ocpp:uid:2:233251
 /// EV DC charging parameters
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DcChargingParametersType {
     /// DC_ Charging_ Parameters. Bulk_ SOC. Percentage
     /// urn:x-oca:ocpp:uid:1:569222
@@ -1548,7 +1548,7 @@ pub struct DcChargingParametersType {
 /// Charging_ Needs. Requested. Energy_ Transfer_ Mode_ Code
 /// urn:x-oca:ocpp:uid:1:569209
 /// Mode of energy transfer requested by the EV.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum EnergyTransferModeEnumType {
     #[serde(rename = "AC_single_phase")]
     AcSinglePhase,
@@ -1562,7 +1562,7 @@ pub enum EnergyTransferModeEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyEvChargingScheduleRequest {
     #[serde(rename = "chargingSchedule")]
     pub charging_schedule: ChargingScheduleType,
@@ -1579,7 +1579,7 @@ pub struct NotifyEvChargingScheduleRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyEventRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1597,7 +1597,7 @@ pub struct NotifyEventRequest {
 }
 
 /// Class to report an event notification for a component-variable.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct EventDataType {
     /// Actual value (_attributeType_ Actual) of the variable.
     ///
@@ -1640,7 +1640,7 @@ pub struct EventDataType {
 }
 
 /// Specifies the event notification type of the message.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum EventNotificationEnumType {
     CustomMonitor,
     HardWiredMonitor,
@@ -1649,7 +1649,7 @@ pub enum EventNotificationEnumType {
 }
 
 /// Type of monitor that triggered this event, e.g. exceeding a threshold value.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum EventTriggerEnumType {
     Alerting,
     Delta,
@@ -1658,7 +1658,7 @@ pub enum EventTriggerEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyMonitoringReportRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1678,7 +1678,7 @@ pub struct NotifyMonitoringReportRequest {
 }
 
 /// Class to hold parameters of SetVariableMonitoring request.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct MonitoringDataType {
     pub component: ComponentType,
     #[serde(rename = "customData")]
@@ -1689,7 +1689,7 @@ pub struct MonitoringDataType {
 }
 
 /// A monitoring setting for a variable.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct VariableMonitoringType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1735,7 +1735,7 @@ pub struct VariableMonitoringType {
 }
 
 /// The type of this monitor, e.g. a threshold, delta or periodic monitor.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum MonitorEnumType {
     Delta,
     LowerThreshold,
@@ -1746,7 +1746,7 @@ pub enum MonitorEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyReportRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1767,7 +1767,7 @@ pub struct NotifyReportRequest {
 }
 
 /// Class to report components, variables and variable attributes and characteristics.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ReportDataType {
     pub component: ComponentType,
     #[serde(rename = "customData")]
@@ -1780,7 +1780,7 @@ pub struct ReportDataType {
 }
 
 /// Attribute data of a variable.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct VariableAttributeType {
     /// If true, value that will never be changed by the Charging Station at runtime. Default
     /// when omitted is false.
@@ -1803,7 +1803,7 @@ pub struct VariableAttributeType {
 }
 
 /// Fixed read-only parameters of a variable.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct VariableCharacteristicsType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1844,7 +1844,7 @@ pub struct VariableCharacteristicsType {
 }
 
 /// Defines the mutability of this attribute. Default is ReadWrite when omitted.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum MutabilityEnumType {
     ReadOnly,
     ReadWrite,
@@ -1852,7 +1852,7 @@ pub enum MutabilityEnumType {
 }
 
 /// Data type of this variable.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum DataEnumType {
     #[serde(rename = "boolean")]
     Boolean,
@@ -1871,7 +1871,7 @@ pub enum DataEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PublishFirmwareStatusNotificationRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -1889,7 +1889,7 @@ pub struct PublishFirmwareStatusNotificationRequest {
 
 /// This contains the progress status of the publishfirmware
 /// installation.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum PublishFirmwareStatusEnumType {
     ChecksumVerified,
     DownloadFailed,
@@ -1905,7 +1905,7 @@ pub enum PublishFirmwareStatusEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ReportChargingProfilesRequest {
     #[serde(rename = "chargingLimitSource")]
     pub charging_limit_source: ChargingLimitSourceEnumType,
@@ -1933,7 +1933,7 @@ pub struct ReportChargingProfilesRequest {
 /// urn:x-oca:ocpp:uid:2:233255
 /// A ChargingProfile consists of ChargingSchedule, describing the amount of power or current
 /// that can be delivered per time interval.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ChargingProfileType {
     #[serde(rename = "chargingProfileKind")]
     pub charging_profile_kind: ChargingProfileKindEnumType,
@@ -1976,7 +1976,7 @@ pub struct ChargingProfileType {
 /// Charging_ Profile. Charging_ Profile_ Kind. Charging_ Profile_ Kind_ Code
 /// urn:x-oca:ocpp:uid:1:569232
 /// Indicates the kind of schedule.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ChargingProfileKindEnumType {
     Absolute,
     Recurring,
@@ -1986,7 +1986,7 @@ pub enum ChargingProfileKindEnumType {
 /// Charging_ Profile. Recurrency_ Kind. Recurrency_ Kind_ Code
 /// urn:x-oca:ocpp:uid:1:569233
 /// Indicates the start point of a recurrence.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum RecurrencyKindEnumType {
     Daily,
     Weekly,
@@ -1994,7 +1994,7 @@ pub enum RecurrencyKindEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RequestStartTransactionRequest {
     #[serde(rename = "chargingProfile")]
     pub charging_profile: Option<ChargingProfileType>,
@@ -2016,7 +2016,7 @@ pub struct RequestStartTransactionRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RequestStopTransactionRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2027,7 +2027,7 @@ pub struct RequestStopTransactionRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ReservationStatusUpdateRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2039,7 +2039,7 @@ pub struct ReservationStatusUpdateRequest {
 }
 
 /// The updated reservation status.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ReservationUpdateStatusEnumType {
     Expired,
     Removed,
@@ -2047,7 +2047,7 @@ pub enum ReservationUpdateStatusEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ReserveNowRequest {
     #[serde(rename = "connectorType")]
     pub connector_type: Option<ConnectorEnumType>,
@@ -2068,7 +2068,7 @@ pub struct ReserveNowRequest {
 }
 
 /// This field specifies the connector type.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ConnectorEnumType {
     #[serde(rename = "cCCS1")]
     CCcs1,
@@ -2112,7 +2112,7 @@ pub enum ConnectorEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ResetRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2125,7 +2125,7 @@ pub struct ResetRequest {
 }
 
 /// This contains the type of reset that the Charging Station or EVSE should perform.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ResetEnumType {
     Immediate,
     OnIdle,
@@ -2133,7 +2133,7 @@ pub enum ResetEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SecurityEventNotificationRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2149,7 +2149,7 @@ pub struct SecurityEventNotificationRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SendLocalListRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2165,7 +2165,7 @@ pub struct SendLocalListRequest {
 }
 
 /// Contains the identifier to use for authorization.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AuthorizationData {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2181,7 +2181,7 @@ pub struct AuthorizationData {
 /// It is advised to not stop charging for a token that expires during charging, as
 /// ExpiryDate is only used for caching purposes. If ExpiryDate is not given, the status has
 /// no end date.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct IdTokenInfoType {
     /// ID_ Token. Expiry. Date_ Time
     /// urn:x-oca:ocpp:uid:1:569373
@@ -2220,7 +2220,7 @@ pub struct IdTokenInfoType {
 /// ID_ Token. Status. Authorization_ Status
 /// urn:x-oca:ocpp:uid:1:569372
 /// Current status of the ID Token.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum AuthorizationStatusEnumType {
     Accepted,
     Blocked,
@@ -2236,7 +2236,7 @@ pub enum AuthorizationStatusEnumType {
 }
 
 /// This contains the type of update (full or differential) of this request.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum UpdateEnumType {
     Differential,
     Full,
@@ -2244,7 +2244,7 @@ pub enum UpdateEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SetChargingProfileRequest {
     #[serde(rename = "chargingProfile")]
     pub charging_profile: ChargingProfileType,
@@ -2259,7 +2259,7 @@ pub struct SetChargingProfileRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SetDisplayMessageRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2268,7 +2268,7 @@ pub struct SetDisplayMessageRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SetMonitoringBaseRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2277,7 +2277,7 @@ pub struct SetMonitoringBaseRequest {
 }
 
 /// Specify which monitoring base will be set
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum MonitoringBaseEnumType {
     All,
     FactoryDefault,
@@ -2286,7 +2286,7 @@ pub enum MonitoringBaseEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SetMonitoringLevelRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2324,7 +2324,7 @@ pub struct SetMonitoringLevelRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SetNetworkProfileRequest {
     /// Slot in which the configuration should be stored.
     #[serde(rename = "configurationSlot")]
@@ -2339,7 +2339,7 @@ pub struct SetNetworkProfileRequest {
 /// urn:x-oca:ocpp:uid:2:233304
 /// The NetworkConnectionProfile defines the functional and technical parameters of a
 /// communication link.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NetworkConnectionProfileType {
     pub apn: Option<ApnType>,
     #[serde(rename = "customData")]
@@ -2380,7 +2380,7 @@ pub struct NetworkConnectionProfileType {
 /// allows to specify a preferred network, which means, if this network is not available, a
 /// different network is used. If you specify UseOnlyPreferredNetwork and this network is not
 /// available, the modem will not dial in.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ApnType {
     /// APN. APN. URI
     /// urn:x-oca:ocpp:uid:1:568814
@@ -2421,7 +2421,7 @@ pub struct ApnType {
 /// VPN
 /// urn:x-oca:ocpp:uid:2:233268
 /// VPN Configuration settings
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct VpnType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2452,7 +2452,7 @@ pub struct VpnType {
 /// APN. APN_ Authentication. APN_ Authentication_ Code
 /// urn:x-oca:ocpp:uid:1:568828
 /// Authentication method.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ApnAuthenticationEnumType {
     #[serde(rename = "AUTO")]
     Auto,
@@ -2465,7 +2465,7 @@ pub enum ApnAuthenticationEnumType {
 }
 
 /// Applicable Network Interface.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum OcppInterfaceEnumType {
     Wired0,
     Wired1,
@@ -2481,7 +2481,7 @@ pub enum OcppInterfaceEnumType {
 /// urn:x-oca:ocpp:uid:1:569356
 /// Defines the transport protocol (e.g. SOAP or JSON). Note: SOAP is not supported in OCPP
 /// 2.0, but is supported by other versions of OCPP.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum OcppTransportEnumType {
     #[serde(rename = "JSON")]
     Json,
@@ -2492,7 +2492,7 @@ pub enum OcppTransportEnumType {
 /// Communication_ Function. OCPP_ Version. OCPP_ Version_ Code
 /// urn:x-oca:ocpp:uid:1:569355
 /// Defines the OCPP version used for this communication function.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum OcppVersionEnumType {
     #[serde(rename = "OCPP12")]
     Ocpp12,
@@ -2507,7 +2507,7 @@ pub enum OcppVersionEnumType {
 /// VPN. Type. VPN_ Code
 /// urn:x-oca:ocpp:uid:1:569277
 /// Type of VPN
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum VpnEnumType {
     #[serde(rename = "IKEv2")]
     IkEv2,
@@ -2521,7 +2521,7 @@ pub enum VpnEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SetVariableMonitoringRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2530,7 +2530,7 @@ pub struct SetVariableMonitoringRequest {
 }
 
 /// Class to hold parameters of SetVariableMonitoring request.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SetMonitoringDataType {
     pub component: ComponentType,
     #[serde(rename = "customData")]
@@ -2580,7 +2580,7 @@ pub struct SetMonitoringDataType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SetVariablesRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2588,7 +2588,7 @@ pub struct SetVariablesRequest {
     pub set_variable_data: Vec<SetVariableDataType>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SetVariableDataType {
     #[serde(rename = "attributeType")]
     pub attribute_type: Option<AttributeEnumType>,
@@ -2608,7 +2608,7 @@ pub struct SetVariableDataType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SignCertificateRequest {
     #[serde(rename = "certificateType")]
     pub certificate_type: Option<CertificateSigningUseEnumType>,
@@ -2622,7 +2622,7 @@ pub struct SignCertificateRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct StatusNotificationRequest {
     /// The id of the connector within the EVSE for which the status is reported.
     #[serde(rename = "connectorId")]
@@ -2640,7 +2640,7 @@ pub struct StatusNotificationRequest {
 }
 
 /// This contains the current status of the Connector.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ConnectorStatusEnumType {
     Available,
     Faulted,
@@ -2651,7 +2651,7 @@ pub enum ConnectorStatusEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct TransactionEventRequest {
     /// The maximum current of the connected cable in Ampere (A).
     #[serde(rename = "cableMaxCurrent")]
@@ -2690,7 +2690,7 @@ pub struct TransactionEventRequest {
 
 /// Transaction
 /// urn:x-oca:ocpp:uid:2:233318
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct TransactionType {
     #[serde(rename = "chargingState")]
     pub charging_state: Option<ChargingStateEnumType>,
@@ -2719,7 +2719,7 @@ pub struct TransactionType {
 /// The first TransactionEvent of a transaction SHALL contain: "Started" The last
 /// TransactionEvent of a transaction SHALL contain: "Ended" All others SHALL contain:
 /// "Updated"
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum TransactionEventEnumType {
     Ended,
     Started,
@@ -2730,7 +2730,7 @@ pub enum TransactionEventEnumType {
 /// urn:x-oca:ocpp:uid:1:569419
 /// Current charging state, is required when state
 /// has changed.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ChargingStateEnumType {
     Charging,
     #[serde(rename = "EVConnected")]
@@ -2746,7 +2746,7 @@ pub enum ChargingStateEnumType {
 /// urn:x-oca:ocpp:uid:1:569413
 /// This contains the reason why the transaction was stopped. MAY only be omitted when Reason
 /// is "Local".
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ReasonEnumType {
     DeAuthorized,
     EmergencyStop,
@@ -2773,7 +2773,7 @@ pub enum ReasonEnumType {
 }
 
 /// Reason the Charging Station sends this message to the CSMS
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum TriggerReasonEnumType {
     AbnormalCondition,
     Authorized,
@@ -2804,7 +2804,7 @@ pub enum TriggerReasonEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct TriggerMessageRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2814,7 +2814,7 @@ pub struct TriggerMessageRequest {
 }
 
 /// Type of message to be triggered.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum MessageTriggerEnumType {
     BootNotification,
     FirmwareStatusNotification,
@@ -2831,7 +2831,7 @@ pub enum MessageTriggerEnumType {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct UnlockConnectorRequest {
     /// This contains the identifier of the connector that needs to be unlocked.
     #[serde(rename = "connectorId")]
@@ -2845,7 +2845,7 @@ pub struct UnlockConnectorRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct UnpublishFirmwareRequest {
     /// The MD5 checksum over the entire firmware file as a hexadecimal string of length 32.
     pub checksum: String,
@@ -2855,7 +2855,7 @@ pub struct UnpublishFirmwareRequest {
 
 //=================================================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateFirmwareRequest {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,
@@ -2876,7 +2876,7 @@ pub struct UpdateFirmwareRequest {
 /// Firmware
 /// urn:x-enexis:ecdm:uid:2:233291
 /// Represents a copy of the firmware that can be loaded/updated on the Charging Station.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FirmwareType {
     #[serde(rename = "customData")]
     pub custom_data: Option<CustomDataType>,

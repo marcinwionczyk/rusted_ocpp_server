@@ -111,6 +111,7 @@ pub fn unpack(msg: &String) -> Result<HashMap<&str, String>, String> {
     let message_type_id = json.get(0).unwrap().as_u64();
     match message_type_id {
         Some(2) => {
+            println!("{:?}", json);
             hash.insert("MessageTypeId", "2".to_string());
             hash.insert("MessageId", (json.get(1).unwrap()).to_string());
             hash.insert("Action", (json.get(2).unwrap()).to_string());
@@ -155,8 +156,8 @@ pub fn boot_notification_response(message_id: &String, payload: &String) -> Stri
             };
             wrap_call_result(message_id, serde_json::to_string(&boot_response).unwrap())
         }
-        Err(_) => {
-            wrap_call_error_result(message_id, ErrorCode::FormatViolation, payload)
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }
     }
 }
@@ -167,8 +168,8 @@ pub fn status_notification_response(message_id: &String, payload: &String) -> St
             let response = responses::StatusNotificationResponse{ custom_data: None };
             wrap_call_result(message_id, serde_json::to_string(&response).unwrap())
         }
-        Err(_) => {
-            wrap_call_error_result(message_id, ErrorCode::FormatViolation, payload)
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }
     }
 }
@@ -202,8 +203,23 @@ pub fn authorize_response(message_id: &String, payload: &String) -> String {
             };
             wrap_call_result(message_id, serde_json::to_string(&authorize_resp).unwrap())
         },
-        Err(_) => {
-            wrap_call_error_result(message_id, ErrorCode::FormatViolation, payload)
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
+        }
+    }
+}
+
+pub fn notify_event_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::NotifyEventRequest, serde_json::Error> {
+        Ok(_) => {
+            let notify_event_response = responses::NotifyEventResponse{
+                custom_data: None
+            };
+            wrap_call_result(message_id, serde_json::to_string(&notify_event_response).unwrap())
+        },
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation,
+                                   &format!("{:#?}", e))
         }
     }
 }
