@@ -3,10 +3,8 @@ use actix_web_actors::ws;
 use std::time::Instant;
 use crate::messages::*;
 use crate::server;
-use serde_json::StreamDeserializer;
 use actix_web_actors::ws::ProtocolError;
-use std::collections::hash_map::RandomState;
-use std::collections::HashMap;
+use crate::messages::responses::TransactionEventResponse;
 
 
 pub struct ChargePointWebSocketSession {
@@ -139,6 +137,28 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargePointWebSoc
                                         let response = notify_event_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
+                                        println!("{} session: response: {}", self.name, response);
+                                        ctx.text(response);
+                                    }
+                                    "NotifyReport" => {
+                                        let response = notify_report_response(
+                                            unpacked.get("MessageId").unwrap(),
+                                            unpacked.get("Payload").unwrap());
+                                        println!("{} session: response: {}", self.name, response);
+                                        ctx.text(response);
+                                    }
+                                    "TransactionEvent" => {                                         
+                                        let response = transaction_event_response(
+                                            unpacked.get("MessageId").unwrap(),
+                                            unpacked.get("Payload").unwrap(),
+                                            TransactionEventResponse{
+                                                charging_priority: None,
+                                                custom_data: None,
+                                                id_token_info: None,
+                                                total_cost: None,
+                                                updated_personal_message: None
+                                            }
+                                        );
                                         println!("{} session: response: {}", self.name, response);
                                         ctx.text(response);
                                     }

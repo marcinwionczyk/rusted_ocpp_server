@@ -1,16 +1,12 @@
-use std::collections::HashMap;
 use std::time::Instant;
 
-use actix::{Actor, ActorFuture, Addr, ContextFutureSpawner, MailboxError, WrapFuture};
-use actix::dev::{MessageResponse, Request};
-use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, Responder, web};
+use actix::{Actor, Addr};
+use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, web};
 use actix_web::web::Json;
 use actix_web_actors::ws;
 use dotenv;
 use qstring::QString;
-use serde::Serialize;
-use crate::messages::{CLIENT_TIMEOUT, HEARTBEAT_INTERVAL, unpack};
-use crate::server::{GetChargers, OcppServer, WebClientMessage};
+use crate::server::{GetChargers, WebClientMessage};
 
 mod config;
 mod messages;

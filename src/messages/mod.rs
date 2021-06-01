@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 
 use chrono::{DateTime, Utc};
 use serde_json::Value;
@@ -9,10 +9,6 @@ pub mod responses;
 
 pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(15);
 pub const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
-
-const CALL: u8 = 3;
-const CALL_RESULT: u8 = 3;
-const CALL_ERROR: u8 = 4;
 
 pub enum ErrorCode {
     FormatViolation,
@@ -42,7 +38,7 @@ pub enum ErrorCode {
 
 // [<MessageTypeId>, "<UniqueId>", {<Payload>}]
 pub fn wrap_call_result(msg_id: &String, payload: String) -> String {
-    format!("[{}, {}, {}]", CALL_RESULT, msg_id, payload)
+    format!("[3, {}, {}]", msg_id, payload)
 }
 
 // [<MessageTypeId>, "<UniqueId>", "<errorCode>", "<errorDescription>", {<errorDetails>}]
@@ -216,6 +212,34 @@ pub fn notify_event_response(message_id: &String, payload: &String) -> String {
                 custom_data: None
             };
             wrap_call_result(message_id, serde_json::to_string(&notify_event_response).unwrap())
+        },
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation,
+                                   &format!("{:#?}", e))
+        }
+    }
+}
+
+pub fn notify_report_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::NotifyReportRequest, serde_json::Error> {
+        Ok(_) => {
+            let notify_report_response = responses::NotifyReportResponse{ custom_data: None };
+            wrap_call_result(message_id,
+                             serde_json::to_string(&notify_report_response).unwrap())
+        },
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation,
+                                   &format!("{:#?}", e))
+        }
+    }
+}
+
+pub fn transaction_event_response(message_id: &String, payload: &String,
+                                  response: responses::TransactionEventResponse) -> String {
+    match serde_json::from_str(&payload) as Result<requests::TransactionEventRequest, serde_json::Error> {
+        Ok(_) => {
+            wrap_call_result(message_id,
+                             serde_json::to_string(&response).unwrap())
         },
         Err(e) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation,

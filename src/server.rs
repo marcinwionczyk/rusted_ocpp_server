@@ -1,7 +1,6 @@
 use actix::prelude::*;
 use std::collections::HashMap;
 use serde::Serialize;
-use crate::client;
 
 
 // Code below is for handling multiple websocket sessions between Ocpp server and charge points
