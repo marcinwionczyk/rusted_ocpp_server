@@ -56,7 +56,7 @@ async fn index(r: HttpRequest, srv: web::Data<Addr<server::OcppServer>>) -> Resu
     }
 }
 
-#[get("/get-chargers")]
+#[get("/api/get-chargers")]
 async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Result<Json<Vec<String>>, error::Error> {
     match srv.send(GetChargers).await {
         Ok(chargers) => Ok(web::Json(chargers)),

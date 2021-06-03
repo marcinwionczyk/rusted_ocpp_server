@@ -87,7 +87,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargePointWebSoc
             }
             Ok(msg) => msg
         };
-        println!("WEBSOCKET MESSAGE: {:?}", msg);
+        println!("{} session: incoming message: {:?}", self.name, msg);
         match msg {
             ws::Message::Ping(msg) => {
                 self.hb = Instant::now();
@@ -110,41 +110,41 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargePointWebSoc
                                         let response = boot_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{} session: response: {}", self.name, response);
+                                        println!("{} session: outgoing response: {}", self.name, response);
                                         ctx.text(response)
                                     }
                                     "StatusNotification" => {
                                         let response = status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{} session: response: {}", self.name, response);
+                                        println!("{} session: outgoing response: {}", self.name, response);
                                         ctx.text(response);
                                     }
                                     "Heartbeat" => {
                                         let response = heartbeat_response(
                                             unpacked.get("MessageId").unwrap());
-                                        println!("{} session: response: {}", self.name, response);
+                                        println!("{} session: outgoing response: {}", self.name, response);
                                         ctx.text(response);
                                     }
                                     "Authorize" => {
                                         let response = authorize_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{} session: response: {}", self.name, response);
+                                        println!("{} session: outgoing response: {}", self.name, response);
                                         ctx.text(response);
                                     }
                                     "NotifyEvent" => {
                                         let response = notify_event_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{} session: response: {}", self.name, response);
+                                        println!("{} session: outgoing response: {}", self.name, response);
                                         ctx.text(response);
                                     }
                                     "NotifyReport" => {
                                         let response = notify_report_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{} session: response: {}", self.name, response);
+                                        println!("{} session: outgoing response: {}", self.name, response);
                                         ctx.text(response);
                                     }
                                     "TransactionEvent" => {                                         
@@ -159,7 +159,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargePointWebSoc
                                                 updated_personal_message: None
                                             }
                                         );
-                                        println!("{} session: response: {}", self.name, response);
+                                        println!("{} session: outgoing response: {}", self.name, response);
                                         ctx.text(response);
                                     }
                                     _ => {

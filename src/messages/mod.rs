@@ -107,7 +107,6 @@ pub fn unpack(msg: &String) -> Result<HashMap<&str, String>, String> {
     let message_type_id = json.get(0).unwrap().as_u64();
     match message_type_id {
         Some(2) => {
-            println!("{:?}", json);
             hash.insert("MessageTypeId", "2".to_string());
             hash.insert("MessageId", (json.get(1).unwrap()).to_string());
             hash.insert("Action", (json.get(2).unwrap()).to_string());
