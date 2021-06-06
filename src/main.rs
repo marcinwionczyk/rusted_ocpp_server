@@ -1,8 +1,7 @@
 use std::time::Instant;
 
 use actix::{Actor, Addr};
-use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, web};
-use actix_web::web::Json;
+use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, web, Responder};
 use actix_web_actors::ws;
 use dotenv;
 use qstring::QString;
@@ -57,9 +56,9 @@ async fn index(r: HttpRequest, srv: web::Data<Addr<server::OcppServer>>) -> Resu
 }
 
 #[get("/api/get-chargers")]
-async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Result<Json<Vec<String>>, error::Error> {
+async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Result<impl Responder, error::Error> {
     match srv.send(GetChargers).await {
-        Ok(chargers) => Ok(web::Json(chargers)),
+        Ok(chargers) => Ok(web::Json(chargers).with_header("Access-Control-Allow-Origin", "*")),
         Err(_) => Err(error::Error{ message: "Unable to get list of chargers".to_string(), status: 500 })
     }
 }
