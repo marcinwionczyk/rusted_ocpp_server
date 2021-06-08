@@ -5,17 +5,82 @@ use crate::messages::*;
 use crate::server;
 use actix_web_actors::ws::ProtocolError;
 use crate::messages::responses::TransactionEventResponse;
+use crate::server::MessageToWebBrowser;
+
+pub struct WebBrowserWebSocketSession {
+    pub hb: Instant
+}
 
 
-pub struct ChargePointWebSocketSession {
+
+impl WebBrowserWebSocketSession {
+    fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
+        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
+            if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
+                ctx.stop();
+                return;
+            }
+            ctx.ping(b"");
+        });
+    }
+}
+
+
+impl Actor for WebBrowserWebSocketSession {
+    type Context = ws::WebsocketContext<Self>;
+
+    fn started(&mut self, ctx: &mut Self::Context) {
+        self.hb(ctx);
+    }
+
+    fn stopping(&mut self, _: &mut Self::Context) -> Running {
+        Running::Stop
+    }
+}
+
+
+impl Handler<server::MessageToWebBrowser> for WebBrowserWebSocketSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: MessageToWebBrowser, ctx: &mut Self::Context) -> Self::Result {
+        ctx.text(msg.0)
+    }
+}
+
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSocketSession {
+    fn handle(&mut self, msg: Result<ws::Message, ProtocolError>, ctx: &mut Self::Context) {
+        let msg = match msg {
+            Err(_) => {
+                ctx.stop();
+                return;
+            }
+            Ok(msg) => msg
+        };
+        match msg {
+            ws::Message::Ping(msg) => {
+                self.hb = Instant::now();
+                ctx.pong(&msg);
+            }
+            ws::Message::Pong(_) => {
+                self.hb = Instant::now();
+            }
+            ws::Message::Text(text) => {
+                println!("{}", text);
+            }
+            _ => ctx.stop()
+        }
+    }
+}
+
+pub struct ChargeStationWebSocketSession {
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT)
     /// otherwise the connection will b e dropped
     pub hb: Instant,
     pub name: String,
-    pub addr: Addr<server::OcppServer>,
+    pub address: Addr<server::OcppServer>,
 }
 
-impl Actor for ChargePointWebSocketSession {
+impl Actor for ChargeStationWebSocketSession {
     type Context = ws::WebsocketContext<Self>;
     /// Method is called on actor start. We register websocket session with charge point
     fn started(&mut self, ctx: &mut Self::Context) {
@@ -28,7 +93,7 @@ impl Actor for ChargePointWebSocketSession {
         // HttpContext::state() is instance of ChargePointWebSocketSession, state is shared
         // across all routes within application
         let addr = ctx.address();
-        self.addr.send(server::Connect {
+        self.address.send(server::ConnectCharger {
             addr: addr.recipient(),
             serial_id: self.name.clone(),
         }).into_actor(self)
@@ -43,12 +108,12 @@ impl Actor for ChargePointWebSocketSession {
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
-        self.addr.do_send(server::Disconnect { serial_id: self.name.clone() });
+        self.address.do_send(server::DisconnectCharger { serial_id: self.name.clone() });
         Running::Stop
     }
 }
 
-impl ChargePointWebSocketSession {
+impl ChargeStationWebSocketSession {
     /// helper method that sends ping to client every second.
     /// also this method checks heartbeats from client
     fn hb(&self, ctx: &mut <Self as Actor>::Context) {
@@ -57,7 +122,7 @@ impl ChargePointWebSocketSession {
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
                 // heartbeat timed out
                 println!("Websocket Client heartbeat failed, disconnecting!");
-                act.addr.do_send(server::Disconnect { serial_id: act.name.clone() });
+                act.address.do_send(server::DisconnectCharger { serial_id: act.name.clone() });
                 // stop actor
                 ctx.stop();
 
@@ -70,15 +135,15 @@ impl ChargePointWebSocketSession {
     }
 }
 
-impl Handler<server::MessageToChargePoint> for ChargePointWebSocketSession {
+impl Handler<server::MessageToChargeStation> for ChargeStationWebSocketSession {
     type Result = ();
 
-    fn handle(&mut self, msg: server::MessageToChargePoint, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: server::MessageToChargeStation, ctx: &mut Self::Context) -> Self::Result {
         ctx.text(msg.0);
     }
 }
 
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargePointWebSocketSession {
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebSocketSession {
     fn handle(&mut self, msg: Result<ws::Message, ProtocolError>, ctx: &mut Self::Context) {
         let msg = match msg {
             Err(_) => {
@@ -97,7 +162,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargePointWebSoc
                 self.hb = Instant::now();
             }
             ws::Message::Text(text) => {
-                match unpack(&text) {
+                match unpack_ocpp_message(&text) {
                     Ok(unpacked) => {
                         let message_type_id: u8 = unpacked.get("MessageTypeId").unwrap().parse()
                             .unwrap();

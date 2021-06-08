@@ -101,7 +101,7 @@ pub fn wrap_call_error_result(msg_id: &String, error_code: ErrorCode, error_deta
     }
 }
 
-pub fn unpack(msg: &String) -> Result<HashMap<&str, String>, String> {
+pub fn unpack_ocpp_message(msg: &String) -> Result<HashMap<&str, String>, String> {
     let mut hash: HashMap<&str, String> = HashMap::new();
     let json: Value = serde_json::from_str(msg).expect("JSON string is wrong");
     let message_type_id = json.get(0).unwrap().as_u64();
