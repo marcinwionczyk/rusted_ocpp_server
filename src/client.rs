@@ -6,11 +6,11 @@ use crate::server;
 use actix_web_actors::ws::ProtocolError;
 use crate::messages::responses::TransactionEventResponse;
 use crate::server::MessageToWebBrowser;
+use serde_json::Value;
 
 pub struct WebBrowserWebSocketSession {
-    pub hb: Instant
+    pub hb: Instant,
 }
-
 
 
 impl WebBrowserWebSocketSession {
@@ -65,7 +65,19 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
                 self.hb = Instant::now();
             }
             ws::Message::Text(text) => {
-                println!("{}", text);
+                let json: Value = serde_json::from_str(text.as_str()).expect("JSON string is wrong");
+                let message = json.get("message");
+                match message {
+                    None => {}
+                    Some(value) => {
+                        if value.is_string(){
+                            if value == "Socket has been opened!" {
+                                ctx.text(text);
+                            }
+                        }
+
+                    }
+                }
             }
             _ => ctx.stop()
         }
@@ -212,17 +224,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
                                     }
-                                    "TransactionEvent" => {                                         
+                                    "TransactionEvent" => {
                                         let response = transaction_event_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap(),
-                                            TransactionEventResponse{
+                                            TransactionEventResponse {
                                                 charging_priority: None,
                                                 custom_data: None,
                                                 id_token_info: None,
                                                 total_cost: None,
-                                                updated_personal_message: None
-                                            }
+                                                updated_personal_message: None,
+                                            },
                                         );
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
