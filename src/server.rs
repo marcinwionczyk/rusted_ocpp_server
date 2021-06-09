@@ -2,7 +2,8 @@ use actix::prelude::*;
 use std::collections::HashMap;
 use serde::{ Serialize, Deserialize};
 use serde_json::Value;
-
+use uuid::Uuid;
+use crate::messages::wrap_call;
 // Code below is for handling multiple websocket sessions between Ocpp server and charge points
 //                ,_____________
 //                | web client  |
@@ -122,7 +123,9 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
 
     fn handle(&mut self, msg: MessageFromWebBrowser, _: &mut Context<Self>) -> Self::Result {
         println!("sending message to: {}", msg.charger);
-        self.send_message(&msg.charger, &msg.payload.to_string());
+        let message_id = Uuid::new_v4().to_simple().to_string();
+        let call = wrap_call(&message_id, &msg.selected, &msg.payload.to_string());
+        self.send_message(&msg.charger, &call);
     }
 }
 

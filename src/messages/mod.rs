@@ -36,6 +36,10 @@ pub enum ErrorCode {
     TypeConstraintViolation, // Payload for Action is syntactically correct but at least one of the fields violates data type constraints
 }
 
+pub fn wrap_call(message_id: &String, action: &String, payload: &String) -> String {
+    format!("[2, {}, {}, {}]", message_id, action, payload)
+}
+
 // [<MessageTypeId>, "<UniqueId>", {<Payload>}]
 pub fn wrap_call_result(msg_id: &String, payload: String) -> String {
     format!("[3, {}, {}]", msg_id, payload)

@@ -7,7 +7,6 @@ use actix_web_actors::ws::ProtocolError;
 use crate::messages::responses::TransactionEventResponse;
 use crate::server::MessageToWebBrowser;
 use serde_json::Value;
-
 pub struct WebBrowserWebSocketSession {
     pub hb: Instant,
 }

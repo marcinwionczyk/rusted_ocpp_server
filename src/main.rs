@@ -1,9 +1,11 @@
 use std::time::Instant;
-use actix_files::Files;
+
 use actix::{Actor, Addr};
-use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, web, Responder};
+use actix_files::Files;
+use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, post, Responder, web};
 use actix_web_actors::ws;
 use dotenv;
+use serde::Serialize;
 
 mod config;
 mod messages;
@@ -12,6 +14,11 @@ mod client;
 mod error;
 
 const ALLOWED_SUB_PROTOCOLS: [&'static str; 1] = ["ocpp2.0.1"];
+
+#[derive(Serialize)]
+struct Status{
+    status: &'static str
+}
 
 #[get("/ocpp/{serial_id}")]
 async fn ws_ocpp_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, ActixWebError> {
@@ -29,7 +36,7 @@ async fn ws_ocpp_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr
     }
 }
 
-#[get("/webclient-socket")]
+#[get("/api/webclient-socket")]
 async fn ws_webclient_index(r: HttpRequest, stream: web::Payload) -> Result<HttpResponse, ActixWebError> {
     ws::start(client::WebBrowserWebSocketSession {hb: Instant::now() }, &r, stream)
 }
@@ -40,6 +47,15 @@ async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Result<impl R
     match srv.send(server::GetChargers).await {
         Ok(chargers) => Ok(web::Json(chargers).with_header("Access-Control-Allow-Origin", "*")),
         Err(_) => Err(error::Error{ message: "Unable to get list of chargers".to_string(), status: 500 })
+    }
+}
+
+#[post("/api/post-request")]
+async fn post_request(srv: web::Data<Addr<server::OcppServer>>,
+                      item: web::Json<server::MessageFromWebBrowser>) -> HttpResponse {
+    match srv.send(item.into_inner()).await {
+        Ok(_) => HttpResponse::Ok().json(Status{ status: "ok" }),
+        Err(_) => HttpResponse::Ok().json(Status{ status: "shit happens" })
     }
 }
 
@@ -59,6 +75,7 @@ async fn main() -> std::io::Result<()> {
             //.data(pool.clone())
             //.service(web::resource("/").route(web::get().to(index)))
             .service(get_chargers)
+            .service(post_request)
             .service(ws_ocpp_index)
             .service(ws_webclient_index)
             .service(Files::new("/", "./webclient/").index_file("index.html"))
