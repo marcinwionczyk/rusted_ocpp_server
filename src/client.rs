@@ -30,6 +30,7 @@ impl Actor for WebBrowserWebSocketSession {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         self.hb(ctx);
+
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {

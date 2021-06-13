@@ -1,4 +1,5 @@
 use serde::{Serialize, Deserialize};
+use serde_json::Value;
 
 // structures created with the help of https://app.quicktype.io/ and json schema provided by
 // https://www.openchargealliance.org/
@@ -8,7 +9,7 @@ pub struct AuthorizeRequest {
     /// The X.509 certificated presented by EV and encoded in PEM format.
     pub certificate: Option<String>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "idToken")]
     pub id_token: IdTokenType,
     #[serde(rename = "iso15118CertificateHashData")]
@@ -30,7 +31,7 @@ pub struct IdTokenType {
     #[serde(rename = "additionalInfo")]
     pub additional_info: Option<Vec<AdditionalInfoType>>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// IdToken is case insensitive. Might hold the hidden id of an RFID tag, but can for example
     /// also contain a UUID.
     #[serde(rename = "idToken")]
@@ -47,7 +48,7 @@ pub struct AdditionalInfoType {
     #[serde(rename = "additionalIdToken")]
     pub additional_id_token: String,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// This defines the type of the additionalIdToken. This is a custom type, so the
     /// implementation needs to be agreed upon by all involved parties.
     #[serde(rename = "type")]
@@ -57,7 +58,7 @@ pub struct AdditionalInfoType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct OcspRequestDataType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "hashAlgorithm")]
     pub hash_algorithm: HashAlgorithmEnumType,
     /// Hashed value of the issuers public key
@@ -107,7 +108,7 @@ pub struct BootNotificationRequest {
     #[serde(rename = "chargingStation")]
     pub charging_station: ChargingStationType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub reason: BootReasonEnumType,
 }
 
@@ -117,7 +118,7 @@ pub struct BootNotificationRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ChargingStationType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// This contains the firmware version of the Charging Station.
     #[serde(rename = "firmwareVersion")]
     pub firmware_version: Option<String>,
@@ -147,7 +148,7 @@ pub struct ChargingStationType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ModemType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Wireless_ Communication_ Module. ICCID. CI20_ Text
     /// urn:x-oca:ocpp:uid:1:569327
     /// This contains the ICCID of the modem’s SIM card.
@@ -177,7 +178,7 @@ pub enum BootReasonEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CancelReservationRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Id of the reservation to cancel.
     #[serde(rename = "reservationId")]
     pub reservation_id: i64,
@@ -198,7 +199,7 @@ pub struct CertificateSignedRequest {
     #[serde(rename = "certificateType")]
     pub certificate_type: Option<CertificateSigningUseEnumType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 /// Indicates the type of the signed certificate that is returned. When omitted the
@@ -218,7 +219,7 @@ pub enum CertificateSigningUseEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ChangeAvailabilityRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub evse: Option<EvseType>,
     #[serde(rename = "operationalStatus")]
     pub operational_status: OperationalStatusEnumType,
@@ -233,7 +234,7 @@ pub struct EvseType {
     #[serde(rename = "connectorId")]
     pub connector_id: Option<i64>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Identified_ Object. MRID. Numeric_ Identifier
     /// urn:x-enexis:ecdm:uid:1:569198
     /// EVSE Identifier. This contains a number (&gt; 0) designating an EVSE of the Charging
@@ -253,7 +254,7 @@ pub enum OperationalStatusEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClearCacheRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 //=================================================================================================
@@ -266,7 +267,7 @@ pub struct ClearChargingProfileRequest {
     #[serde(rename = "chargingProfileId")]
     pub charging_profile_id: Option<i64>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 /// Charging_ Profile
@@ -278,7 +279,7 @@ pub struct ClearChargingProfileType {
     #[serde(rename = "chargingProfilePurpose")]
     pub charging_profile_purpose: Option<ChargingProfilePurposeEnumType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Identified_ Object. MRID. Numeric_ Identifier
     /// urn:x-enexis:ecdm:uid:1:569198
     /// Specifies the id of the EVSE for which to clear charging profiles. An evseId of zero (0)
@@ -312,7 +313,7 @@ pub enum ChargingProfilePurposeEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClearDisplayMessageRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Id of the message that SHALL be removed from the Charging Station.
     pub id: i64,
 }
@@ -324,7 +325,7 @@ pub struct ClearedChargingLimitRequest {
     #[serde(rename = "chargingLimitSource")]
     pub charging_limit_source: ChargingLimitSourceEnumType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// EVSE Identifier.
     #[serde(rename = "evseId")]
     pub evse_id: Option<i64>,
@@ -347,7 +348,7 @@ pub enum ChargingLimitSourceEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClearVariableMonitoringRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// List of the monitors to be cleared, identified by there Id.
     pub id: Vec<i64>,
 }
@@ -357,7 +358,7 @@ pub struct ClearVariableMonitoringRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CostUpdatedRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Current total cost, based on the information known by the CSMS, of the transaction
     /// including taxes. In the currency configured with the configuration Variable:
     /// [&lt;&lt;configkey-currency, Currency&gt;&gt;]
@@ -376,7 +377,7 @@ pub struct CustomerInformationRequest {
     /// customer referred to.
     pub clear: bool,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "customerCertificate")]
     pub customer_certificate: Option<CertificateHashDataType>,
     /// A (e.g. vendor specific) identifier of the customer this request refers to. This field
@@ -399,7 +400,7 @@ pub struct CustomerInformationRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CertificateHashDataType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "hashAlgorithm")]
     pub hash_algorithm: HashAlgorithmEnumType,
     /// Hashed value of the issuers public key
@@ -418,7 +419,7 @@ pub struct CertificateHashDataType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DataTransferRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Data without specified length or format. This needs to be decided by both parties (Open
     /// to implementation).
     pub data: Option<serde_json::Value>,
@@ -437,7 +438,7 @@ pub struct DeleteCertificateRequest {
     #[serde(rename = "certificateHashData")]
     pub certificate_hash_data: CertificateHashDataType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 //=================================================================================================
@@ -445,7 +446,7 @@ pub struct DeleteCertificateRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FirmwareStatusNotificationRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The request id that was provided in the
     /// UpdateFirmwareRequest that started this firmware update.
     /// This field is mandatory, unless the message was triggered by a TriggerMessageRequest AND
@@ -480,7 +481,7 @@ pub enum FirmwareStatusEnumType {
 pub struct Get15118EvCertificateRequest {
     pub action: CertificateActionEnumType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Raw CertificateInstallationReq request from EV, Base64 encoded.
     #[serde(rename = "exiRequest")]
     pub exi_request: String,
@@ -502,7 +503,7 @@ pub enum CertificateActionEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetBaseReportRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "reportBase")]
     pub report_base: ReportBaseEnumType,
     /// The Id of the request.
@@ -523,7 +524,7 @@ pub enum ReportBaseEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetCertificateStatusRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "ocspRequestData")]
     pub ocsp_request_data: OcspRequestDataType,
 }
@@ -535,7 +536,7 @@ pub struct GetChargingProfilesRequest {
     #[serde(rename = "chargingProfile")]
     pub charging_profile: ChargingProfileCriterionType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// For which EVSE installed charging profiles SHALL be reported. If 0, only charging
     /// profiles installed on the Charging Station itself (the grid connection) SHALL be
     /// reported. If omitted, all installed charging profiles SHALL be reported.
@@ -567,7 +568,7 @@ pub struct ChargingProfileCriterionType {
     #[serde(rename = "chargingProfilePurpose")]
     pub charging_profile_purpose: Option<ChargingProfilePurposeEnumType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Charging_ Profile. Stack_ Level. Counter
     /// urn:x-oca:ocpp:uid:1:569230
     /// Value determining level in hierarchy stack of profiles. Higher values have precedence
@@ -583,7 +584,7 @@ pub struct GetCompositeScheduleRequest {
     #[serde(rename = "chargingRateUnit")]
     pub charging_rate_unit: Option<ChargingRateUnitEnumType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Length of the requested schedule in seconds.
     pub duration: i64,
     /// The ID of the EVSE for which the schedule is requested. When evseid=0, the Charging
@@ -604,7 +605,7 @@ pub enum ChargingRateUnitEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetDisplayMessagesRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// If provided the Charging Station shall return Display Messages of the given ids. This
     /// field SHALL NOT contain more ids than set in
     /// &lt;&lt;configkey-number-of-display-messages,NumberOfDisplayMessages.maxLimit&gt;&gt;
@@ -643,7 +644,7 @@ pub struct GetInstalledCertificateIdsRequest {
     #[serde(rename = "certificateType")]
     pub certificate_type: Option<Vec<GetCertificateIdUseEnumType>>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -662,7 +663,7 @@ pub enum GetCertificateIdUseEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetLocalListVersionRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 //=================================================================================================
@@ -670,7 +671,7 @@ pub struct GetLocalListVersionRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetLogRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub log: LogParametersType,
     #[serde(rename = "logType")]
     pub log_type: LogEnumType,
@@ -693,7 +694,7 @@ pub struct GetLogRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LogParametersType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Log. Latest_ Timestamp. Date_ Time
     /// urn:x-enexis:ecdm:uid:1:569482
     /// This contains the date and time of the latest logging information to include in the
@@ -728,7 +729,7 @@ pub struct GetMonitoringReportRequest {
     #[serde(rename = "componentVariable")]
     pub component_variable: Option<Vec<ComponentVariableType>>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// This field contains criteria for components for which a monitoring report is requested
     #[serde(rename = "monitoringCriteria")]
     pub monitoring_criteria: Option<Vec<MonitoringCriterionEnumType>>,
@@ -742,7 +743,7 @@ pub struct GetMonitoringReportRequest {
 pub struct ComponentVariableType {
     pub component: ComponentType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub variable: Option<VariableType>,
 }
 
@@ -750,7 +751,7 @@ pub struct ComponentVariableType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ComponentType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub evse: Option<EvseType>,
     /// Name of instance in case the component exists as multiple instances. Case Insensitive.
     /// strongly advised to use Camel Case.
@@ -764,7 +765,7 @@ pub struct ComponentType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VariableType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Name of instance in case the variable exists as multiple instances. Case Insensitive.
     /// strongly advised to use Camel Case.
     pub instance: Option<String>,
@@ -790,7 +791,7 @@ pub struct GetReportRequest {
     #[serde(rename = "componentVariable")]
     pub component_variable: Option<Vec<ComponentVariableType>>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The Id of the request.
     #[serde(rename = "requestId")]
     pub request_id: i64,
@@ -809,7 +810,7 @@ pub enum ComponentCriterionEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetTransactionStatusRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The Id of the transaction for which the status is requested.
     #[serde(rename = "transactionId")]
     pub transaction_id: Option<String>,
@@ -820,7 +821,7 @@ pub struct GetTransactionStatusRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetVariablesRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "getVariableData")]
     pub get_variable_data: Vec<GetVariableDataType>,
 }
@@ -832,7 +833,7 @@ pub struct GetVariableDataType {
     pub attribute_type: Option<AttributeEnumType>,
     pub component: ComponentType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub variable: VariableType,
 }
 
@@ -850,7 +851,7 @@ pub enum AttributeEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct HeartbeatRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 //=================================================================================================
@@ -862,7 +863,7 @@ pub struct InstallCertificateRequest {
     #[serde(rename = "certificateType")]
     pub certificate_type: InstallCertificateUseEnumType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 /// Indicates the certificate type that is sent.
@@ -881,7 +882,7 @@ pub enum InstallCertificateUseEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LogStatusNotificationRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The request id that was provided in GetLogRequest that started this log upload. This
     /// field is mandatory,
     /// unless the message was triggered by a TriggerMessageRequest AND there is no log upload
@@ -911,7 +912,7 @@ pub enum UploadLogStatusEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MeterValuesRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Request_ Body. EVSEID. Numeric_ Identifier
     /// urn:x-enexis:ecdm:uid:1:571101
     /// This contains a number (&gt;0) designating an EVSE of the Charging Station. ‘0’ (zero) is
@@ -929,7 +930,7 @@ pub struct MeterValuesRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MeterValueType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "sampledValue")]
     pub sampled_value: Vec<SampledValueType>,
     /// Meter_ Value. Timestamp. Date_ Time
@@ -949,7 +950,7 @@ pub struct MeterValueType {
 pub struct SampledValueType {
     pub context: Option<ReadingContextEnumType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub location: Option<LocationEnumType>,
     pub measurand: Option<MeasurandEnumType>,
     pub phase: Option<PhaseEnumType>,
@@ -967,7 +968,7 @@ pub struct SampledValueType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SignedMeterValueType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Method used to encode the meter values before applying the digital signature algorithm.
     #[serde(rename = "encodingMethod")]
     pub encoding_method: String,
@@ -987,7 +988,7 @@ pub struct SignedMeterValueType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UnitOfMeasureType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Multiplier, this value represents the exponent to base 10. I.e. multiplier 3 means 10
     /// raised to the 3rd power. Default is 0.
     pub multiplier: Option<i64>,
@@ -1120,7 +1121,7 @@ pub struct NotifyChargingLimitRequest {
     #[serde(rename = "chargingSchedule")]
     pub charging_schedule: Option<Vec<ChargingScheduleType>>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The charging schedule contained in this notification applies to an EVSE. evseId must be
     /// &gt; 0.
     #[serde(rename = "evseId")]
@@ -1134,7 +1135,7 @@ pub struct ChargingLimitType {
     #[serde(rename = "chargingLimitSource")]
     pub charging_limit_source: ChargingLimitSourceEnumType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Charging_ Limit. Is_ Grid_ Critical. Indicator
     /// urn:x-enexis:ecdm:uid:1:570847
     /// Indicates whether the charging limit is critical for the grid.
@@ -1153,7 +1154,7 @@ pub struct ChargingScheduleType {
     #[serde(rename = "chargingSchedulePeriod")]
     pub charging_schedule_period: Vec<ChargingSchedulePeriodType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Charging_ Schedule. Duration. Elapsed_ Time
     /// urn:x-oca:ocpp:uid:1:569236
     /// Duration of the charging schedule in seconds. If the duration is left empty, the last
@@ -1186,7 +1187,7 @@ pub struct ChargingScheduleType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ChargingSchedulePeriodType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Charging_ Schedule_ Period. Limit. Measure
     /// urn:x-oca:ocpp:uid:1:569241
     /// Charging rate limit during the schedule period, in the applicable chargingRateUnit, for
@@ -1219,7 +1220,7 @@ pub struct ChargingSchedulePeriodType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SalesTariffType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Identified_ Object. MRID. Numeric_ Identifier
     /// urn:x-enexis:ecdm:uid:1:569198
     /// SalesTariff identifier used to identify one sales tariff. An SAID remains a unique
@@ -1248,7 +1249,7 @@ pub struct SalesTariffEntryType {
     #[serde(rename = "consumptionCost")]
     pub consumption_cost: Option<Vec<ConsumptionCostType>>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Sales_ Tariff_ Entry. E_ Price_ Level. Unsigned_ Integer
     /// urn:x-oca:ocpp:uid:1:569281
     /// Defines the price level of this SalesTariffEntry (referring to NumEPriceLevels). Small
@@ -1266,7 +1267,7 @@ pub struct SalesTariffEntryType {
 pub struct ConsumptionCostType {
     pub cost: Vec<CostType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Consumption_ Cost. Start_ Value. Numeric
     /// urn:x-oca:ocpp:uid:1:569246
     /// The lowest level of consumption that defines the starting point of this consumption
@@ -1292,7 +1293,7 @@ pub struct CostType {
     #[serde(rename = "costKind")]
     pub cost_kind: CostKindEnumType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 /// Relative_ Timer_ Interval
@@ -1300,7 +1301,7 @@ pub struct CostType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RelativeTimeIntervalType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Relative_ Timer_ Interval. Duration. Elapsed_ Time
     /// urn:x-oca:ocpp:uid:1:569280
     /// Duration of the interval, in seconds.
@@ -1326,7 +1327,7 @@ pub enum CostKindEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyCustomerInformationRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// (Part of) the requested data. No format specified in which the data is returned. Should
     /// be human readable.
     pub data: String,
@@ -1349,7 +1350,7 @@ pub struct NotifyCustomerInformationRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyDisplayMessagesRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "messageInfo")]
     pub message_info: Option<Vec<MessageInfoType>>,
     /// The id of the &lt;&lt;getdisplaymessagesrequest,GetDisplayMessagesRequest&gt;&gt; that
@@ -1367,7 +1368,7 @@ pub struct NotifyDisplayMessagesRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MessageInfoType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub display: Option<ComponentType>,
     /// Message_ Info. End. Date_ Time
     /// urn:x-enexis:ecdm:uid:1:569257
@@ -1405,7 +1406,7 @@ pub struct MessageContentType {
     /// Message contents.
     pub content: String,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub format: MessageFormatEnumType,
     /// Message_ Content. Language. Language_ Code
     /// urn:x-enexis:ecdm:uid:1:570849
@@ -1436,7 +1437,7 @@ pub struct NotifyEvChargingNeedsRequest {
     #[serde(rename = "chargingNeeds")]
     pub charging_needs: ChargingNeedsType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Defines the EVSE and connector to which the EV is connected. EvseId may not be 0.
     #[serde(rename = "evseId")]
     pub evse_id: i64,
@@ -1452,7 +1453,7 @@ pub struct ChargingNeedsType {
     #[serde(rename = "acChargingParameters")]
     pub ac_charging_parameters: Option<AcChargingParametersType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "dcChargingParameters")]
     pub dc_charging_parameters: Option<DcChargingParametersType>,
     /// Charging_ Needs. Departure_ Time. Date_ Time
@@ -1470,7 +1471,7 @@ pub struct ChargingNeedsType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AcChargingParametersType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// AC_ Charging_ Parameters. Energy_ Amount. Energy_ Amount
     /// urn:x-oca:ocpp:uid:1:569211
     /// Amount of energy requested (in Wh). This includes energy required for preconditioning.
@@ -1506,7 +1507,7 @@ pub struct DcChargingParametersType {
     #[serde(rename = "bulkSoC")]
     pub bulk_so_c: Option<i64>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// DC_ Charging_ Parameters. Energy_ Amount. Energy_ Amount
     /// urn:x-oca:ocpp:uid:1:569217
     /// Amount of energy requested (in Wh). This inludes energy required for preconditioning.
@@ -1567,7 +1568,7 @@ pub struct NotifyEvChargingScheduleRequest {
     #[serde(rename = "chargingSchedule")]
     pub charging_schedule: ChargingScheduleType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The charging schedule contained in this notification applies to an EVSE. EvseId must be
     /// &gt; 0.
     #[serde(rename = "evseId")]
@@ -1582,7 +1583,7 @@ pub struct NotifyEvChargingScheduleRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyEventRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "eventData")]
     pub event_data: Vec<EventDataType>,
     /// Timestamp of the moment this message was generated at the Charging Station.
@@ -1614,7 +1615,7 @@ pub struct EventDataType {
     pub cleared: Option<bool>,
     pub component: ComponentType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Identifies the event. This field can be referred to as a cause by other events.
     #[serde(rename = "eventId")]
     pub event_id: i64,
@@ -1661,7 +1662,7 @@ pub enum EventTriggerEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyMonitoringReportRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Timestamp of the moment this message was generated at the Charging Station.
     #[serde(rename = "generatedAt")]
     pub generated_at: String,
@@ -1682,7 +1683,7 @@ pub struct NotifyMonitoringReportRequest {
 pub struct MonitoringDataType {
     pub component: ComponentType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub variable: VariableType,
     #[serde(rename = "variableMonitoring")]
     pub variable_monitoring: Vec<VariableMonitoringType>,
@@ -1692,7 +1693,7 @@ pub struct MonitoringDataType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VariableMonitoringType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Identifies the monitor.
     pub id: i64,
     /// The severity that will be assigned to an event that is triggered by this monitor. The
@@ -1749,7 +1750,7 @@ pub enum MonitorEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NotifyReportRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Timestamp of the moment this message was generated at the Charging Station.
     #[serde(rename = "generatedAt")]
     pub generated_at: String,
@@ -1771,7 +1772,7 @@ pub struct NotifyReportRequest {
 pub struct ReportDataType {
     pub component: ComponentType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub variable: VariableType,
     #[serde(rename = "variableAttribute")]
     pub variable_attribute: Vec<VariableAttributeType>,
@@ -1786,7 +1787,7 @@ pub struct VariableAttributeType {
     /// when omitted is false.
     pub constant: Option<bool>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub mutability: Option<MutabilityEnumType>,
     /// If true, value will be persistent across system reboots or power down. Default when
     /// omitted is false.
@@ -1806,7 +1807,7 @@ pub struct VariableAttributeType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VariableCharacteristicsType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "dataType")]
     pub data_type: DataEnumType,
     /// Maximum possible value of this variable. When the datatype of this Variable is String,
@@ -1874,7 +1875,7 @@ pub enum DataEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PublishFirmwareStatusNotificationRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Required if status is Published. Can be multiple URI’s, if the Local Controller supports
     /// e.g. HTTP, HTTPS, and FTP.
     pub location: Option<Vec<String>>,
@@ -1912,7 +1913,7 @@ pub struct ReportChargingProfilesRequest {
     #[serde(rename = "chargingProfile")]
     pub charging_profile: Vec<ChargingProfileType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The evse to which the charging profile applies. If evseId = 0, the message contains an
     /// overall limit for the Charging Station.
     #[serde(rename = "evseId")]
@@ -1942,7 +1943,7 @@ pub struct ChargingProfileType {
     #[serde(rename = "chargingSchedule")]
     pub charging_schedule: Vec<ChargingScheduleType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Identified_ Object. MRID. Numeric_ Identifier
     /// urn:x-enexis:ecdm:uid:1:569198
     /// Id of ChargingProfile.
@@ -1999,7 +2000,7 @@ pub struct RequestStartTransactionRequest {
     #[serde(rename = "chargingProfile")]
     pub charging_profile: Option<ChargingProfileType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Number of the EVSE on which to start the transaction. EvseId SHALL be &gt; 0
     #[serde(rename = "evseId")]
     pub evse_id: Option<i64>,
@@ -2019,7 +2020,7 @@ pub struct RequestStartTransactionRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestStopTransactionRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The identifier of the transaction which the Charging Station is requested to stop.
     #[serde(rename = "transactionId")]
     pub transaction_id: String,
@@ -2030,7 +2031,7 @@ pub struct RequestStopTransactionRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ReservationStatusUpdateRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The ID of the reservation.
     #[serde(rename = "reservationId")]
     pub reservation_id: i64,
@@ -2052,7 +2053,7 @@ pub struct ReserveNowRequest {
     #[serde(rename = "connectorType")]
     pub connector_type: Option<ConnectorEnumType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// This contains ID of the evse to be reserved.
     #[serde(rename = "evseId")]
     pub evse_id: Option<i64>,
@@ -2115,7 +2116,7 @@ pub enum ConnectorEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResetRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// This contains the ID of a specific EVSE that needs to be reset, instead of the entire
     /// Charging Station.
     #[serde(rename = "evseId")]
@@ -2136,7 +2137,7 @@ pub enum ResetEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SecurityEventNotificationRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Additional information about the occurred security event.
     #[serde(rename = "techInfo")]
     pub tech_info: Option<String>,
@@ -2152,7 +2153,7 @@ pub struct SecurityEventNotificationRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SendLocalListRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "localAuthorizationList")]
     pub local_authorization_list: Option<Vec<AuthorizationData>>,
     #[serde(rename = "updateType")]
@@ -2168,7 +2169,7 @@ pub struct SendLocalListRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AuthorizationData {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "idToken")]
     pub id_token: IdTokenType,
     #[serde(rename = "idTokenInfo")]
@@ -2194,7 +2195,7 @@ pub struct IdTokenInfoType {
     #[serde(rename = "chargingPriority")]
     pub charging_priority: Option<i64>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Only used when the IdToken is only valid for one or more specific EVSEs, not for the
     /// entire Charging Station.
     #[serde(rename = "evseId")]
@@ -2249,7 +2250,7 @@ pub struct SetChargingProfileRequest {
     #[serde(rename = "chargingProfile")]
     pub charging_profile: ChargingProfileType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// For TxDefaultProfile an evseId=0 applies the profile to each individual evse. For
     /// ChargingStationMaxProfile and ChargingStationExternalConstraints an evseId=0 contains an
     /// overal limit for the whole Charging Station.
@@ -2262,7 +2263,7 @@ pub struct SetChargingProfileRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SetDisplayMessageRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub message: MessageInfoType,
 }
 
@@ -2271,7 +2272,7 @@ pub struct SetDisplayMessageRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SetMonitoringBaseRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "monitoringBase")]
     pub monitoring_base: MonitoringBaseEnumType,
 }
@@ -2289,7 +2290,7 @@ pub enum MonitoringBaseEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SetMonitoringLevelRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The Charging Station SHALL only report events with a severity number lower than or equal
     /// to this severity.
     /// The severity range is 0-9, with 0 as the highest and 9 as the lowest severity level.
@@ -2332,7 +2333,7 @@ pub struct SetNetworkProfileRequest {
     #[serde(rename = "connectionData")]
     pub connection_data: NetworkConnectionProfileType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 /// Communication_ Function
@@ -2343,7 +2344,7 @@ pub struct SetNetworkProfileRequest {
 pub struct NetworkConnectionProfileType {
     pub apn: Option<ApnType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Duration in seconds before a message send by the Charging Station via this network
     /// connection times-out.
     /// The best setting depends on the underlying network and response times of the CSMS.
@@ -2399,7 +2400,7 @@ pub struct ApnType {
     #[serde(rename = "apnUserName")]
     pub apn_user_name: Option<String>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// APN. Preferred_ Network. Mobile_ Network_ ID
     /// urn:x-oca:ocpp:uid:1:568822
     /// Preferred network, written as MCC and MNC concatenated. See note.
@@ -2424,7 +2425,7 @@ pub struct ApnType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VpnType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// VPN. Group. Group_ Name
     /// urn:x-oca:ocpp:uid:1:569274
     /// VPN group.
@@ -2524,7 +2525,7 @@ pub enum VpnEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SetVariableMonitoringRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "setMonitoringData")]
     pub set_monitoring_data: Vec<SetMonitoringDataType>,
 }
@@ -2534,7 +2535,7 @@ pub struct SetVariableMonitoringRequest {
 pub struct SetMonitoringDataType {
     pub component: ComponentType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// An id SHALL only be given to replace an existing monitor. The Charging Station handles
     /// the generation of id's for new monitors.
     pub id: Option<i64>,
@@ -2583,7 +2584,7 @@ pub struct SetMonitoringDataType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SetVariablesRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "setVariableData")]
     pub set_variable_data: Vec<SetVariableDataType>,
 }
@@ -2602,7 +2603,7 @@ pub struct SetVariableDataType {
     pub attribute_value: String,
     pub component: ComponentType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub variable: VariableType,
 }
 
@@ -2617,7 +2618,7 @@ pub struct SignCertificateRequest {
     /// &lt;&lt;signcertificaterequest,SignCertificateRequest&gt;&gt; message.
     pub csr: String,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 //=================================================================================================
@@ -2630,7 +2631,7 @@ pub struct StatusNotificationRequest {
     #[serde(rename = "connectorStatus")]
     pub connector_status: ConnectorStatusEnumType,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The id of the EVSE to which the connector belongs for which the the status is reported.
     #[serde(rename = "evseId")]
     pub evse_id: i64,
@@ -2657,7 +2658,7 @@ pub struct TransactionEventRequest {
     #[serde(rename = "cableMaxCurrent")]
     pub cable_max_current: Option<i64>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     #[serde(rename = "eventType")]
     pub event_type: TransactionEventEnumType,
     pub evse: Option<EvseType>,
@@ -2695,7 +2696,7 @@ pub struct TransactionType {
     #[serde(rename = "chargingState")]
     pub charging_state: Option<ChargingStateEnumType>,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// The ID given to remote start request (&lt;&lt;requeststarttransactionrequest,
     /// RequestStartTransactionRequest&gt;&gt;. This enables to CSMS to match the started
     /// transaction to the given start request.
@@ -2807,7 +2808,7 @@ pub enum TriggerReasonEnumType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TriggerMessageRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub evse: Option<EvseType>,
     #[serde(rename = "requestedMessage")]
     pub requested_message: MessageTriggerEnumType,
@@ -2837,7 +2838,7 @@ pub struct UnlockConnectorRequest {
     #[serde(rename = "connectorId")]
     pub connector_id: i64,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// This contains the identifier of the EVSE for which a connector needs to be unlocked.
     #[serde(rename = "evseId")]
     pub evse_id: i64,
@@ -2850,7 +2851,7 @@ pub struct UnpublishFirmwareRequest {
     /// The MD5 checksum over the entire firmware file as a hexadecimal string of length 32.
     pub checksum: String,
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
 }
 
 //=================================================================================================
@@ -2858,7 +2859,7 @@ pub struct UnpublishFirmwareRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateFirmwareRequest {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     pub firmware: FirmwareType,
     /// The Id of this request
     #[serde(rename = "requestId")]
@@ -2879,7 +2880,7 @@ pub struct UpdateFirmwareRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FirmwareType {
     #[serde(rename = "customData")]
-    pub custom_data: Option<CustomDataType>,
+    pub custom_data: Option<Value>,
     /// Firmware. Install. Date_ Time
     /// urn:x-enexis:ecdm:uid:1:569462
     /// Date and time at which the firmware shall be installed.
