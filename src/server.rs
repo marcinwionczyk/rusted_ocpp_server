@@ -1,11 +1,9 @@
 use actix::prelude::*;
 use std::collections::HashMap;
 use serde::{ Serialize, Deserialize};
-use serde_json::{Value, Error};
+use serde_json::{Value};
 use uuid::Uuid;
-use crate::messages::{requests, responses, wrap_call};
-use crate::client::WebBrowserWebSocketSession;
-use serde_json::value::Value::Null;
+use crate::messages::wrap_call;
 use crate::messages::requests::{CancelReservationRequest, CertificateSignedRequest};
 // Code below is for handling multiple websocket sessions between Ocpp server and charge points
 //                ,_____________
@@ -14,10 +12,11 @@ use crate::messages::requests::{CancelReservationRequest, CertificateSignedReque
 //                     \ /
 //                      |
 //                   websocket
-//                   session
+//                   worker
 //                      |
 //                 _____^_______
-//       ,--------| Ocpp Server |-------.
+//                |    ocpp     |
+//       ,--------|   server    |-------.
 //      |         ``````|```````        |
 //   websocket       websocket       websocket
 //   worker          worker          worker
@@ -40,6 +39,8 @@ pub struct MessageToWebBrowser(pub String);
 #[derive(Message, Deserialize)]
 #[rtype(result = "()")]
 pub struct MessageFromWebBrowser {
+    #[serde(rename = "clientId")]
+    pub client_id: String,
     pub charger: String, // target Charge point
     pub selected: String,
     pub payload: Value, // OCPP message
@@ -64,21 +65,37 @@ pub struct DisconnectCharger {
 #[derive(Serialize)]
 pub struct GetChargers;
 
+/// New Chargepoint websocket session is created
+#[derive(Message)]
+#[rtype(Uuid)]
+pub struct ConnectWebClient {
+    pub addr: Recipient<MessageToWebBrowser>,
+    pub serial_id: Uuid,
+}
+
+
 impl actix::Message for GetChargers { type Result = Vec<String>; }
 
 /// `OcppServer` manages websocket sessions with charge stations
 pub struct OcppServer {
     websocket_workers: HashMap<String, Recipient<MessageToChargeStation>>,
+    webclient_workers: HashMap<Uuid, Receipient<MessageToWebBrowser>>
 }
 
 impl OcppServer {
     pub fn new() -> OcppServer {
-        OcppServer { websocket_workers: HashMap::new() }
+        OcppServer { websocket_workers: HashMap::new(), webclient_workers: HashMap::new() }
     }
 
     fn send_message_to_charger(&self, charger: &String, message: &String) {
         if let Some(session) = self.websocket_workers.get(charger) {
-            let _ = session.do_send(MessageToChargeStation(message.to_owned()));
+            session.do_send(MessageToChargeStation(message.to_owned()));
+        }
+    }
+
+    fn send_message_to_web_client(&self, web_client: &Uuid, message: &String) {
+        if let Some(session) = self.webclient_workers.get(web_client) {
+            session.do
         }
     }
 }
@@ -122,7 +139,7 @@ impl Handler<GetChargers> for OcppServer {
 impl Handler<MessageFromWebBrowser> for OcppServer {
     type Result = ();
 
-    fn handle(&mut self, mut msg: MessageFromWebBrowser, _: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, msg: MessageFromWebBrowser, _: &mut Context<Self>) -> Self::Result {
         println!("sending message to: {}", msg.charger);
         let message_id = Uuid::new_v4().to_simple().to_string();
         match msg.selected.as_str() {

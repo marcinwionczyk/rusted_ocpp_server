@@ -1,5 +1,5 @@
 use std::time::Instant;
-
+use uuid::Uuid;
 use actix::{Actor, Addr};
 use actix_files::Files;
 use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, post, Responder, web};
@@ -10,7 +10,8 @@ use serde::Serialize;
 mod config;
 mod messages;
 mod server;
-mod client;
+mod charger_client;
+mod webclient;
 mod error;
 
 const ALLOWED_SUB_PROTOCOLS: [&'static str; 1] = ["ocpp2.0.1"];
@@ -25,7 +26,7 @@ async fn ws_ocpp_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr
     match r.match_info().get("serial_id") {
         Some(serial_id) => {
             let res = ws::start_with_protocols(
-                client::ChargeStationWebSocketSession {
+                charger_client::ChargeStationWebSocketSession {
                     hb: Instant::now(),
                     name: String::from(serial_id),
                     address: srv.get_ref().clone(),
@@ -37,13 +38,17 @@ async fn ws_ocpp_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr
 }
 
 #[get("/api/webclient-socket")]
-async fn ws_webclient_index(r: HttpRequest, stream: web::Payload) -> Result<HttpResponse, ActixWebError> {
-    ws::start(client::WebBrowserWebSocketSession {hb: Instant::now() }, &r, stream)
+async fn ws_webclient_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, ActixWebError> {
+    ws::start(webclient::WebBrowserWebSocketSession {
+        id: Uuid::nil(),
+        hb: Instant::now(),
+        address: srv.get_ref().clone()}, &r, stream)
 }
 
 
 #[get("/api/get-chargers")]
 async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Result<impl Responder, error::Error> {
+    //Ok(web::Json(vec!["charger1", "charger2", "charger3", "charger4"]).with_header("Access-Control-Allow-Origin", "*"))
     match srv.send(server::GetChargers).await {
         Ok(chargers) => Ok(web::Json(chargers).with_header("Access-Control-Allow-Origin", "*")),
         Err(_) => Err(error::Error{ message: "Unable to get list of chargers".to_string(), status: 500 })
