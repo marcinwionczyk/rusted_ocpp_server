@@ -1100,37 +1100,6 @@ pub struct NotifyReportResponse {
 //=================================================================================================
 
 #[derive(Serialize, Deserialize)]
-pub struct PublishFirmwareRequest {
-    /// The MD5 checksum over the entire firmware file as a hexadecimal string of length 32.
-    pub checksum: String,
-    #[serde(rename = "customData")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub custom_data: Option<CustomDataType>,
-    /// This contains a string containing a URI pointing to a
-    /// location from which to retrieve the firmware.
-    pub location: String,
-    /// The Id of the request.
-    #[serde(rename = "requestId")]
-    pub request_id: i64,
-    /// This specifies how many times Charging Station must try
-    /// to download the firmware before giving up. If this field is not
-    /// present, it is left to Charging Station to decide how many times it wants to retry.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub retries: Option<i64>,
-    /// The interval in seconds
-    /// after which a retry may be
-    /// attempted. If this field is not
-    /// present, it is left to Charging
-    /// Station to decide how long to wait
-    /// between attempts.
-    #[serde(rename = "retryInterval")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub retry_interval: Option<i64>,
-}
-
-//=================================================================================================
-
-#[derive(Serialize, Deserialize)]
 pub struct PublishFirmwareResponse {
     #[serde(rename = "customData")]
     #[serde(skip_serializing_if = "Option::is_none")]

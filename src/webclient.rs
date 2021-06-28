@@ -4,12 +4,12 @@ use std::time::Instant;
 use crate::messages::*;
 use crate::server;
 use actix_web_actors::ws::ProtocolError;
-use crate::server::MessageToWebBrowser;
-use serde_json::Value;
+use crate::server::{MessageToWebBrowser, ConnectWebClient};
+use serde_json::{Value, Error};
 use uuid::Uuid;
 
 pub struct WebBrowserWebSocketSession {
-    pub id: Uuid,
+    pub id: String,
     pub hb: Instant,
     pub address: Addr<server::OcppServer>,
 }
@@ -32,9 +32,12 @@ impl Actor for WebBrowserWebSocketSession {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         self.hb(ctx);
+        let addr = ctx.address();
+        self.address.send(ConnectWebClient{ addr, serial_id: self.id.clone() })
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
+        self.address.do_send(server::DisconnectWebClient{ serial_id: self.id.clone() });
         Running::Stop
     }
 }
@@ -44,7 +47,7 @@ impl Handler<server::MessageToWebBrowser> for WebBrowserWebSocketSession {
     type Result = ();
 
     fn handle(&mut self, msg: MessageToWebBrowser, ctx: &mut Self::Context) -> Self::Result {
-        ctx.text(msg.0)
+        ctx.text(serde_json::to_string(&msg))
     }
 }
 
@@ -76,14 +79,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
                             match client_id.unwrap().as_str() {
                                 None => {}
                                 Some(uuid) => {
-                                    match Uuid::parse_str(uuid) {
-                                        Ok(parsed_uuid) => {
-                                            self.id = parsed_uuid;
-                                            let mut text = "{\"message\":\"Connected to the Ocpp server. Your client id is ".to_string();
-                                            text += parsed_uuid.to_string().as_str();
-                                            text += " \"}".to_string().as_str();
-                                            ctx.text(text);
-                                        }
+                                    self.id = uuid.into_string();
+                                    let text = serde_json::to_string(&MessageToWebBrowser{message: "Connected to the Ocpp server".to_string()});
+                                    match text {
+                                        Ok(t) => { ctx.text(t)}
                                         Err(_) => {}
                                     }
                                 }

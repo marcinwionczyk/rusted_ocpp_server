@@ -40,7 +40,7 @@ async fn ws_ocpp_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr
 #[get("/api/webclient-socket")]
 async fn ws_webclient_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, ActixWebError> {
     ws::start(webclient::WebBrowserWebSocketSession {
-        id: Uuid::nil(),
+        id: Uuid::nil().to_string(),
         hb: Instant::now(),
         address: srv.get_ref().clone()}, &r, stream)
 }
