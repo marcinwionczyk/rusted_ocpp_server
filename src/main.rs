@@ -1,5 +1,4 @@
 use std::time::Instant;
-use uuid::Uuid;
 use actix::{Actor, Addr};
 use actix_files::Files;
 use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, post, Responder, web};
@@ -37,14 +36,18 @@ async fn ws_ocpp_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr
     }
 }
 
-#[get("/api/webclient-socket")]
+#[get("/api/webclient-socket/{serial_id}")]
 async fn ws_webclient_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, ActixWebError> {
-    ws::start(webclient::WebBrowserWebSocketSession {
-        id: Uuid::nil().to_string(),
-        hb: Instant::now(),
-        address: srv.get_ref().clone()}, &r, stream)
+    match r.match_info().get("serial_id") {
+        Some(serial_id) => {
+            ws::start(webclient::WebBrowserWebSocketSession {
+                id: String::from(serial_id),
+                hb: Instant::now(),
+                address: srv.get_ref().clone()}, &r, stream)
+        }
+        None => Err(ActixWebError::from(HttpResponse::BadRequest()))
+    }
 }
-
 
 #[get("/api/get-chargers")]
 async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Result<impl Responder, error::Error> {
@@ -59,8 +62,8 @@ async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Result<impl R
 async fn post_request(srv: web::Data<Addr<server::OcppServer>>,
                       item: web::Json<server::MessageFromWebBrowser>) -> HttpResponse {
     match srv.send(item.into_inner()).await {
-        Ok(_) => HttpResponse::Ok().json(Status{ status: "ok" }),
-        Err(_) => HttpResponse::Ok().json(Status{ status: "shit happens" })
+        Ok(_) => HttpResponse::Ok().json(Status{ status: "0k" }),
+        Err(_) => HttpResponse::Ok().json(Status{ status: "not 0k" })
     }
 }
 

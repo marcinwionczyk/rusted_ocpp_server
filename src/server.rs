@@ -4,7 +4,6 @@ use serde::{ Serialize, Deserialize};
 use serde_json::{Value};
 use uuid::Uuid;
 use crate::messages::wrap_call;
-use actix::dev::MessageResponse;
 use crate::messages;
 // Code below is for handling multiple websocket sessions between Ocpp server and charge points
 //                ,_____________
@@ -32,14 +31,14 @@ use crate::messages;
 pub struct MessageToChargeStation(pub String);
 
 /// Ocpp server sends this messages through websocket session to the web browser
-#[derive(Message, Serialize)]
+#[derive(Message, Serialize, Deserialize)]
 #[rtype(result = "()")]
 pub struct MessageToWebBrowser{
     pub message: String
 }
 
 /// a OCPP message to OCPP server from web client
-#[derive(Message, Deserialize)]
+#[derive(Message, Clone, Deserialize)]
 #[rtype(result = "()")]
 pub struct MessageFromWebBrowser {
     #[serde(rename = "clientId")]
@@ -98,13 +97,19 @@ impl OcppServer {
 
     fn send_message_to_charger(&self, charger: &String, message: &String) {
         if let Some(session) = self.websocket_workers.get(charger) {
-            session.do_send(MessageToChargeStation(message.to_owned()));
+            match session.do_send(MessageToChargeStation(message.to_owned())) {
+                Err(e) => {println!("{}", e.to_string())}
+                Ok(_) => {}
+            }
         }
     }
 
-    fn send_message_to_web_client(&self, web_client: &String, message: String) {
+    fn send_message_to_web_client(&self, web_client: &String, message: &String) {
         if let Some(session) = self.webclient_workers.get(web_client) {
-            session.do_send(MessageToWebBrowser{message });
+            match session.do_send(MessageToWebBrowser{message: message.to_owned()}) {
+                Err(e) => {println!("{}", e.to_string())}
+                Ok(_) => {}
+            }
         }
     }
 
@@ -330,9 +335,9 @@ impl Handler<ConnectWebClient> for OcppServer {
     type Result = String;
 
     fn handle(&mut self, msg: ConnectWebClient, _: &mut Context<Self>) -> Self::Result {
-        self.webclient_workers.insert(msg.serial_id, msg.addr);
+        self.webclient_workers.insert(msg.serial_id.clone(), msg.addr);
         println!("OcppServer: Inserting web client: {}", msg.serial_id);
-        msg.serial_id.to_string()
+        msg.serial_id
     }
 }
 
@@ -371,12 +376,12 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
     fn handle(&mut self, msg: MessageFromWebBrowser, _: &mut Context<Self>) -> Self::Result {
         println!("sending message to: {}", msg.charger);
         let message_id = Uuid::new_v4().to_string();
-        if OcppServer::message_from_web_browser_is_valid(msg) {
+        if OcppServer::message_from_web_browser_is_valid(msg.clone()) {
             let call = wrap_call(&message_id, &msg.selected, &serde_json::to_string(&msg.payload).unwrap());
             self.send_message_to_charger(&msg.charger, &call);
-            self.send_message_to_web_client(&msg.client_id, format!("call sent to charger {}:\r\n{}", msg.charger, call))
+            self.send_message_to_web_client(&msg.client_id, &format!("call sent to charger {}:\r\n{}", &msg.charger, call))
         } else {
-            self.send_message_to_web_client(&msg.client_id, format!("improper message payload:\r\n{}", msg.payload))
+            self.send_message_to_web_client(&msg.client_id, &format!("improper payload:\r\n{}", &msg.payload))
         }
     }
 }

@@ -37,7 +37,7 @@ pub enum ErrorCode {
 }
 
 pub fn wrap_call(message_id: &String, action: &String, payload: &String) -> String {
-    format!("[2, {}, {}, {}]", message_id, action, payload)
+    format!("[2, {}, \"{}\", {}]", message_id, action, payload)
 }
 
 // [<MessageTypeId>, "<UniqueId>", {<Payload>}]
