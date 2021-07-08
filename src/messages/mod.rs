@@ -1,7 +1,8 @@
 use std::collections::HashMap;
-use std::time::{Duration};
+use std::time::Duration;
 
 use chrono::{DateTime, Utc};
+use serde::Deserialize;
 use serde_json::Value;
 
 pub mod requests;
@@ -36,14 +37,46 @@ pub enum ErrorCode {
     TypeConstraintViolation, // Payload for Action is syntactically correct but at least one of the fields violates data type constraints
 }
 
+#[derive(Deserialize)]
+pub struct CallResult{
+    pub msg_id: String,
+    pub payload: serde_json::Value
+}
+#[derive(Deserialize)]
+pub struct CallError{
+    pub msg_id: String,
+    pub error_code: String,
+    pub error_description: String,
+    pub error_details: String
+}
+
 pub fn wrap_call(message_id: &String, action: &String, payload: &String) -> String {
-    format!("[2, {}, \"{}\", {}]", message_id, action, payload)
+    let mut m = String::new();
+    let mut a = String::new();
+    if !(message_id.starts_with("\"") && message_id.ends_with("\"")) {
+        m = format!("\"{}\"", message_id);
+    } else {
+        m = message_id.clone();
+    };
+    if !(action.starts_with("\"") && action.ends_with("\"")) {
+        a = format!("\"{}\"", action);
+    } else {
+        a = action.clone();
+    };
+    format!("[2, {}, {}, {}]", m, a, payload)
 }
 
 // [<MessageTypeId>, "<UniqueId>", {<Payload>}]
 pub fn wrap_call_result(msg_id: &String, payload: String) -> String {
-    format!("[3, {}, {}]", msg_id, payload)
+    let mut m = String::new();
+    if !(msg_id.starts_with("\"") && msg_id.ends_with("\"")) {
+        m = format!("\"{}\"", msg_id);
+    } else {
+        m = msg_id.clone();
+    }
+    format!("[3, \"{}\", {}]", m, payload)
 }
+
 
 // [<MessageTypeId>, "<UniqueId>", "<errorCode>", "<errorDescription>", {<errorDetails>}]
 pub fn wrap_call_error_result(msg_id: &String, error_code: ErrorCode, error_details: &String) -> String {

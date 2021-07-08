@@ -5,6 +5,7 @@ use crate::messages::*;
 use crate::server;
 use actix_web_actors::ws::ProtocolError;
 use crate::messages::responses::TransactionEventResponse;
+use crate::server::MessageFromChargeStation;
 
 pub struct ChargeStationWebSocketSession {
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT)
@@ -173,8 +174,39 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                     }
                                 }
                             }
-                            3 => {}
-                            4 => {}
+                            3 => {
+                                let message_id_option = unpacked.get("MessageId");
+                                let payload_option = unpacked.get("Payload");
+                                if message_id_option.is_some() && payload_option.is_some() {
+                                    let call_result = CallResult{
+                                        msg_id: message_id_option.unwrap().clone(),
+                                        payload: serde_json::from_str(payload_option.unwrap().clone().as_str()).unwrap()
+                                    };
+                                    self.address.do_send(MessageFromChargeStation{
+                                        call_result: Some(call_result),
+                                        call_error: None
+                                    });
+                                }
+                            }
+                            4 => {
+                                let message_id_option = unpacked.get("MessageId");
+                                let error_code_option = unpacked.get("ErrorCode");
+                                let error_description_option = unpacked.get("ErrorDescription");
+                                let error_details_option = unpacked.get("ErrorDetails");
+                                if message_id_option.is_some() && error_code_option.is_some() &&
+                                    error_description_option.is_some() && error_details_option.is_some() {
+                                    let call_error = CallError{
+                                        msg_id: message_id_option.unwrap().clone(),
+                                        error_code: error_code_option.unwrap().clone(),
+                                        error_description: error_description_option.unwrap().clone(),
+                                        error_details: error_details_option.unwrap().clone()
+                                    };
+                                    self.address.do_send(MessageFromChargeStation{
+                                        call_result: None,
+                                        call_error: Some(call_error)
+                                    })
+                                }
+                            }
                             _ => {}
                         }
                     }

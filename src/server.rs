@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use serde::{ Serialize, Deserialize};
 use serde_json::{Value};
 use uuid::Uuid;
-use crate::messages::wrap_call;
+use crate::messages::{wrap_call, CallResult, CallError, wrap_call_error_result};
 use crate::messages;
+use actix::dev::MessageResponse;
 // Code below is for handling multiple websocket sessions between Ocpp server and charge points
 //                ,_____________
 //                | web client  |
@@ -30,6 +31,13 @@ use crate::messages;
 #[rtype(result = "()")]
 pub struct MessageToChargeStation(pub String);
 
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct MessageFromChargeStation{
+    pub call_result: Option<CallResult>,
+    pub call_error: Option<CallError>
+}
+
 /// Ocpp server sends this messages through websocket session to the web browser
 #[derive(Message, Serialize, Deserialize)]
 #[rtype(result = "()")]
@@ -47,7 +55,6 @@ pub struct MessageFromWebBrowser {
     pub selected: String,
     pub payload: Value, // OCPP message
 }
-
 
 /// New Chargepoint websocket session is created
 #[derive(Message)]
@@ -86,13 +93,18 @@ impl actix::Message for GetChargers { type Result = Vec<String>; }
 
 /// `OcppServer` manages websocket sessions with charge stations
 pub struct OcppServer {
+    awaiting_call_result: HashMap<String, String>, // key: MessageId, value: websocket_worker_id
     websocket_workers: HashMap<String, Recipient<MessageToChargeStation>>,
     webclient_workers: HashMap<String, Recipient<MessageToWebBrowser>>
 }
 
 impl OcppServer {
     pub fn new() -> OcppServer {
-        OcppServer { websocket_workers: HashMap::new(), webclient_workers: HashMap::new() }
+        OcppServer {
+            awaiting_call_result: HashMap::new(),
+            websocket_workers: HashMap::new(),
+            webclient_workers: HashMap::new()
+        }
     }
 
     fn send_message_to_charger(&self, charger: &String, message: &String) {
@@ -379,6 +391,7 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
         if OcppServer::message_from_web_browser_is_valid(msg.clone()) {
             let call = wrap_call(&message_id, &msg.selected, &serde_json::to_string(&msg.payload).unwrap());
             self.send_message_to_charger(&msg.charger, &call);
+            self.awaiting_call_result.insert(message_id, msg.client_id.clone());
             self.send_message_to_web_client(&msg.client_id, &format!("call sent to charger {}:\r\n{}", &msg.charger, call))
         } else {
             self.send_message_to_web_client(&msg.client_id, &format!("improper payload:\r\n{}", &msg.payload))
@@ -386,3 +399,29 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
     }
 }
 
+impl Handler<MessageFromChargeStation> for OcppServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: MessageFromChargeStation, _: &mut Context<Self>) -> Self::Result {
+        if msg.call_error.is_some() {
+            let call_error = msg.call_error.unwrap();
+            if let Some(webclient_id) = self.awaiting_call_result.get(call_error.msg_id.as_str()) {
+                let call_error_as_a_string = format!("Call error: [4, \"{}\", \"{}\", \"{}\", {}]",
+                                                     call_error.msg_id,
+                                                     call_error.error_code, call_error.error_description,
+                                                     call_error.error_details);
+                self.send_message_to_web_client(webclient_id, &call_error_as_a_string);
+                self.awaiting_call_result.remove(call_error.msg_id.as_str());
+            }
+        }
+        if msg.call_result.is_some() {
+            let call_result = msg.call_result.unwrap();
+            if let Some(webclient_id) = self.awaiting_call_result.get(call_result.msg_id.as_str()) {
+                let call_result_as_a_string = format!("Call result: [3, \"{}\", {}]",
+                                                     call_result.msg_id, call_result.payload.as_str().unwrap());
+                self.send_message_to_web_client(webclient_id, &call_result_as_a_string);
+                self.awaiting_call_result.remove(call_result.msg_id.as_str());
+            }
+        }
+    }
+}
