@@ -420,7 +420,7 @@ impl Handler<MessageFromChargeStation> for OcppServer {
             if let Some(webclient_id) = self.awaiting_call_result.get(key) {
                 ;
                 let call_result_as_a_string =
-                    format!("Call result: \r\n: {}",
+                    format!("Call result: \r\n{}",
                             wrap_call_result(&call_result.msg_id,
                                              (&call_result.payload).to_string()));
                 self.send_message_to_web_client(webclient_id, &call_result_as_a_string);
