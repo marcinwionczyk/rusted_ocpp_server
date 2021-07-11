@@ -53,28 +53,28 @@ pub struct CallError{
 pub fn wrap_call(message_id: &String, action: &String, payload: &String) -> String {
     let mut m = String::new();
     let mut a = String::new();
-    if !(message_id.starts_with("\"") && message_id.ends_with("\"")) {
+    if message_id.starts_with("\"") && message_id.ends_with("\"") {
+        m = format!("{}", message_id);
+    } else {
         m = format!("\"{}\"", message_id);
-    } else {
-        m = message_id.clone();
     };
-    if !(action.starts_with("\"") && action.ends_with("\"")) {
-        a = format!("\"{}\"", action);
+    if action.starts_with("\"") && action.ends_with("\"") {
+        a = format!("{}", action);
     } else {
-        a = action.clone();
+        a = format!("\"{}\"", action);
     };
     format!("[2, {}, {}, {}]", m, a, payload)
 }
 
 // [<MessageTypeId>, "<UniqueId>", {<Payload>}]
-pub fn wrap_call_result(msg_id: &String, payload: String) -> String {
+pub fn wrap_call_result(message_id: &String, payload: String) -> String {
     let mut m = String::new();
-    if !(msg_id.starts_with("\"") && msg_id.ends_with("\"")) {
-        m = format!("\"{}\"", msg_id);
+    if message_id.starts_with("\"") && message_id.ends_with("\"") {
+        m = format!("{}", message_id);
     } else {
-        m = msg_id.clone();
+        m = format!("\"{}\"", message_id);
     }
-    format!("[3, \"{}\", {}]", m, payload)
+    format!("[3, {}, {}]", m, payload)
 }
 
 

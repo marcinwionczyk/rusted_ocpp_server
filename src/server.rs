@@ -3,9 +3,8 @@ use std::collections::HashMap;
 use serde::{ Serialize, Deserialize};
 use serde_json::{Value};
 use uuid::Uuid;
-use crate::messages::{wrap_call, CallResult, CallError, wrap_call_error_result};
+use crate::messages::{wrap_call, CallResult, CallError, wrap_call_result, wrap_call_error_result};
 use crate::messages;
-use actix::dev::MessageResponse;
 // Code below is for handling multiple websocket sessions between Ocpp server and charge points
 //                ,_____________
 //                | web client  |
@@ -416,9 +415,14 @@ impl Handler<MessageFromChargeStation> for OcppServer {
         }
         if msg.call_result.is_some() {
             let call_result = msg.call_result.unwrap();
-            if let Some(webclient_id) = self.awaiting_call_result.get(call_result.msg_id.as_str()) {
-                let call_result_as_a_string = format!("Call result: [3, \"{}\", {}]",
-                                                     call_result.msg_id, call_result.payload.as_str().unwrap());
+            let key = call_result.msg_id.strip_prefix("\"").unwrap().strip_suffix("\"").unwrap();
+
+            if let Some(webclient_id) = self.awaiting_call_result.get(key) {
+                ;
+                let call_result_as_a_string =
+                    format!("Call result: \r\n: {}",
+                            wrap_call_result(&call_result.msg_id,
+                                             (&call_result.payload).to_string()));
                 self.send_message_to_web_client(webclient_id, &call_result_as_a_string);
                 self.awaiting_call_result.remove(call_result.msg_id.as_str());
             }
