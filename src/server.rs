@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{ Serialize, Deserialize};
 use serde_json::{Value};
 use uuid::Uuid;
-use crate::messages::{wrap_call, CallResult, CallError, wrap_call_result, wrap_call_error_result};
+use crate::messages::{wrap_call, CallResult, CallError, wrap_call_result};
 use crate::messages;
 // Code below is for handling multiple websocket sessions between Ocpp server and charge points
 //                ,_____________
@@ -418,7 +418,6 @@ impl Handler<MessageFromChargeStation> for OcppServer {
             let key = call_result.msg_id.strip_prefix("\"").unwrap().strip_suffix("\"").unwrap();
 
             if let Some(webclient_id) = self.awaiting_call_result.get(key) {
-                ;
                 let call_result_as_a_string =
                     format!("Call result: \r\n{}",
                             wrap_call_result(&call_result.msg_id,
