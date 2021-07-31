@@ -336,3 +336,137 @@ pub enum UnlockConnectorStatus {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateFirmwareResponse {
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CertificateSignedResponse {
+    pub status: CertificateSignedStatusEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum CertificateSignedStatusEnumType {
+    Accepted,
+    Rejected,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DeleteCertificateResponse {
+    pub status: DeleteCertificateStatusEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum DeleteCertificateStatusEnumType {
+    Accepted,
+    Failed,
+    NotFound,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ExtendedTriggerMessageResponse {
+    pub status: TriggerMessageStatusEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum TriggerMessageStatusEnumType {
+    Accepted,
+    NotImplemented,
+    Rejected,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetInstalledCertificateIdsResponse {
+    #[serde(rename = "certificateHashData")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub certificate_hash_data: Option<Vec<CertificateHashDataType>>,
+    pub status: GetInstalledCertificateStatusEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CertificateHashDataType {
+    #[serde(rename = "hashAlgorithm")]
+    pub hash_algorithm: HashAlgorithmEnumType,
+    #[serde(rename = "issuerKeyHash")]
+    pub issuer_key_hash: String,
+    #[serde(rename = "issuerNameHash")]
+    pub issuer_name_hash: String,
+    #[serde(rename = "serialNumber")]
+    pub serial_number: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum HashAlgorithmEnumType {
+    #[serde(rename = "SHA256")]
+    Sha256,
+    #[serde(rename = "SHA384")]
+    Sha384,
+    #[serde(rename = "SHA512")]
+    Sha512,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum GetInstalledCertificateStatusEnumType {
+    Accepted,
+    NotFound,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetLogResponse {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub filename: Option<String>,
+    pub status: LogStatusEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum LogStatusEnumType {
+    Accepted,
+    AcceptedCanceled,
+    Rejected,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct InstallCertificateResponse {
+    pub status: InstallCertificateStatusEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum InstallCertificateStatusEnumType {
+    Accepted,
+    Failed,
+    Rejected,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LogStatusNotificationResponse {
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SecurityEventNotificationResponse {
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SignCertificateResponse {
+    pub status: GenericStatusEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum GenericStatusEnumType {
+    Accepted,
+    Rejected,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SignedFirmwareStatusNotificationResponse {
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SignedUpdateFirmwareResponse {
+    pub status: UpdateFirmwareStatusEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum UpdateFirmwareStatusEnumType {
+    Accepted,
+    AcceptedCanceled,
+    InvalidCertificate,
+    Rejected,
+    RevokedCertificate,
+}

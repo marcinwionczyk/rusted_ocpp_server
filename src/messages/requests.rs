@@ -670,3 +670,192 @@ pub enum RequestedMessage {
     StatusNotification,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CertificateSignedRequest {
+    #[serde(rename = "certificateChain")]
+    pub certificate_chain: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DeleteCertificateRequest {
+    #[serde(rename = "certificateHashData")]
+    pub certificate_hash_data: CertificateHashDataType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CertificateHashDataType {
+    #[serde(rename = "hashAlgorithm")]
+    pub hash_algorithm: HashAlgorithmEnumType,
+    #[serde(rename = "issuerKeyHash")]
+    pub issuer_key_hash: String,
+    #[serde(rename = "issuerNameHash")]
+    pub issuer_name_hash: String,
+    #[serde(rename = "serialNumber")]
+    pub serial_number: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum HashAlgorithmEnumType {
+    #[serde(rename = "SHA256")]
+    Sha256,
+    #[serde(rename = "SHA384")]
+    Sha384,
+    #[serde(rename = "SHA512")]
+    Sha512,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ExtendedTriggerMessageRequest {
+    #[serde(rename = "connectorId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub connector_id: Option<i64>,
+    #[serde(rename = "requestedMessage")]
+    pub requested_message: MessageTriggerEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum MessageTriggerEnumType {
+    BootNotification,
+    FirmwareStatusNotification,
+    Heartbeat,
+    LogStatusNotification,
+    MeterValues,
+    SignChargePointCertificate,
+    StatusNotification,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetInstalledCertificateIdsRequest {
+    #[serde(rename = "certificateType")]
+    pub certificate_type: CertificateUseEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum CertificateUseEnumType {
+    CentralSystemRootCertificate,
+    ManufacturerRootCertificate,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetLogRequest {
+    pub log: LogParametersType,
+    #[serde(rename = "logType")]
+    pub log_type: LogEnumType,
+    #[serde(rename = "requestId")]
+    pub request_id: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retries: Option<i64>,
+    #[serde(rename = "retryInterval")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retry_interval: Option<i64>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LogParametersType {
+    #[serde(rename = "latestTimestamp")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub latest_timestamp: Option<String>,
+    #[serde(rename = "oldestTimestamp")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub oldest_timestamp: Option<String>,
+    #[serde(rename = "remoteLocation")]
+    pub remote_location: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum LogEnumType {
+    DiagnosticsLog,
+    SecurityLog,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct InstallCertificateRequest {
+    pub certificate: String,
+    #[serde(rename = "certificateType")]
+    pub certificate_type: CertificateUseEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LogStatusNotificationRequest {
+    #[serde(rename = "requestId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub request_id: Option<i64>,
+    pub status: UploadLogStatusEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum UploadLogStatusEnumType {
+    BadMessage,
+    Idle,
+    NotSupportedOperation,
+    PermissionDenied,
+    UploadFailure,
+    Uploaded,
+    Uploading,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SecurityEventNotificationRequest {
+    #[serde(rename = "techInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tech_info: Option<String>,
+    pub timestamp: String,
+    #[serde(rename = "type")]
+    pub security_event_notification_request_type: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SignCertificateRequest {
+    pub csr: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SignedFirmwareStatusNotificationRequest {
+    #[serde(rename = "requestId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub request_id: Option<i64>,
+    pub status: FirmwareStatusEnumType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum FirmwareStatusEnumType {
+    DownloadFailed,
+    DownloadPaused,
+    DownloadScheduled,
+    Downloaded,
+    Downloading,
+    Idle,
+    InstallRebooting,
+    InstallScheduled,
+    InstallVerificationFailed,
+    InstallationFailed,
+    Installed,
+    Installing,
+    InvalidSignature,
+    SignatureVerified,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SignedUpdateFirmwareRequest {
+    pub firmware: FirmwareType,
+    #[serde(rename = "requestId")]
+    pub request_id: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retries: Option<i64>,
+    #[serde(rename = "retryInterval")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retry_interval: Option<i64>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct FirmwareType {
+    #[serde(rename = "installDateTime")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub install_date_time: Option<String>,
+    pub location: String,
+    #[serde(rename = "retrieveDateTime")]
+    pub retrieve_date_time: String,
+    pub signature: String,
+    #[serde(rename = "signingCertificate")]
+    pub signing_certificate: String,
+}
