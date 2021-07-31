@@ -13,7 +13,7 @@ mod charger_client;
 mod webclient;
 mod error;
 
-const ALLOWED_SUB_PROTOCOLS: [&'static str; 1] = ["ocpp2.0.1"];
+const ALLOWED_SUB_PROTOCOLS: [&'static str; 1] = ["ocpp1.6"];
 
 #[derive(Serialize)]
 struct Status{
