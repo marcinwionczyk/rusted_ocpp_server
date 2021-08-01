@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{ Serialize, Deserialize};
 use serde_json::{Value};
 use uuid::Uuid;
-use crate::messages::{wrap_call, CallResult, CallError, wrap_call_result};
+use crate::messages::{wrap_call, Call, CallResult, CallError, wrap_call_result};
 use crate::messages;
 // Code below is for handling multiple websocket sessions between Ocpp server and charge points
 //                ,_____________
@@ -33,6 +33,7 @@ pub struct MessageToChargeStation(pub String);
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct MessageFromChargeStation{
+    pub call: Option<Call>,
     pub call_result: Option<CallResult>,
     pub call_error: Option<CallError>
 }
@@ -94,7 +95,8 @@ impl actix::Message for GetChargers { type Result = Vec<String>; }
 pub struct OcppServer {
     awaiting_call_result: HashMap<String, String>, // key: MessageId, value: websocket_worker_id
     websocket_workers: HashMap<String, Recipient<MessageToChargeStation>>,
-    webclient_workers: HashMap<String, Recipient<MessageToWebBrowser>>
+    webclient_workers: HashMap<String, Recipient<MessageToWebBrowser>>,
+    chargers_webclients_pair: HashMap<String, String>
 }
 
 impl OcppServer {
@@ -102,7 +104,8 @@ impl OcppServer {
         OcppServer {
             awaiting_call_result: HashMap::new(),
             websocket_workers: HashMap::new(),
-            webclient_workers: HashMap::new()
+            webclient_workers: HashMap::new(),
+            chargers_webclients_pair: HashMap::new()
         }
     }
 
@@ -131,13 +134,13 @@ impl OcppServer {
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
-            "CertificateSigned" => {
-                let res: Result<messages::requests::CertificateSignedRequest, serde_json::Error> =
+            "ChangeAvailability" => {
+                let res: Result<messages::requests::ChangeAvailabilityRequest, serde_json::Error> =
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
-            "ChangeAvailability" => {
-                let res: Result<messages::requests::ChangeAvailabilityRequest, serde_json::Error> =
+            "ChangeConfiguration" => {
+                let res: Result<messages::requests::ChangeConfigurationRequest, serde_json::Error> =
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
@@ -151,58 +154,23 @@ impl OcppServer {
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
-            "ClearDisplayMessage" => {
-                let res: Result<messages::requests::ClearDisplayMessageRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "ClearVariableMonitoring" => {
-                let res: Result<messages::requests::ClearVariableMonitoringRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "CostUpdated" => {
-                let res: Result<messages::requests::CostUpdatedRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "CustomerInformation" => {
-                let res: Result<messages::requests::CustomerInformationRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
             "DataTransfer" => {
                 let res: Result<messages::requests::DataTransferRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "DeleteCertificate" => {
-                let res: Result<messages::requests::DeleteCertificateRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "GetBaseReport" => {
-                let res: Result<messages::requests::GetBaseReportRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "GetChargingProfiles" => {
-                let res: Result<messages::requests::GetChargingProfilesRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
+                serde_json::from_value(msg.payload);
                 res.is_ok()
             },
             "GetCompositeSchedule" => {
                 let res: Result<messages::requests::GetCompositeScheduleRequest, serde_json::Error> =
+                serde_json::from_value(msg.payload);
+                res.is_ok()
+            },
+            "GetConfiguration" => {
+                let res: Result<messages::requests::GetConfigurationRequest, serde_json::Error> =
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
-            "GetDisplayMessages" => {
-                let res: Result<messages::requests::GetDisplayMessagesRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "GetInstalledCertificateIds" => {
-                let res: Result<messages::requests::GetInstalledCertificateIdsRequest, serde_json::Error> =
+            "GetDiagnostics" => {
+                let res: Result<messages::requests::GetDiagnosticsRequest, serde_json::Error> =
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
@@ -211,38 +179,13 @@ impl OcppServer {
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
-            "GetLog" => {
-                let res: Result<messages::requests::GetLogRequest, serde_json::Error> =
+            "RemoteStartTransaction" => {
+                let res: Result<messages::requests::RemoteStartTransactionRequest, serde_json::Error> =
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
-            "GetMonitoringReport" => {
-                let res: Result<messages::requests::GetMonitoringReportRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "GetReport" => {
-                let res: Result<messages::requests::GetReportRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "GetTransactionStatus" => {
-                let res: Result<messages::requests::GetTransactionStatusRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "GetVariables" => {
-                let res: Result<messages::requests::GetVariablesRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "InstallCertificate" => {
-                let res: Result<messages::requests::InstallCertificateRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "PublishFirmware" => {
-                let res: Result<messages::requests::PublishFirmwareRequest, serde_json::Error> =
+            "RemoteStopTransaction" => {
+                let res: Result<messages::requests::RemoteStopTransactionRequest, serde_json::Error> =
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
@@ -266,41 +209,6 @@ impl OcppServer {
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
-            "SetDisplayMessage" => {
-                let res: Result<messages::requests::SetDisplayMessageRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "SetMonitoringBase" => {
-                let res: Result<messages::requests::SetMonitoringBaseRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "SetMonitoringLevel" => {
-                let res: Result<messages::requests::SetMonitoringLevelRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "SetNetworkProfile" => {
-                let res: Result<messages::requests::SetNetworkProfileRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "SetVariableMonitoring" => {
-                let res: Result<messages::requests::SetVariableMonitoringRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "SetVariables" => {
-                let res: Result<messages::requests::SetVariablesRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
-            "SignCertificate" => {
-                let res: Result<messages::requests::SignCertificateRequest, serde_json::Error> =
-                    serde_json::from_value(msg.payload);
-                res.is_ok()
-            },
             "TriggerMessage" => {
                 let res: Result<messages::requests::TriggerMessageRequest, serde_json::Error> =
                     serde_json::from_value(msg.payload);
@@ -311,13 +219,48 @@ impl OcppServer {
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
-            "UnpublishFirmware" => {
-                let res: Result<messages::requests::UnpublishFirmwareRequest, serde_json::Error> =
+            "UpdateFirmware" => {
+                let res: Result<messages::requests::UpdateFirmwareRequest, serde_json::Error> =
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
-            "UpdateFirmware" => {
-                let res: Result<messages::requests::UpdateFirmwareRequest, serde_json::Error> =
+            "CertificateSigned" => {
+                let res: Result<messages::requests::CertificateSignedRequest, serde_json::Error> =
+                    serde_json::from_value(msg.payload);
+                res.is_ok()
+            },
+            "DeleteCertificate" => {
+                let res: Result<messages::requests::DeleteCertificateRequest, serde_json::Error> =
+                    serde_json::from_value(msg.payload);
+                res.is_ok()
+            },
+            "ExtendedTriggerMessage" => {
+                let res: Result<messages::requests::ExtendedTriggerMessageRequest, serde_json::Error> =
+                    serde_json::from_value(msg.payload);
+                res.is_ok()
+            },
+            "GetInstalledCertificateIds" => {
+                let res: Result<messages::requests::GetInstalledCertificateIdsRequest, serde_json::Error> =
+                    serde_json::from_value(msg.payload);
+                res.is_ok()
+            },
+            "GetLog" => {
+                let res: Result<messages::requests::GetLogRequest, serde_json::Error> =
+                    serde_json::from_value(msg.payload);
+                res.is_ok()
+            },
+            "InstallCertificate" => {
+                let res: Result<messages::requests::InstallCertificateRequest, serde_json::Error> =
+                    serde_json::from_value(msg.payload);
+                res.is_ok()
+            },
+            "SignCertificate" => {
+                let res: Result<messages::requests::SignCertificateRequest, serde_json::Error> =
+                    serde_json::from_value(msg.payload);
+                res.is_ok()
+            },
+            "SignedUpdateFirmware" => {
+                let res: Result<messages::requests::SignedUpdateFirmwareRequest, serde_json::Error> =
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             }
@@ -404,26 +347,26 @@ impl Handler<MessageFromChargeStation> for OcppServer {
     fn handle(&mut self, msg: MessageFromChargeStation, _: &mut Context<Self>) -> Self::Result {
         if msg.call_error.is_some() {
             let call_error = msg.call_error.unwrap();
-            if let Some(webclient_id) = self.awaiting_call_result.get(call_error.msg_id.as_str()) {
+            if let Some(webclient_id) = self.awaiting_call_result.get(call_error.unique_id.as_str()) {
                 let call_error_as_a_string = format!("Call error: [4, \"{}\", \"{}\", \"{}\", {}]",
-                                                     call_error.msg_id,
+                                                     call_error.unique_id,
                                                      call_error.error_code, call_error.error_description,
                                                      call_error.error_details);
                 self.send_message_to_web_client(webclient_id, &call_error_as_a_string);
-                self.awaiting_call_result.remove(call_error.msg_id.as_str());
+                self.awaiting_call_result.remove(call_error.unique_id.as_str());
             }
         }
         if msg.call_result.is_some() {
             let call_result = msg.call_result.unwrap();
-            let key = call_result.msg_id.strip_prefix("\"").unwrap().strip_suffix("\"").unwrap();
+            let key = call_result.unique_id.strip_prefix("\"").unwrap().strip_suffix("\"").unwrap();
 
             if let Some(webclient_id) = self.awaiting_call_result.get(key) {
                 let call_result_as_a_string =
                     format!("Call result: \r\n{}",
-                            wrap_call_result(&call_result.msg_id,
+                            wrap_call_result(&call_result.unique_id,
                                              (&call_result.payload).to_string()));
                 self.send_message_to_web_client(webclient_id, &call_result_as_a_string);
-                self.awaiting_call_result.remove(call_result.msg_id.as_str());
+                self.awaiting_call_result.remove(call_result.unique_id.as_str());
             }
         }
     }

@@ -1,5 +1,4 @@
 use serde::{Serialize, Deserialize};
-use serde_json::Value;
 
 // structures created with the help of https://app.quicktype.io/ and json schema provided by
 // https://www.openchargealliance.org/

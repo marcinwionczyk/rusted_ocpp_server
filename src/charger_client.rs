@@ -4,7 +4,6 @@ use std::time::Instant;
 use crate::messages::*;
 use crate::server;
 use actix_web_actors::ws::ProtocolError;
-use crate::messages::responses::TransactionEventResponse;
 use crate::server::MessageFromChargeStation;
 
 pub struct ChargeStationWebSocketSession {
@@ -105,63 +104,110 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                             2 => {
                                 let action: &str = &unpacked.get("Action").unwrap().as_str()
                                     .replace("\"", "");
+                                let call = Call{
+                                    unique_id: unpacked.get("MessageId").unwrap().clone(),
+                                    action: unpacked.get("Action").unwrap().clone(),
+                                    payload: serde_json::from_str(unpacked.get("Payload").unwrap()).unwrap()
+                                };
                                 match action {
+                                    "Authorize" => {
+                                        self.address.do_send(MessageFromChargeStation{
+                                            call: Some(call),
+                                            call_result: None,
+                                            call_error: None
+                                        });
+                                    },
                                     "BootNotification" => {
                                         let response = boot_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
+                                        ctx.text(response);
+                                    },
+                                    "DataTransfer" => {
+                                        self.address.do_send(MessageFromChargeStation{
+                                            call: Some(call),
+                                            call_result: None,
+                                            call_error: None
+                                        });
+                                    },
+                                    "DiagnosticsStatusNotification" => {
+                                        let response = diagnostics_status_notification_response(
+                                            unpacked.get("MessageId").unwrap(),
+                                            unpacked.get("Payload").unwrap());
+                                        println!("{}: outgoing response: {}", self.name, response);
+                                        ctx.text(response);
+                                    },
+                                    "FirmwareStatusNotification" => {
+                                        let response = firmware_status_notification_response(
+                                            unpacked.get("MessageId").unwrap(),
+                                            unpacked.get("Payload").unwrap());
+                                        println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response)
-                                    }
+                                    },
+                                    "Heartbeat" => {
+                                        let response = heartbeat_response(
+                                            unpacked.get("MessageId").unwrap());
+                                        println!("{}: outgoing response: {}", self.name, response);
+                                        ctx.text(response)
+                                    },
+                                    "MeterValues" => {
+                                        let response = meter_values_response(
+                                            unpacked.get("MessageId").unwrap(),
+                                            unpacked.get("Payload").unwrap());
+                                        println!("{}: outgoing response: {}", self.name, response);
+                                        ctx.text(response);
+                                    },
+                                    "StartTransaction" => {
+                                        self.address.do_send(MessageFromChargeStation{
+                                            call: Some(call),
+                                            call_result: None,
+                                            call_error: None
+                                        });
+                                    },
                                     "StatusNotification" => {
                                         let response = status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
-                                    }
-                                    "Heartbeat" => {
-                                        let response = heartbeat_response(
-                                            unpacked.get("MessageId").unwrap());
+                                    },
+                                    "StopTransaction" => {
+                                        self.address.do_send(MessageFromChargeStation{
+                                            call: Some(call),
+                                            call_result: None,
+                                            call_error: None
+                                        });
+                                    },
+                                    "LogStatusNotification" => {
+                                        let response = log_status_notification_response(
+                                            unpacked.get("MessageId").unwrap(),
+                                            unpacked.get("Payload").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
-                                    }
-                                    "Authorize" => {
-                                        let response = authorize_response(
+                                    },
+                                    "SecurityEventNotification" => {
+                                        let response = security_event_notification_response(
+                                            unpacked.get("MessageId").unwrap(),
+                                            unpacked.get("Payload").unwrap());
+                                        println!("{}: outgoing response: {}", self.name, response);
+                                        ctx.text(response);
+                                    },
+                                    "SignCertificate" => {
+                                        self.address.do_send(MessageFromChargeStation{
+                                            call: Some(call),
+                                            call_result: None,
+                                            call_error: None
+                                        });
+                                    },
+                                    "SignedFirmwareStatusNotification" => {
+                                        let response = signed_firmware_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
                                     }
-                                    "NotifyEvent" => {
-                                        let response = notify_event_response(
-                                            unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
-                                        ctx.text(response);
-                                    }
-                                    "NotifyReport" => {
-                                        let response = notify_report_response(
-                                            unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
-                                        ctx.text(response);
-                                    }
-                                    "TransactionEvent" => {
-                                        let response = transaction_event_response(
-                                            unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap(),
-                                            TransactionEventResponse {
-                                                charging_priority: None,
-                                                custom_data: None,
-                                                id_token_info: None,
-                                                total_cost: None,
-                                                updated_personal_message: None,
-                                            },
-                                        );
-                                        println!("{}: outgoing response: {}", self.name, response);
-                                        ctx.text(response);
-                                    }
+
                                     _ => {
                                         let response =
                                             wrap_call_error_result(
@@ -179,10 +225,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                 let payload_option = unpacked.get("Payload");
                                 if message_id_option.is_some() && payload_option.is_some() {
                                     let call_result = CallResult{
-                                        msg_id: message_id_option.unwrap().clone(),
+                                        unique_id: message_id_option.unwrap().clone(),
                                         payload: serde_json::from_str(payload_option.unwrap().clone().as_str()).unwrap()
                                     };
                                     self.address.do_send(MessageFromChargeStation{
+                                        call: None,
                                         call_result: Some(call_result),
                                         call_error: None
                                     });
@@ -196,12 +243,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                 if message_id_option.is_some() && error_code_option.is_some() &&
                                     error_description_option.is_some() && error_details_option.is_some() {
                                     let call_error = CallError{
-                                        msg_id: message_id_option.unwrap().clone(),
+                                        unique_id: message_id_option.unwrap().clone(),
                                         error_code: error_code_option.unwrap().clone(),
                                         error_description: error_description_option.unwrap().clone(),
                                         error_details: error_details_option.unwrap().clone()
                                     };
                                     self.address.do_send(MessageFromChargeStation{
+                                        call: None,
                                         call_result: None,
                                         call_error: Some(call_error)
                                     })

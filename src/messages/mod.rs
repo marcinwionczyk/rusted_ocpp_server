@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, SecondsFormat};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -38,13 +38,20 @@ pub enum ErrorCode {
 }
 
 #[derive(Deserialize)]
+pub struct Call{
+    pub unique_id: String,
+    pub action: String,
+    pub payload: serde_json::Value
+}
+
+#[derive(Deserialize)]
 pub struct CallResult{
-    pub msg_id: String,
+    pub unique_id: String,
     pub payload: serde_json::Value
 }
 #[derive(Deserialize)]
 pub struct CallError{
-    pub msg_id: String,
+    pub unique_id: String,
     pub error_code: String,
     pub error_description: String,
     pub error_details: String
@@ -180,25 +187,11 @@ pub fn boot_notification_response(message_id: &String, payload: &String) -> Stri
         Ok(_) => {
             let at_now:DateTime<Utc> = Utc::now();
             let boot_response: responses::BootNotificationResponse = responses::BootNotificationResponse {
-                current_time: at_now.to_rfc3339(),
-                custom_data: None,
-                interval: HEARTBEAT_INTERVAL.as_secs() as i64,
-                status: responses::RegistrationStatusEnumType::Accepted,
-                status_info: None
+                current_time: at_now.to_rfc3339_opts(SecondsFormat::Millis, false),
+                interval: 3600, // 1 hour
+                status: responses::BootNotificationStatus::Accepted,
             };
             wrap_call_result(message_id, serde_json::to_string(&boot_response).unwrap())
-        }
-        Err(e) => {
-            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
-        }
-    }
-}
-
-pub fn status_notification_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::StatusNotificationRequest, serde_json::Error> {
-        Ok(_) => {
-            let response = responses::StatusNotificationResponse{ custom_data: None };
-            wrap_call_result(message_id, serde_json::to_string(&response).unwrap())
         }
         Err(e) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
@@ -209,31 +202,16 @@ pub fn status_notification_response(message_id: &String, payload: &String) -> St
 pub fn heartbeat_response(message_id: &String) -> String {
     let at_now:DateTime<Utc> = Utc::now();
     let heartbeat_resp: responses::HeartbeatResponse = responses::HeartbeatResponse {
-        current_time: at_now.to_rfc3339(),
-        custom_data: None
+        current_time: at_now.to_rfc3339_opts(SecondsFormat::Millis, false),
     };
     wrap_call_result(message_id, serde_json::to_string(&heartbeat_resp).unwrap())
 }
 
-pub fn authorize_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::AuthorizeRequest, serde_json::Error> {
+pub fn diagnostics_status_notification_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::DiagnosticsStatusNotificationRequest, serde_json::Error> {
         Ok(_) => {
-            let authorize_resp: responses::AuthorizeResponse = responses::AuthorizeResponse{
-                certificate_status: None,
-                custom_data: None,
-                id_token_info: responses::IdTokenInfoType{
-                    cache_expiry_date_time: None,
-                    charging_priority: None,
-                    custom_data: None,
-                    evse_id: None,
-                    group_id_token: None,
-                    language1: None,
-                    language2: None,
-                    personal_message: None,
-                    status: responses::AuthorizationStatusEnumType::Accepted
-                }
-            };
-            wrap_call_result(message_id, serde_json::to_string(&authorize_resp).unwrap())
+            let diagnostics_status_notification_resp = responses::DiagnosticsStatusNotificationResponse{};
+            wrap_call_result(message_id, serde_json::to_string(&diagnostics_status_notification_resp).unwrap())
         },
         Err(e) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
@@ -241,45 +219,75 @@ pub fn authorize_response(message_id: &String, payload: &String) -> String {
     }
 }
 
-pub fn notify_event_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::NotifyEventRequest, serde_json::Error> {
+pub fn firmware_status_notification_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::FirmwareStatusNotificationRequest,
+            serde_json::Error> {
         Ok(_) => {
-            let notify_event_response = responses::NotifyEventResponse{
-                custom_data: None
-            };
-            wrap_call_result(message_id, serde_json::to_string(&notify_event_response).unwrap())
+            let firmware_status_notification_resp = responses::FirmwareStatusNotificationResponse{};
+            wrap_call_result(message_id, serde_json::to_string(&firmware_status_notification_resp).unwrap())
         },
         Err(e) => {
-            wrap_call_error_result(message_id, ErrorCode::FormatViolation,
-                                   &format!("{:#?}", e))
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }
     }
 }
 
-pub fn notify_report_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::NotifyReportRequest, serde_json::Error> {
+pub fn meter_values_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::MeterValuesRequest, serde_json::Error> {
         Ok(_) => {
-            let notify_report_response = responses::NotifyReportResponse{ custom_data: None };
-            wrap_call_result(message_id,
-                             serde_json::to_string(&notify_report_response).unwrap())
+            let meter_values_resp = responses::MeterValuesResponse{};
+            wrap_call_result(message_id, serde_json::to_string(&meter_values_resp).unwrap())
         },
         Err(e) => {
-            wrap_call_error_result(message_id, ErrorCode::FormatViolation,
-                                   &format!("{:#?}", e))
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }
     }
 }
 
-pub fn transaction_event_response(message_id: &String, payload: &String,
-                                  response: responses::TransactionEventResponse) -> String {
-    match serde_json::from_str(&payload) as Result<requests::TransactionEventRequest, serde_json::Error> {
+pub fn status_notification_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::StatusNotificationRequest, serde_json::Error> {
         Ok(_) => {
-            wrap_call_result(message_id,
-                             serde_json::to_string(&response).unwrap())
+            let status_notification_resp = responses::StatusNotificationResponse{};
+            wrap_call_result(message_id, serde_json::to_string(&status_notification_resp).unwrap())
         },
         Err(e) => {
-            wrap_call_error_result(message_id, ErrorCode::FormatViolation,
-                                   &format!("{:#?}", e))
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
+        }
+    }
+}
+
+pub fn log_status_notification_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::LogStatusNotificationRequest, serde_json::Error> {
+        Ok(_) => {
+            let log_status_notification_resp = responses::LogStatusNotificationResponse{};
+            wrap_call_result(message_id, serde_json::to_string(&log_status_notification_resp).unwrap())
+        },
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
+        }
+    }
+}
+
+pub fn security_event_notification_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::SecurityEventNotificationRequest, serde_json::Error> {
+        Ok(_) => {
+            let security_event_notification_resp = responses::SecurityEventNotificationResponse{};
+            wrap_call_result(message_id, serde_json::to_string(&security_event_notification_resp).unwrap())
+        },
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
+        }
+    }
+}
+
+pub fn signed_firmware_status_notification_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::SignedFirmwareStatusNotificationRequest, serde_json::Error> {
+        Ok(_) => {
+            let signed_firmware_status_notification_resp = responses::SignedFirmwareStatusNotificationResponse{};
+            wrap_call_result(message_id, serde_json::to_string(&signed_firmware_status_notification_resp).unwrap())
+        },
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }
     }
 }
