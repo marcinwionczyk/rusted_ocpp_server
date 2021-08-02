@@ -33,6 +33,7 @@ pub struct MessageToChargeStation(pub String);
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct MessageFromChargeStation{
+    pub charger_id: String,
     pub call: Option<Call>,
     pub call_result: Option<CallResult>,
     pub call_error: Option<CallError>
@@ -96,7 +97,7 @@ pub struct OcppServer {
     awaiting_call_result: HashMap<String, String>, // key: MessageId, value: websocket_worker_id
     websocket_workers: HashMap<String, Recipient<MessageToChargeStation>>,
     webclient_workers: HashMap<String, Recipient<MessageToWebBrowser>>,
-    chargers_webclients_pair: HashMap<String, String>
+    chargers_webclients_pair: HashMap<String, String> // key: charger_id, value: browser_id
 }
 
 impl OcppServer {
@@ -300,15 +301,22 @@ impl Handler<DisconnectCharger> for OcppServer {
     fn handle(&mut self, msg: DisconnectCharger, _: &mut Context<Self>) -> Self::Result {
         println!("OcppServer: Removing charger: {}", msg.serial_id);
         self.websocket_workers.remove(msg.serial_id.as_str());
+        self.chargers_webclients_pair.remove(msg.serial_id.as_str());
     }
 }
 
 impl Handler<DisconnectWebClient> for OcppServer {
     type Result = ();
 
+
     fn handle(&mut self, msg: DisconnectWebClient, _: &mut Context<Self>) -> Self::Result {
-        println!("OcppServer: Removing web client: {}", msg.serial_id.to_string());
+        println!("OcppServer: Removing web client: {}", msg.serial_id);
         self.webclient_workers.remove(&msg.serial_id);
+        for (item, value) in self.chargers_webclients_pair.clone() {
+            if value == msg.serial_id {
+                self.chargers_webclients_pair.remove(&item);
+            }
+        }
     }
 }
 
@@ -334,6 +342,7 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
             let call = wrap_call(&message_id, &msg.selected, &serde_json::to_string(&msg.payload).unwrap());
             self.send_message_to_charger(&msg.charger, &call);
             self.awaiting_call_result.insert(message_id, msg.client_id.clone());
+            self.chargers_webclients_pair.insert(msg.charger.clone(), msg.client_id.clone());
             self.send_message_to_web_client(&msg.client_id, &format!("call sent to charger {}:\r\n{}", &msg.charger, call))
         } else {
             self.send_message_to_web_client(&msg.client_id, &format!("improper payload:\r\n{}", &msg.payload))
@@ -345,6 +354,14 @@ impl Handler<MessageFromChargeStation> for OcppServer {
     type Result = ();
 
     fn handle(&mut self, msg: MessageFromChargeStation, _: &mut Context<Self>) -> Self::Result {
+        if msg.call.is_some() {
+            let call = msg.call.unwrap();
+            if let Some(webclient_id) = self.chargers_webclients_pair.get(msg.charger_id.as_str()){
+                let call_as_string = format!("Call: [2, \"{}\", \"{}\", {}]", call.unique_id,
+                                             call.action, call.payload.as_str().unwrap());
+                self.send_message_to_web_client(webclient_id, &call_as_string);
+            }
+        }
         if msg.call_error.is_some() {
             let call_error = msg.call_error.unwrap();
             if let Some(webclient_id) = self.awaiting_call_result.get(call_error.unique_id.as_str()) {

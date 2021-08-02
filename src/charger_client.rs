@@ -112,6 +112,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                 match action {
                                     "Authorize" => {
                                         self.address.do_send(MessageFromChargeStation{
+                                            charger_id: self.name.clone(),
                                             call: Some(call),
                                             call_result: None,
                                             call_error: None
@@ -126,6 +127,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                     },
                                     "DataTransfer" => {
                                         self.address.do_send(MessageFromChargeStation{
+                                            charger_id: self.name.clone(),
                                             call: Some(call),
                                             call_result: None,
                                             call_error: None
@@ -160,6 +162,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                     },
                                     "StartTransaction" => {
                                         self.address.do_send(MessageFromChargeStation{
+                                            charger_id: self.name.clone(),
                                             call: Some(call),
                                             call_result: None,
                                             call_error: None
@@ -174,6 +177,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                     },
                                     "StopTransaction" => {
                                         self.address.do_send(MessageFromChargeStation{
+                                            charger_id: self.name.clone(),
                                             call: Some(call),
                                             call_result: None,
                                             call_error: None
@@ -195,6 +199,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                     },
                                     "SignCertificate" => {
                                         self.address.do_send(MessageFromChargeStation{
+                                            charger_id: self.name.clone(),
                                             call: Some(call),
                                             call_result: None,
                                             call_error: None
@@ -229,6 +234,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                         payload: serde_json::from_str(payload_option.unwrap().clone().as_str()).unwrap()
                                     };
                                     self.address.do_send(MessageFromChargeStation{
+                                        charger_id: self.name.clone(),
                                         call: None,
                                         call_result: Some(call_result),
                                         call_error: None
@@ -249,6 +255,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                         error_details: error_details_option.unwrap().clone()
                                     };
                                     self.address.do_send(MessageFromChargeStation{
+                                        charger_id: self.name.clone(),
                                         call: None,
                                         call_result: None,
                                         call_error: Some(call_error)

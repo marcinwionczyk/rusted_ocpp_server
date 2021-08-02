@@ -58,29 +58,26 @@ pub struct CallError{
 }
 
 pub fn wrap_call(message_id: &String, action: &String, payload: &String) -> String {
-    let mut m = String::new();
-    let mut a = String::new();
-    if message_id.starts_with("\"") && message_id.ends_with("\"") {
-        m = format!("{}", message_id);
+    let m = if message_id.starts_with("\"") && message_id.ends_with("\"") {
+        format!("{}", message_id)
     } else {
-        m = format!("\"{}\"", message_id);
+        format!("\"{}\"", message_id)
     };
-    if action.starts_with("\"") && action.ends_with("\"") {
-        a = format!("{}", action);
+    let a = if action.starts_with("\"") && action.ends_with("\"") {
+        format!("{}", action)
     } else {
-        a = format!("\"{}\"", action);
+        format!("\"{}\"", action)
     };
     format!("[2, {}, {}, {}]", m, a, payload)
 }
 
 // [<MessageTypeId>, "<UniqueId>", {<Payload>}]
 pub fn wrap_call_result(message_id: &String, payload: String) -> String {
-    let mut m = String::new();
-    if message_id.starts_with("\"") && message_id.ends_with("\"") {
-        m = format!("{}", message_id);
+    let m = if message_id.starts_with("\"") && message_id.ends_with("\"") {
+        format!("{}", message_id)
     } else {
-        m = format!("\"{}\"", message_id);
-    }
+        format!("\"{}\"", message_id)
+    };
     format!("[3, {}, {}]", m, payload)
 }
 
