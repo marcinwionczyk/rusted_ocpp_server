@@ -3,7 +3,7 @@ use actix_web_actors::ws;
 use std::time::Instant;
 use crate::messages::*;
 use crate::server;
-use actix_web_actors::ws::ProtocolError;
+use actix_web_actors::ws::{ProtocolError};
 use crate::server::{MessageToWebBrowser, ConnectWebClient, DisconnectWebClient};
 use serde_json::Value;
 
@@ -109,6 +109,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
                     }
                 }
             }
+            ws::Message::Close(reason) => {
+                ctx.close(reason);
+                ctx.stop();
+            }
+            ws::Message::Nop => (),
             _ => ctx.stop()
         }
     }

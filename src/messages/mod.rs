@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, SecondsFormat};
 use serde::Deserialize;
 use serde_json::Value;
 
 pub mod requests;
 pub mod responses;
 
-pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(15);
-pub const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
+pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(60);
+pub const CLIENT_TIMEOUT: Duration = Duration::from_secs(600);
 
 pub enum ErrorCode {
     FormatViolation,
@@ -38,42 +38,46 @@ pub enum ErrorCode {
 }
 
 #[derive(Deserialize)]
+pub struct Call{
+    pub unique_id: String,
+    pub action: String,
+    pub payload: serde_json::Value
+}
+
+#[derive(Deserialize)]
 pub struct CallResult{
-    pub msg_id: String,
+    pub unique_id: String,
     pub payload: serde_json::Value
 }
 #[derive(Deserialize)]
 pub struct CallError{
-    pub msg_id: String,
+    pub unique_id: String,
     pub error_code: String,
     pub error_description: String,
     pub error_details: String
 }
 
 pub fn wrap_call(message_id: &String, action: &String, payload: &String) -> String {
-    let mut m = String::new();
-    let mut a = String::new();
-    if message_id.starts_with("\"") && message_id.ends_with("\"") {
-        m = format!("{}", message_id);
+    let m = if message_id.starts_with("\"") && message_id.ends_with("\"") {
+        format!("{}", message_id)
     } else {
-        m = format!("\"{}\"", message_id);
+        format!("\"{}\"", message_id)
     };
-    if action.starts_with("\"") && action.ends_with("\"") {
-        a = format!("{}", action);
+    let a = if action.starts_with("\"") && action.ends_with("\"") {
+        format!("{}", action)
     } else {
-        a = format!("\"{}\"", action);
+        format!("\"{}\"", action)
     };
     format!("[2, {}, {}, {}]", m, a, payload)
 }
 
 // [<MessageTypeId>, "<UniqueId>", {<Payload>}]
 pub fn wrap_call_result(message_id: &String, payload: String) -> String {
-    let mut m = String::new();
-    if message_id.starts_with("\"") && message_id.ends_with("\"") {
-        m = format!("{}", message_id);
+    let m = if message_id.starts_with("\"") && message_id.ends_with("\"") {
+        format!("{}", message_id)
     } else {
-        m = format!("\"{}\"", message_id);
-    }
+        format!("\"{}\"", message_id)
+    };
     format!("[3, {}, {}]", m, payload)
 }
 
@@ -180,9 +184,9 @@ pub fn boot_notification_response(message_id: &String, payload: &String) -> Stri
         Ok(_) => {
             let at_now:DateTime<Utc> = Utc::now();
             let boot_response: responses::BootNotificationResponse = responses::BootNotificationResponse {
-                current_time: at_now.to_rfc3339(),
+                current_time: at_now.to_rfc3339_opts(SecondsFormat::Millis, false),
                 custom_data: None,
-                interval: HEARTBEAT_INTERVAL.as_secs() as i64,
+                interval: 3600, // 1 hour
                 status: responses::RegistrationStatusEnumType::Accepted,
                 status_info: None
             };
@@ -209,7 +213,7 @@ pub fn status_notification_response(message_id: &String, payload: &String) -> St
 pub fn heartbeat_response(message_id: &String) -> String {
     let at_now:DateTime<Utc> = Utc::now();
     let heartbeat_resp: responses::HeartbeatResponse = responses::HeartbeatResponse {
-        current_time: at_now.to_rfc3339(),
+        current_time: at_now.to_rfc3339_opts(SecondsFormat::Millis, false),
         custom_data: None
     };
     wrap_call_result(message_id, serde_json::to_string(&heartbeat_resp).unwrap())

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{ Serialize, Deserialize};
 use serde_json::{Value};
 use uuid::Uuid;
-use crate::messages::{wrap_call, CallResult, CallError, wrap_call_result};
+use crate::messages::{wrap_call, Call, CallResult, CallError, wrap_call_result};
 use crate::messages;
 // Code below is for handling multiple websocket sessions between Ocpp server and charge points
 //                ,_____________
@@ -33,6 +33,8 @@ pub struct MessageToChargeStation(pub String);
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct MessageFromChargeStation{
+    pub charger_id: String,
+    pub call: Option<Call>,
     pub call_result: Option<CallResult>,
     pub call_error: Option<CallError>
 }
@@ -94,7 +96,8 @@ impl actix::Message for GetChargers { type Result = Vec<String>; }
 pub struct OcppServer {
     awaiting_call_result: HashMap<String, String>, // key: MessageId, value: websocket_worker_id
     websocket_workers: HashMap<String, Recipient<MessageToChargeStation>>,
-    webclient_workers: HashMap<String, Recipient<MessageToWebBrowser>>
+    webclient_workers: HashMap<String, Recipient<MessageToWebBrowser>>,
+    chargers_webclients_pair: HashMap<String, String> // key: charger_id, value: browser_id
 }
 
 impl OcppServer {
@@ -102,7 +105,8 @@ impl OcppServer {
         OcppServer {
             awaiting_call_result: HashMap::new(),
             websocket_workers: HashMap::new(),
-            webclient_workers: HashMap::new()
+            webclient_workers: HashMap::new(),
+            chargers_webclients_pair: HashMap::new()
         }
     }
 
@@ -357,6 +361,7 @@ impl Handler<DisconnectCharger> for OcppServer {
     fn handle(&mut self, msg: DisconnectCharger, _: &mut Context<Self>) -> Self::Result {
         println!("OcppServer: Removing charger: {}", msg.serial_id);
         self.websocket_workers.remove(msg.serial_id.as_str());
+        self.chargers_webclients_pair.remove(msg.serial_id.as_str());
     }
 }
 
@@ -364,8 +369,13 @@ impl Handler<DisconnectWebClient> for OcppServer {
     type Result = ();
 
     fn handle(&mut self, msg: DisconnectWebClient, _: &mut Context<Self>) -> Self::Result {
-        println!("OcppServer: Removing web client: {}", msg.serial_id.to_string());
+        println!("OcppServer: Removing web client: {}", msg.serial_id);
         self.webclient_workers.remove(&msg.serial_id);
+        for (item, value) in self.chargers_webclients_pair.clone() {
+            if value == msg.serial_id {
+                self.chargers_webclients_pair.remove(&item);
+            }
+        }
     }
 }
 
@@ -391,6 +401,7 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
             let call = wrap_call(&message_id, &msg.selected, &serde_json::to_string(&msg.payload).unwrap());
             self.send_message_to_charger(&msg.charger, &call);
             self.awaiting_call_result.insert(message_id, msg.client_id.clone());
+            self.chargers_webclients_pair.insert(msg.charger.clone(), msg.client_id.clone());
             self.send_message_to_web_client(&msg.client_id, &format!("call sent to charger {}:\r\n{}", &msg.charger, call))
         } else {
             self.send_message_to_web_client(&msg.client_id, &format!("improper payload:\r\n{}", &msg.payload))
@@ -402,28 +413,36 @@ impl Handler<MessageFromChargeStation> for OcppServer {
     type Result = ();
 
     fn handle(&mut self, msg: MessageFromChargeStation, _: &mut Context<Self>) -> Self::Result {
+        if msg.call.is_some() {
+            let call = msg.call.unwrap();
+            if let Some(webclient_id) = self.chargers_webclients_pair.get(msg.charger_id.as_str()){
+                let call_as_string = format!("Call: [2, \"{}\", \"{}\", {}]", call.unique_id,
+                                             call.action, call.payload.as_str().unwrap());
+                self.send_message_to_web_client(webclient_id, &call_as_string);
+            }
+        }
         if msg.call_error.is_some() {
             let call_error = msg.call_error.unwrap();
-            if let Some(webclient_id) = self.awaiting_call_result.get(call_error.msg_id.as_str()) {
+            if let Some(webclient_id) = self.awaiting_call_result.get(call_error.unique_id.as_str()) {
                 let call_error_as_a_string = format!("Call error: [4, \"{}\", \"{}\", \"{}\", {}]",
-                                                     call_error.msg_id,
+                                                     call_error.unique_id,
                                                      call_error.error_code, call_error.error_description,
                                                      call_error.error_details);
                 self.send_message_to_web_client(webclient_id, &call_error_as_a_string);
-                self.awaiting_call_result.remove(call_error.msg_id.as_str());
+                self.awaiting_call_result.remove(call_error.unique_id.as_str());
             }
         }
         if msg.call_result.is_some() {
             let call_result = msg.call_result.unwrap();
-            let key = call_result.msg_id.strip_prefix("\"").unwrap().strip_suffix("\"").unwrap();
+            let key = call_result.unique_id.strip_prefix("\"").unwrap().strip_suffix("\"").unwrap();
 
             if let Some(webclient_id) = self.awaiting_call_result.get(key) {
                 let call_result_as_a_string =
                     format!("Call result: \r\n{}",
-                            wrap_call_result(&call_result.msg_id,
+                            wrap_call_result(&call_result.unique_id,
                                              (&call_result.payload).to_string()));
                 self.send_message_to_web_client(webclient_id, &call_result_as_a_string);
-                self.awaiting_call_result.remove(call_result.msg_id.as_str());
+                self.awaiting_call_result.remove(call_result.unique_id.as_str());
             }
         }
     }
