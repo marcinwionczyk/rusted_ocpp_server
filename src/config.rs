@@ -5,6 +5,7 @@ use serde::Deserialize;
 pub struct ServerConfig {
     pub host: String,
     pub port: i32,
+    pub use_tls: bool
 }
 
 #[derive(Deserialize)]

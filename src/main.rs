@@ -1,11 +1,15 @@
+use std::fs::File;
+use std::io::BufReader;
 use std::time::Instant;
 use actix::{Actor, Addr};
 use actix_files::Files;
-use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, post, Responder, web};
+use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, post,
+                Responder, web};
 use actix_web_actors::ws;
 use dotenv;
 use serde::Serialize;
-
+use rustls::{AllowAnyAuthenticatedClient, RootCertStore};
+use rustls::internal::pemfile::{certs, pkcs8_private_keys};
 mod config;
 mod messages;
 mod server;
@@ -24,13 +28,12 @@ struct Status{
 async fn ws_ocpp_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, ActixWebError> {
     match r.match_info().get("serial_id") {
         Some(serial_id) => {
-            let res = ws::start_with_protocols(
+            ws::start_with_protocols(
                 charger_client::ChargeStationWebSocketSession {
                     hb: Instant::now(),
                     name: String::from(serial_id),
                     address: srv.get_ref().clone(),
-                }, &ALLOWED_SUB_PROTOCOLS, &r, stream);
-            res
+                }, &ALLOWED_SUB_PROTOCOLS, &r, stream)
         }
         None => Err(ActixWebError::from(HttpResponse::BadRequest()))
     }
@@ -54,7 +57,10 @@ async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Result<impl R
     //Ok(web::Json(vec!["charger1", "charger2", "charger3", "charger4"]).with_header("Access-Control-Allow-Origin", "*"))
     match srv.send(server::GetChargers).await {
         Ok(chargers) => Ok(web::Json(chargers).with_header("Access-Control-Allow-Origin", "*")),
-        Err(_) => Err(error::Error{ message: "Unable to get list of chargers".to_string(), status: 500 })
+        Err(e) => {
+            eprintln!("{}", e);
+            Err(error::Error{ message: "Unable to get list of chargers".to_string(), status: 500 })
+        }
     }
 }
 
@@ -71,15 +77,29 @@ async fn post_request(srv: web::Data<Addr<server::OcppServer>>,
 async fn main() -> std::io::Result<()> {
     dotenv::from_filename("settings.env").ok();
     let config = crate::config::Config::from_env().unwrap();
-    println!("Server is listening.\r\n \
+    let root_cert_store = RootCertStore::empty();
+    let mut tls_config = rustls::ServerConfig::new(
+        AllowAnyAuthenticatedClient::new(root_cert_store));
+    let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
+    let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
+    let cert_chain = certs(cert_file).unwrap();
+    let mut keys = pkcs8_private_keys(key_file).unwrap();
+    tls_config.set_single_cert(cert_chain, keys.remove(0)).unwrap();
+    if config.server.use_tls {
+        println!("Server is listening.\r\n \
+              Open web-browser with the url https://{host}:{port}/\r\n \
+              Connect chargers with the url wss://{host}:{port}/ocpp/",
+                 host = config.server.host, port = config.server.port);
+    }  else {
+        println!("Server is listening.\r\n \
               Open web-browser with the url http://{host}:{port}/\r\n \
               Connect chargers with the url ws://{host}:{port}/ocpp/",
-             host = config.server.host, port = config.server.port);
-    let server = server::OcppServer::new().start();
-
-    HttpServer::new(move || {
+                 host = config.server.host, port = config.server.port);
+    }
+    let ocpp_server = server::OcppServer::new().start();
+    let http_server = HttpServer::new(move || {
         App::new()
-            .data(server.clone())
+            .data(ocpp_server.clone())
             //.data(pool.clone())
             //.service(web::resource("/").route(web::get().to(index)))
             .service(get_chargers)
@@ -87,8 +107,15 @@ async fn main() -> std::io::Result<()> {
             .service(ws_ocpp_index)
             .service(ws_webclient_index)
             .service(Files::new("/", "./webclient/").index_file("index.html"))
-    })
-        .bind(format!("{}:{}", config.server.host, config.server.port))?
-        .run()
-        .await
+    });
+    if config.server.use_tls {
+        http_server.bind_rustls(format!("{}:{}", config.server.host, config.server.port), tls_config)?
+            //.bind(format!("{}:{}", config.server.host, config.server.port))?
+            .run()
+            .await
+    } else {
+        http_server.bind(format!("{}:{}", config.server.host, config.server.port))?
+            .run()
+            .await
+    }
 }

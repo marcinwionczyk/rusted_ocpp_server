@@ -53,7 +53,11 @@ pub struct MessageFromWebBrowser {
     #[serde(rename = "clientId")]
     pub client_id: String,
     pub charger: String, // target Charge point
-    pub selected: String,
+    pub selected: String, // action
+    #[serde(rename = "messageId")]
+    pub message_id: u8, // call or call_result
+    #[serde(rename = "uniqueId")]
+    pub unique_id: String,
     pub payload: Value, // OCPP message
 }
 
@@ -130,6 +134,11 @@ impl OcppServer {
 
     fn message_from_web_browser_is_valid(msg: MessageFromWebBrowser) -> bool {
         match msg.selected.as_str() {
+            "Authorize" => {
+                let res: Result<messages::responses::AuthorizeResponse, serde_json::Error> =
+                serde_json::from_value(msg.payload);
+                res.is_ok()
+            },
             "CancelReservation" => {
                 let res: Result<messages::requests::CancelReservationRequest, serde_json::Error> =
                     serde_json::from_value(msg.payload);
@@ -156,9 +165,11 @@ impl OcppServer {
                 res.is_ok()
             },
             "DataTransfer" => {
-                let res: Result<messages::requests::DataTransferRequest, serde_json::Error> =
-                serde_json::from_value(msg.payload);
-                res.is_ok()
+                let res1: Result<messages::requests::DataTransferRequest, serde_json::Error> =
+                serde_json::from_value(msg.payload.clone());
+                let res2: Result<messages::responses::DataTransferResponse, serde_json::Error> =
+                    serde_json::from_value(msg.payload);
+                res1.is_ok() || res2.is_ok()
             },
             "GetCompositeSchedule" => {
                 let res: Result<messages::requests::GetCompositeScheduleRequest, serde_json::Error> =
@@ -256,7 +267,7 @@ impl OcppServer {
                 res.is_ok()
             },
             "SignCertificate" => {
-                let res: Result<messages::requests::SignCertificateRequest, serde_json::Error> =
+                let res: Result<messages::responses::SignCertificateResponse, serde_json::Error> =
                     serde_json::from_value(msg.payload);
                 res.is_ok()
             },
@@ -264,7 +275,17 @@ impl OcppServer {
                 let res: Result<messages::requests::SignedUpdateFirmwareRequest, serde_json::Error> =
                     serde_json::from_value(msg.payload);
                 res.is_ok()
-            }
+            },
+            "StartTransaction" => {
+                let res: Result<messages::responses::StartTransactionResponse, serde_json::Error> =
+                    serde_json::from_value(msg.payload);
+                res.is_ok()
+            },
+            "StopTransaction" => {
+                let res: Result<messages::responses::StopTransactionResponse, serde_json::Error> =
+                    serde_json::from_value(msg.payload);
+                res.is_ok()
+            },
             &_ => false
         }
     }
@@ -337,13 +358,20 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
 
     fn handle(&mut self, msg: MessageFromWebBrowser, _: &mut Context<Self>) -> Self::Result {
         println!("sending message to: {}", msg.charger);
-        let message_id = Uuid::new_v4().to_string();
         if OcppServer::message_from_web_browser_is_valid(msg.clone()) {
-            let call = wrap_call(&message_id, &msg.selected, &serde_json::to_string(&msg.payload).unwrap());
-            self.send_message_to_charger(&msg.charger, &call);
-            self.awaiting_call_result.insert(message_id, msg.client_id.clone());
-            self.chargers_webclients_pair.insert(msg.charger.clone(), msg.client_id.clone());
-            self.send_message_to_web_client(&msg.client_id, &format!("call sent to charger {}:\r\n{}", &msg.charger, call))
+            if msg.message_id == 2 {
+                let message_id = Uuid::new_v4().to_string();
+                let call = wrap_call(&message_id, &msg.selected, &serde_json::to_string(&msg.payload).unwrap());
+
+                self.send_message_to_charger(&msg.charger, &call);
+                self.awaiting_call_result.insert(message_id, msg.client_id.clone());
+                self.chargers_webclients_pair.insert(msg.charger.clone(), msg.client_id.clone());
+                self.send_message_to_web_client(&msg.client_id, &format!("call sent to charger {}:\r\n{}", &msg.charger, call))
+            }
+            if msg.message_id == 3 {
+                let call_result = wrap_call_result(&msg.unique_id, serde_json::to_string(&msg.payload).unwrap());
+                self.send_message_to_charger(&msg.charger, &call_result);
+            }
         } else {
             self.send_message_to_web_client(&msg.client_id, &format!("improper payload:\r\n{}", &msg.payload))
         }
@@ -356,6 +384,7 @@ impl Handler<MessageFromChargeStation> for OcppServer {
     fn handle(&mut self, msg: MessageFromChargeStation, _: &mut Context<Self>) -> Self::Result {
         if msg.call.is_some() {
             let call = msg.call.unwrap();
+
             if let Some(webclient_id) = self.chargers_webclients_pair.get(msg.charger_id.as_str()){
                 let call_as_string = format!("Call: [2, \"{}\", \"{}\", {}]", call.unique_id,
                                              call.action, call.payload.as_str().unwrap());

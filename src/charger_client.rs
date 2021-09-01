@@ -86,7 +86,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
             }
             Ok(msg) => msg
         };
-        println!("{}: incoming message: {:?}", self.name, msg);
         match msg {
             ws::Message::Ping(msg) => {
                 self.hb = Instant::now();
@@ -96,6 +95,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                 self.hb = Instant::now();
             }
             ws::Message::Text(text) => {
+                println!("{}: incoming message: {:?}", self.name, text);
                 match unpack_ocpp_message(&text) {
                     Ok(unpacked) => {
                         let message_type_id: u8 = unpacked.get("MessageTypeId").unwrap().parse()
@@ -111,6 +111,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                 };
                                 match action {
                                     "Authorize" => {
+                                        // print line below for bug hunting reason. TODO: remove it if all is OK
+                                        println!("Authorize call received: uinique_id: {}, action: {}, payload: {}", call.unique_id, call.action, call.payload);
                                         self.address.do_send(MessageFromChargeStation{
                                             charger_id: self.name.clone(),
                                             call: Some(call),
@@ -161,12 +163,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                         ctx.text(response);
                                     },
                                     "StartTransaction" => {
-                                        self.address.do_send(MessageFromChargeStation{
-                                            charger_id: self.name.clone(),
-                                            call: Some(call),
-                                            call_result: None,
-                                            call_error: None
-                                        });
+                                        // self.address.do_send(MessageFromChargeStation{
+                                        //     charger_id: self.name.clone(),
+                                        //     call: Some(call),
+                                        //     call_result: None,
+                                        //     call_error: None
+                                        // });
+                                        let response = start_transaction_response(
+                                            unpacked.get("MessageId").unwrap(),
+                                            unpacked.get("Payload").unwrap());
+                                        println!("{}: outgoing response: {}", self.name, response);
+                                        ctx.text(response);
                                     },
                                     "StatusNotification" => {
                                         let response = status_notification_response(

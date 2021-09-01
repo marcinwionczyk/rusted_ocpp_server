@@ -3,7 +3,8 @@ use std::time::Duration;
 
 use chrono::{DateTime, Utc, SecondsFormat};
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{Value, Error};
+use crate::messages::requests::StartTransactionRequest;
 
 pub mod requests;
 pub mod responses;
@@ -72,11 +73,11 @@ pub fn wrap_call(message_id: &String, action: &String, payload: &String) -> Stri
 }
 
 // [<MessageTypeId>, "<UniqueId>", {<Payload>}]
-pub fn wrap_call_result(message_id: &String, payload: String) -> String {
-    let m = if message_id.starts_with("\"") && message_id.ends_with("\"") {
-        format!("{}", message_id)
+pub fn wrap_call_result(unique_id: &String, payload: String) -> String {
+    let m = if unique_id.starts_with("\"") && unique_id.ends_with("\"") {
+        format!("{}", unique_id)
     } else {
-        format!("\"{}\"", message_id)
+        format!("\"{}\"", unique_id)
     };
     format!("[3, {}, {}]", m, payload)
 }
@@ -189,6 +190,44 @@ pub fn boot_notification_response(message_id: &String, payload: &String) -> Stri
                 status: responses::BootNotificationStatus::Accepted,
             };
             wrap_call_result(message_id, serde_json::to_string(&boot_response).unwrap())
+        }
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
+        }
+    }
+}
+
+pub fn start_transaction_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::StartTransactionRequest, serde_json::Error> {
+        Ok(_) => {
+            let start_transaction_response = responses::StartTransactionResponse{
+                id_tag_info: responses::IdTagInfo {
+                    expiry_date: None,
+                    parent_id_tag: None,
+                    status: responses::IdTagInfoStatus::Accepted
+                },
+                transaction_id: 1500100900
+            };
+            wrap_call_result(message_id, serde_json::to_string(&start_transaction_response).unwrap())
+        }
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
+        }
+    }
+}
+
+
+pub fn authorize_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::AuthorizeRequest, serde_json::Error> {
+        Ok(_) => {
+            let authorize_resp =  responses::AuthorizeResponse{
+                id_tag_info: responses::IdTagInfo {
+                    expiry_date: None,
+                    parent_id_tag: None,
+                    status: responses::IdTagInfoStatus::Accepted
+                }
+            };
+            wrap_call_result(message_id, serde_json::to_string(&authorize_resp).unwrap())
         }
         Err(e) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
