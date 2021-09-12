@@ -322,7 +322,12 @@ impl Handler<DisconnectCharger> for OcppServer {
     fn handle(&mut self, msg: DisconnectCharger, _: &mut Context<Self>) -> Self::Result {
         println!("OcppServer: Removing charger: {}", msg.serial_id);
         self.websocket_workers.remove(msg.serial_id.as_str());
-        self.chargers_webclients_pair.remove(msg.serial_id.as_str());
+        if self.chargers_webclients_pair.contains_key(msg.serial_id.as_str()){
+            println!("OcppServer: Removing charger<->webclient pair: {}", msg.serial_id);
+            self.chargers_webclients_pair.remove(msg.serial_id.as_str());
+        }
+
+
     }
 }
 
@@ -331,13 +336,14 @@ impl Handler<DisconnectWebClient> for OcppServer {
 
 
     fn handle(&mut self, msg: DisconnectWebClient, _: &mut Context<Self>) -> Self::Result {
-        println!("OcppServer: Removing web client: {}", msg.serial_id);
-        self.webclient_workers.remove(&msg.serial_id);
         for (item, value) in self.chargers_webclients_pair.clone() {
             if value == msg.serial_id {
+                println!("OcppServer: Removing pair {}<->{}", &item, &value);
                 self.chargers_webclients_pair.remove(&item);
             }
         }
+        println!("OcppServer: Removing web client: {}", msg.serial_id);
+        self.webclient_workers.remove(&msg.serial_id);
     }
 }
 
@@ -365,6 +371,7 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
 
                 self.send_message_to_charger(&msg.charger, &call);
                 self.awaiting_call_result.insert(message_id, msg.client_id.clone());
+                println!("Inserting charger_webclient_pair: {} -> {}", msg.charger.clone(), msg.client_id.clone());
                 self.chargers_webclients_pair.insert(msg.charger.clone(), msg.client_id.clone());
                 self.send_message_to_web_client(&msg.client_id, &format!("call sent to charger {}:\r\n{}", &msg.charger, call))
             }
