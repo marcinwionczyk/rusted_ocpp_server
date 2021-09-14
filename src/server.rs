@@ -136,7 +136,7 @@ impl OcppServer {
         match msg.selected.as_str() {
             "Authorize" => {
                 let res: Result<messages::responses::AuthorizeResponse, serde_json::Error> =
-                serde_json::from_value(msg.payload);
+                    serde_json::from_value(msg.payload);
                 res.is_ok()
             },
             "CancelReservation" => {
@@ -166,14 +166,14 @@ impl OcppServer {
             },
             "DataTransfer" => {
                 let res1: Result<messages::requests::DataTransferRequest, serde_json::Error> =
-                serde_json::from_value(msg.payload.clone());
+                    serde_json::from_value(msg.payload.clone());
                 let res2: Result<messages::responses::DataTransferResponse, serde_json::Error> =
                     serde_json::from_value(msg.payload);
                 res1.is_ok() || res2.is_ok()
             },
             "GetCompositeSchedule" => {
                 let res: Result<messages::requests::GetCompositeScheduleRequest, serde_json::Error> =
-                serde_json::from_value(msg.payload);
+                    serde_json::from_value(msg.payload);
                 res.is_ok()
             },
             "GetConfiguration" => {
@@ -326,8 +326,6 @@ impl Handler<DisconnectCharger> for OcppServer {
             println!("OcppServer: Removing charger<->webclient pair: {}", msg.serial_id);
             self.chargers_webclients_pair.remove(msg.serial_id.as_str());
         }
-
-
     }
 }
 
@@ -371,8 +369,10 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
 
                 self.send_message_to_charger(&msg.charger, &call);
                 self.awaiting_call_result.insert(message_id, msg.client_id.clone());
-                println!("Inserting charger_webclient_pair: {} -> {}", msg.charger.clone(), msg.client_id.clone());
-                self.chargers_webclients_pair.insert(msg.charger.clone(), msg.client_id.clone());
+                if !self.chargers_webclients_pair.contains_key(msg.charger.clone().as_str()){
+                    println!("Inserting charger_webclient_pair: {} -> {}", msg.charger.clone(), msg.client_id.clone());
+                    self.chargers_webclients_pair.insert(msg.charger.clone(), msg.client_id.clone());
+                }
                 self.send_message_to_web_client(&msg.client_id, &format!("call sent to charger {}:\r\n{}", &msg.charger, call))
             }
             if msg.message_id == 3 {
@@ -393,15 +393,16 @@ impl Handler<MessageFromChargeStation> for OcppServer {
             let call = msg.call.unwrap();
 
             if let Some(webclient_id) = self.chargers_webclients_pair.get(msg.charger_id.as_str()){
-                let call_as_string = format!("Call: [2, \"{}\", \"{}\", {}]", call.unique_id,
-                                             call.action, call.payload.as_str().unwrap());
+                let call_as_string = format!("Call from {}:\r\n[2, \"{}\", \"{}\", {}]", call.unique_id,
+                                             msg.charger_id, call.action, call.payload.as_str().unwrap());
                 self.send_message_to_web_client(webclient_id, &call_as_string);
             }
         }
         if msg.call_error.is_some() {
             let call_error = msg.call_error.unwrap();
-            if let Some(webclient_id) = self.awaiting_call_result.get(call_error.unique_id.as_str()) {
-                let call_error_as_a_string = format!("Call error: [4, \"{}\", \"{}\", \"{}\", {}]",
+            if let Some(webclient_id) = self.awaiting_call_result.get(&call_error.unique_id) {
+                let call_error_as_a_string = format!("Call error from {}:\r\n[4, \"{}\", \"{}\", \"{}\", {}]",
+                                                     msg.charger_id,
                                                      call_error.unique_id,
                                                      call_error.error_code, call_error.error_description,
                                                      call_error.error_details);
@@ -415,7 +416,8 @@ impl Handler<MessageFromChargeStation> for OcppServer {
 
             if let Some(webclient_id) = self.awaiting_call_result.get(key) {
                 let call_result_as_a_string =
-                    format!("Call result: \r\n{}",
+                    format!("Call result from {}: \r\n{}",
+                            msg.charger_id,
                             wrap_call_result(&call_result.unique_id,
                                              (&call_result.payload).to_string()));
                 self.send_message_to_web_client(webclient_id, &call_result_as_a_string);

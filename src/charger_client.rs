@@ -47,6 +47,10 @@ impl Actor for ChargeStationWebSocketSession {
     }
 }
 
+fn strip_quotes(input: &String) -> &str {
+    input.strip_prefix("\"").unwrap().strip_suffix("\"").unwrap()
+}
+
 impl ChargeStationWebSocketSession {
     /// helper method that sends ping to client every second.
     /// also this method checks heartbeats from client
@@ -111,14 +115,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                 };
                                 match action {
                                     "Authorize" => {
-                                        // print line below for bug hunting reason. TODO: remove it if all is OK
-                                        println!("Authorize call received: uinique_id: {}, action: {}, payload: {}", call.unique_id, call.action, call.payload);
-                                        self.address.do_send(MessageFromChargeStation{
-                                            charger_id: self.name.clone(),
-                                            call: Some(call),
-                                            call_result: None,
-                                            call_error: None
-                                        });
+                                        let response = authorize_response(
+                                            unpacked.get("MessageId").unwrap(),
+                                            unpacked.get("Payload").unwrap());
+                                                            println!("{}: outgoing response: {}", self.name, response);
+                                                            ctx.text(response);
+                                        // self.address.do_send(MessageFromChargeStation{
+                                        //    charger_id: self.name.clone(),
+                                        //    call: Some(call),
+                                        //    call_result: None,
+                                        //    call_error: None
+                                        //});
                                     },
                                     "BootNotification" => {
                                         let response = boot_notification_response(
@@ -183,12 +190,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                         ctx.text(response);
                                     },
                                     "StopTransaction" => {
-                                        self.address.do_send(MessageFromChargeStation{
-                                            charger_id: self.name.clone(),
-                                            call: Some(call),
-                                            call_result: None,
-                                            call_error: None
-                                        });
+                                        // self.address.do_send(MessageFromChargeStation{
+                                        //     charger_id: self.name.clone(),
+                                        //     call: Some(call),
+                                        //     call_result: None,
+                                        //     call_error: None
+                                        // });
+                                        let response = stop_transaction_response(
+                                            unpacked.get("MessageId").unwrap(),
+                                            unpacked.get("Payload").unwrap());
+                                        println!("{}: outgoing response: {}", self.name, response);
+                                        ctx.text(response);
                                     },
                                     "LogStatusNotification" => {
                                         let response = log_status_notification_response(
@@ -253,12 +265,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                 let error_code_option = unpacked.get("ErrorCode");
                                 let error_description_option = unpacked.get("ErrorDescription");
                                 let error_details_option = unpacked.get("ErrorDetails");
+
                                 if message_id_option.is_some() && error_code_option.is_some() &&
                                     error_description_option.is_some() && error_details_option.is_some() {
+
                                     let call_error = CallError{
-                                        unique_id: message_id_option.unwrap().clone(),
-                                        error_code: error_code_option.unwrap().clone(),
-                                        error_description: error_description_option.unwrap().clone(),
+                                        unique_id : strip_quotes(&message_id_option.unwrap()).parse().unwrap(),
+                                        error_code: strip_quotes(&error_code_option.unwrap()).parse().unwrap(),
+                                        error_description: strip_quotes(&error_description_option.unwrap()).parse().unwrap(),
                                         error_details: error_details_option.unwrap().clone()
                                     };
                                     self.address.do_send(MessageFromChargeStation{

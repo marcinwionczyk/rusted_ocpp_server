@@ -3,8 +3,7 @@ use std::time::Duration;
 
 use chrono::{DateTime, Utc, SecondsFormat};
 use serde::Deserialize;
-use serde_json::{Value, Error};
-use crate::messages::requests::StartTransactionRequest;
+use serde_json::{Value};
 
 pub mod requests;
 pub mod responses;
@@ -81,6 +80,7 @@ pub fn wrap_call_result(unique_id: &String, payload: String) -> String {
     };
     format!("[3, {}, {}]", m, payload)
 }
+
 
 
 // [<MessageTypeId>, "<UniqueId>", "<errorCode>", "<errorDescription>", {<errorDetails>}]
@@ -215,6 +215,21 @@ pub fn start_transaction_response(message_id: &String, payload: &String) -> Stri
         }
     }
 }
+
+pub fn stop_transaction_response(message_id: &String, payload: &String) -> String {
+    match serde_json::from_str(&payload) as Result<requests::StopTransactionRequest, serde_json::Error> {
+        Ok(_) => {
+            let stop_transaction_response = responses::StopTransactionResponse{
+                id_tag_info: None
+            };
+            wrap_call_result(message_id, serde_json::to_string(&stop_transaction_response).unwrap())
+        }
+        Err(e) => {
+            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
+        }
+    }
+}
+
 
 
 pub fn authorize_response(message_id: &String, payload: &String) -> String {
