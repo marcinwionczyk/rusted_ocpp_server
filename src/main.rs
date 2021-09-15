@@ -8,7 +8,7 @@ use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, Htt
 use actix_web_actors::ws;
 use dotenv;
 use serde::Serialize;
-use rustls::{AllowAnyAuthenticatedClient, RootCertStore};
+use rustls::{RootCertStore, AllowAnyAnonymousOrAuthenticatedClient};
 use rustls::internal::pemfile::{certs, pkcs8_private_keys};
 mod config;
 mod messages;
@@ -58,7 +58,7 @@ async fn get_chargers(srv: web::Data<Addr<server::OcppServer>>) -> Result<impl R
     match srv.send(server::GetChargers).await {
         Ok(chargers) => Ok(web::Json(chargers).with_header("Access-Control-Allow-Origin", "*")),
         Err(e) => {
-            eprintln!("{}", e);
+            eprintln!("{:#?}", e);
             Err(error::Error{ message: "Unable to get list of chargers".to_string(), status: 500 })
         }
     }
@@ -77,14 +77,6 @@ async fn post_request(srv: web::Data<Addr<server::OcppServer>>,
 async fn main() -> std::io::Result<()> {
     dotenv::from_filename("settings.env").ok();
     let config = crate::config::Config::from_env().unwrap();
-    let root_cert_store = RootCertStore::empty();
-    let mut tls_config = rustls::ServerConfig::new(
-        AllowAnyAuthenticatedClient::new(root_cert_store));
-    let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
-    let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
-    let cert_chain = certs(cert_file).unwrap();
-    let mut keys = pkcs8_private_keys(key_file).unwrap();
-    tls_config.set_single_cert(cert_chain, keys.remove(0)).unwrap();
     if config.server.use_tls {
         println!("Server is listening.\r\n \
               Open web-browser with the url https://{host}:{port}/\r\n \
@@ -109,6 +101,14 @@ async fn main() -> std::io::Result<()> {
             .service(Files::new("/", "./webclient/").index_file("index.html"))
     });
     if config.server.use_tls {
+        let root_cert_store = RootCertStore::empty();
+        let mut tls_config = rustls::ServerConfig::new(
+            AllowAnyAnonymousOrAuthenticatedClient::new(root_cert_store));
+        let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
+        let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
+        let cert_chain = certs(cert_file).unwrap();
+        let mut keys = pkcs8_private_keys(key_file).unwrap();
+        tls_config.set_single_cert(cert_chain, keys.remove(0)).unwrap();
         http_server.bind_rustls(format!("{}:{}", config.server.host, config.server.port), tls_config)?
             //.bind(format!("{}:{}", config.server.host, config.server.port))?
             .run()

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::time::Duration;
-
-use chrono::{DateTime, Utc, SecondsFormat};
+use chrono::{DateTime, Utc, SecondsFormat, Duration as ChronoDuration};
 use serde::Deserialize;
 use serde_json::{Value};
+use dotenv;
 
 pub mod requests;
 pub mod responses;
@@ -183,12 +183,15 @@ pub fn unpack_ocpp_message(msg: &String) -> Result<HashMap<&str, String>, String
 pub fn boot_notification_response(message_id: &String, payload: &String) -> String {
     match serde_json::from_str(&payload) as Result<requests::BootNotificationRequest, serde_json::Error> {
         Ok(_) => {
-            let at_now:DateTime<Utc> = Utc::now();
+            dotenv::from_filename("settings.env").ok();
+            let config = crate::config::Config::from_env().unwrap();
+            let at_now:DateTime<Utc> = Utc::now() + ChronoDuration::hours(config.server.time_offset);
             let boot_response: responses::BootNotificationResponse = responses::BootNotificationResponse {
                 current_time: at_now.to_rfc3339_opts(SecondsFormat::Millis, false),
-                interval: 3600, // 1 hour
+                interval: config.server.heartbeat_interval,
                 status: responses::BootNotificationStatus::Accepted,
             };
+
             wrap_call_result(message_id, serde_json::to_string(&boot_response).unwrap())
         }
         Err(e) => {
@@ -251,7 +254,8 @@ pub fn authorize_response(message_id: &String, payload: &String) -> String {
 }
 
 pub fn heartbeat_response(message_id: &String) -> String {
-    let at_now:DateTime<Utc> = Utc::now();
+    let config = crate::config::Config::from_env().unwrap();
+    let at_now:DateTime<Utc> = Utc::now() + ChronoDuration::hours(config.server.time_offset);
     let heartbeat_resp: responses::HeartbeatResponse = responses::HeartbeatResponse {
         current_time: at_now.to_rfc3339_opts(SecondsFormat::Millis, false),
     };
