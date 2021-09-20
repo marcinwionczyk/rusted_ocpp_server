@@ -200,58 +200,6 @@ pub fn boot_notification_response(message_id: &String, payload: &String) -> Stri
     }
 }
 
-pub fn start_transaction_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::StartTransactionRequest, serde_json::Error> {
-        Ok(_) => {
-            let start_transaction_response = responses::StartTransactionResponse{
-                id_tag_info: responses::IdTagInfo {
-                    expiry_date: None,
-                    parent_id_tag: None,
-                    status: responses::IdTagInfoStatus::Accepted
-                },
-                transaction_id: 1500100900
-            };
-            wrap_call_result(message_id, serde_json::to_string(&start_transaction_response).unwrap())
-        }
-        Err(e) => {
-            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
-        }
-    }
-}
-
-pub fn stop_transaction_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::StopTransactionRequest, serde_json::Error> {
-        Ok(_) => {
-            let stop_transaction_response = responses::StopTransactionResponse{
-                id_tag_info: None
-            };
-            wrap_call_result(message_id, serde_json::to_string(&stop_transaction_response).unwrap())
-        }
-        Err(e) => {
-            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
-        }
-    }
-}
-
-
-
-pub fn authorize_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::AuthorizeRequest, serde_json::Error> {
-        Ok(_) => {
-            let authorize_resp =  responses::AuthorizeResponse{
-                id_tag_info: responses::IdTagInfo {
-                    expiry_date: None,
-                    parent_id_tag: None,
-                    status: responses::IdTagInfoStatus::Accepted
-                }
-            };
-            wrap_call_result(message_id, serde_json::to_string(&authorize_resp).unwrap())
-        }
-        Err(e) => {
-            wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
-        }
-    }
-}
 
 pub fn heartbeat_response(message_id: &String) -> String {
     let config = crate::config::Config::from_env().unwrap();

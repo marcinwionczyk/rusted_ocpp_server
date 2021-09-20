@@ -33,6 +33,25 @@ async fn ws_ocpp_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr
                     hb: Instant::now(),
                     name: String::from(serial_id),
                     address: srv.get_ref().clone(),
+                    default_responses: charger_client::DefaultResponses{
+                        authorize: messages::responses::AuthorizeResponse { id_tag_info: messages::responses::IdTagInfo {
+                            expiry_date: None,
+                            parent_id_tag: None,
+                            status: messages::responses::IdTagInfoStatus::Accepted
+                        }},
+                        data_transfer: messages::responses::DataTransferResponse { data: None,
+                            status: messages::responses::DataTransferStatus::Accepted },
+                        sign_certificate: messages::responses::SignCertificateResponse {
+                            status: messages::responses::GenericStatusEnumType::Accepted },
+                        start_transaction: messages::responses::StartTransactionResponse {
+                            id_tag_info: messages::responses::IdTagInfo {
+                                expiry_date: None,
+                                parent_id_tag: None,
+                                status: messages::responses::IdTagInfoStatus::Accepted
+                            }, transaction_id: 0 },
+                        stop_transaction: messages::responses::StopTransactionResponse {
+                            id_tag_info: None }
+                    }
                 }, &ALLOWED_SUB_PROTOCOLS, &r, stream)
         }
         None => Err(ActixWebError::from(HttpResponse::BadRequest()))

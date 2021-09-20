@@ -28,7 +28,21 @@ use crate::messages;
 /// Ocpp server sends this message through websocket session to the charger
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct MessageToChargeStation(pub String);
+pub struct MessageToChargeStation {
+    pub message: Option<String>,
+    pub authorize: Option<messages::responses::AuthorizeResponse>,
+    pub data_transfer: Option<messages::responses::DataTransferResponse>,
+    pub sign_certificate: Option<messages::responses::SignCertificateResponse>,
+    pub start_transaction: Option<messages::responses::StartTransactionResponse>,
+    pub stop_transaction: Option<messages::responses::StopTransactionResponse>
+}
+
+impl Default for MessageToChargeStation {
+    fn default() -> MessageToChargeStation {
+        MessageToChargeStation{message: None, authorize: None, data_transfer: None,
+            sign_certificate: None, start_transaction: None, stop_transaction: None}
+    }
+}
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -56,8 +70,6 @@ pub struct MessageFromWebBrowser {
     pub selected: String, // action
     #[serde(rename = "messageId")]
     pub message_id: u8, // call or call_result
-    #[serde(rename = "uniqueId")]
-    pub unique_id: String,
     pub payload: Value, // OCPP message
 }
 
@@ -114,9 +126,9 @@ impl OcppServer {
         }
     }
 
-    fn send_message_to_charger(&self, charger: &String, message: &String) {
+    fn send_message_to_charger(&self, charger: &String, message: MessageToChargeStation) {
         if let Some(session) = self.websocket_workers.get(charger) {
-            match session.do_send(MessageToChargeStation(message.to_owned())) {
+            match session.do_send(message) {
                 Err(e) => {println!("{}", e.to_string())}
                 Ok(_) => {}
             }
@@ -366,8 +378,9 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
             if msg.message_id == 2 {
                 let message_id = Uuid::new_v4().to_string();
                 let call = wrap_call(&message_id, &msg.selected, &serde_json::to_string(&msg.payload).unwrap());
-
-                self.send_message_to_charger(&msg.charger, &call);
+                let mut message_to_charge_station = MessageToChargeStation::default();
+                message_to_charge_station.message = Some(call.clone());
+                self.send_message_to_charger(&msg.charger, message_to_charge_station);
                 self.awaiting_call_result.insert(message_id, msg.client_id.clone());
                 if !self.chargers_webclients_pair.contains_key(msg.charger.clone().as_str()){
                     println!("Inserting charger_webclient_pair: {} -> {}", msg.charger.clone(), msg.client_id.clone());
@@ -376,8 +389,90 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
                 self.send_message_to_web_client(&msg.client_id, &format!("call sent to charger {}:\r\n{}", &msg.charger, call))
             }
             if msg.message_id == 3 {
-                let call_result = wrap_call_result(&msg.unique_id, serde_json::to_string(&msg.payload).unwrap());
-                self.send_message_to_charger(&msg.charger, &call_result);
+                let mut message_to_charge_station = MessageToChargeStation::default();
+                match msg.selected.as_str() {
+                    "Authorize" => {
+                        match serde_json::from_value(msg.payload.clone()) as Result<messages::responses::AuthorizeResponse, serde_json::Error>{
+                            Ok(response) => {
+                                message_to_charge_station.authorize = Some(response);
+                                self.send_message_to_charger(&msg.charger, message_to_charge_station);
+                                println!("Setting default Authorize response for charger {}: {}", &msg.charger,
+                                         serde_json::to_string(&msg.payload).unwrap());
+                                self.send_message_to_web_client(&msg.client_id,
+                                                                &format!("Setting default Authorize response for charger {}:\r\n {}", &msg.charger,
+                                                                                        serde_json::to_string(&msg.payload).unwrap()))
+                            }
+                            Err(err) => {
+                                println!("Unable to parse Authorize response. Error: {:#?}", err);
+                            }
+                        }
+                    },
+                    "DataTransfer" => {
+                        match serde_json::from_value(msg.payload.clone()) as Result<messages::responses::DataTransferResponse, serde_json::Error>{
+                            Ok(response) => {
+                                message_to_charge_station.data_transfer = Some(response);
+                                self.send_message_to_charger(&msg.charger, message_to_charge_station);
+                                println!("Setting default DataTransfer response to charger {}: {}", &msg.charger,
+                                         serde_json::to_string(&msg.payload).unwrap());
+                                self.send_message_to_web_client(&msg.client_id,
+                                                                &format!("Setting default DataTransfer response for charger {}:\r\n {}", &msg.charger,
+                                                                         serde_json::to_string(&msg.payload).unwrap()))
+                            }
+                            Err(err) => {
+                                println!("Unable to parse DataTransfer response. Error: {:#?}", err);
+                            }
+                        }
+                    },
+                    "SignCertificate" => {
+                        match serde_json::from_value(msg.payload.clone()) as Result<messages::responses::SignCertificateResponse, serde_json::Error>{
+                            Ok(response) => {
+                                message_to_charge_station.sign_certificate = Some(response);
+                                self.send_message_to_charger(&msg.charger, message_to_charge_station);
+                                println!("Setting default SignCertificate response to charger {}: {}", &msg.charger,
+                                         serde_json::to_string(&msg.payload).unwrap());
+                                self.send_message_to_web_client(&msg.client_id,
+                                                                &format!("Setting default SignCertificate response for charger {}:\r\n {}", &msg.charger,
+                                                                         serde_json::to_string(&msg.payload).unwrap()))
+                            }
+                            Err(err) => {
+                                println!("Unable to parse SignCertificate response. Error: {:#?}", err);
+                            }
+                        }
+                    },
+                    "StartTransaction" => {
+                        match serde_json::from_value(msg.payload.clone()) as Result<messages::responses::StartTransactionResponse, serde_json::Error>{
+                            Ok(response) => {
+                                message_to_charge_station.start_transaction = Some(response);
+                                self.send_message_to_charger(&msg.charger, message_to_charge_station);
+                                println!("Setting default StartTransaction response to charger {}: {}", &msg.charger,
+                                         serde_json::to_string(&msg.payload).unwrap());
+                                self.send_message_to_web_client(&msg.client_id,
+                                                                &format!("Setting default StartTransaction response for charger {}:\r\n {}", &msg.charger,
+                                                                         serde_json::to_string(&msg.payload).unwrap()))
+                            }
+                            Err(err) => {
+                                println!("Unable to parse StartTransaction response. Error: {:#?}", err);
+                            }
+                        }
+                    },
+                    "StopTransaction" => {
+                        match serde_json::from_value(msg.payload.clone()) as Result<messages::responses::StopTransactionResponse, serde_json::Error>{
+                            Ok(response) => {
+                                message_to_charge_station.stop_transaction = Some(response);
+                                self.send_message_to_charger(&msg.charger, message_to_charge_station);
+                                println!("Setting default StopTransaction response to charger {}: {}", &msg.charger,
+                                         serde_json::to_string(&msg.payload).unwrap());
+                                self.send_message_to_web_client(&msg.client_id,
+                                                                &format!("Setting default StopTransaction response for charger {}:\r\n {}", &msg.charger,
+                                                                         serde_json::to_string(&msg.payload).unwrap()))
+                            }
+                            Err(err) => {
+                                println!("Unable to parse StopTransaction response. Error: {:#?}", err);
+                            }
+                        }
+                    },
+                    _ => {}
+                }
             }
         } else {
             self.send_message_to_web_client(&msg.client_id, &format!("improper payload:\r\n{}", &msg.payload))

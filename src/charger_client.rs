@@ -6,12 +6,21 @@ use crate::server;
 use actix_web_actors::ws::ProtocolError;
 use crate::server::MessageFromChargeStation;
 
+pub struct DefaultResponses {
+    pub authorize: responses::AuthorizeResponse,
+    pub data_transfer: responses::DataTransferResponse,
+    pub sign_certificate: responses::SignCertificateResponse,
+    pub start_transaction: responses::StartTransactionResponse,
+    pub stop_transaction: responses::StopTransactionResponse,
+}
+
 pub struct ChargeStationWebSocketSession {
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT)
     /// otherwise the connection will b e dropped
     pub hb: Instant,
     pub name: String,
     pub address: Addr<server::OcppServer>,
+    pub default_responses: DefaultResponses,
 }
 
 impl Actor for ChargeStationWebSocketSession {
@@ -77,7 +86,24 @@ impl Handler<server::MessageToChargeStation> for ChargeStationWebSocketSession {
     type Result = ();
 
     fn handle(&mut self, msg: server::MessageToChargeStation, ctx: &mut Self::Context) -> Self::Result {
-        ctx.text(msg.0);
+        if msg.authorize.is_some() {
+            self.default_responses.authorize = msg.authorize.unwrap();
+        }
+        if msg.data_transfer.is_some() {
+            self.default_responses.data_transfer = msg.data_transfer.unwrap();
+        }
+        if msg.sign_certificate.is_some() {
+            self.default_responses.sign_certificate = msg.sign_certificate.unwrap();
+        }
+        if msg.start_transaction.is_some() {
+            self.default_responses.start_transaction = msg.start_transaction.unwrap();
+        }
+        if msg.stop_transaction.is_some() {
+            self.default_responses.stop_transaction = msg.stop_transaction.unwrap();
+        }
+        if msg.message.is_some() {
+            ctx.text(msg.message.unwrap())
+        }
     }
 }
 
@@ -108,122 +134,137 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                             2 => {
                                 let action: &str = &unpacked.get("Action").unwrap().as_str()
                                     .replace("\"", "");
-                                let call = Call{
-                                    unique_id: unpacked.get("MessageId").unwrap().clone(),
-                                    action: unpacked.get("Action").unwrap().clone(),
-                                    payload: serde_json::from_str(unpacked.get("Payload").unwrap()).unwrap()
-                                };
                                 match action {
                                     "Authorize" => {
-                                        let response = authorize_response(
-                                            unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                                            println!("{}: outgoing response: {}", self.name, response);
-                                                            ctx.text(response);
-                                        // self.address.do_send(MessageFromChargeStation{
-                                        //    charger_id: self.name.clone(),
-                                        //    call: Some(call),
-                                        //    call_result: None,
-                                        //    call_error: None
-                                        //});
-                                    },
+                                        match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::AuthorizeRequest, serde_json::Error> {
+                                            Ok(_) => {
+                                                ctx.text(wrap_call_result(
+                                                    unpacked.get("MessageId").unwrap(),
+                                                    serde_json::to_string(&self.default_responses.authorize).unwrap()))
+                                            }
+                                            Err(e) => {
+                                                ctx.text(wrap_call_error_result(
+                                                    unpacked.get("MessageId").unwrap(),
+                                                    ErrorCode::FormatViolation,
+                                                    &format!("{:#?}", e)))
+                                            }
+                                        }
+                                    }
                                     "BootNotification" => {
                                         let response = boot_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
-                                    },
+                                    }
                                     "DataTransfer" => {
-                                        self.address.do_send(MessageFromChargeStation{
-                                            charger_id: self.name.clone(),
-                                            call: Some(call),
-                                            call_result: None,
-                                            call_error: None
-                                        });
-                                    },
+                                        match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::DataTransferRequest, serde_json::Error> {
+                                            Ok(_) => {
+                                                ctx.text(wrap_call_result(
+                                                    unpacked.get("MessageId").unwrap(),
+                                                    serde_json::to_string(&self.default_responses.data_transfer).unwrap()))
+                                            }
+                                            Err(e) => {
+                                                ctx.text(wrap_call_error_result(
+                                                    unpacked.get("MessageId").unwrap(),
+                                                    ErrorCode::FormatViolation,
+                                                    &format!("{:#?}", e)))
+                                            }
+                                        }
+                                    }
                                     "DiagnosticsStatusNotification" => {
                                         let response = diagnostics_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
-                                    },
+                                    }
                                     "FirmwareStatusNotification" => {
                                         let response = firmware_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response)
-                                    },
+                                    }
                                     "Heartbeat" => {
                                         let response = heartbeat_response(
                                             unpacked.get("MessageId").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response)
-                                    },
+                                    }
                                     "MeterValues" => {
                                         let response = meter_values_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
-                                    },
+                                    }
                                     "StartTransaction" => {
-                                        // self.address.do_send(MessageFromChargeStation{
-                                        //     charger_id: self.name.clone(),
-                                        //     call: Some(call),
-                                        //     call_result: None,
-                                        //     call_error: None
-                                        // });
-                                        let response = start_transaction_response(
-                                            unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
-                                        ctx.text(response);
-                                    },
+                                        match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::StartTransactionRequest, serde_json::Error> {
+                                            Ok(_) => {
+                                                ctx.text(wrap_call_result(
+                                                    unpacked.get("MessageId").unwrap(),
+                                                    serde_json::to_string(&self.default_responses.start_transaction).unwrap()))
+                                            }
+                                            Err(e) => {
+                                                ctx.text(wrap_call_error_result(
+                                                    unpacked.get("MessageId").unwrap(),
+                                                    ErrorCode::FormatViolation,
+                                                    &format!("{:#?}", e)))
+                                            }
+                                        }
+                                    }
                                     "StatusNotification" => {
                                         let response = status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
-                                    },
+                                    }
                                     "StopTransaction" => {
-                                        // self.address.do_send(MessageFromChargeStation{
-                                        //     charger_id: self.name.clone(),
-                                        //     call: Some(call),
-                                        //     call_result: None,
-                                        //     call_error: None
-                                        // });
-                                        let response = stop_transaction_response(
-                                            unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
-                                        ctx.text(response);
-                                    },
+                                        match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::StopTransactionRequest, serde_json::Error> {
+                                            Ok(_) => {
+                                                ctx.text(wrap_call_result(
+                                                    unpacked.get("MessageId").unwrap(),
+                                                    serde_json::to_string(&self.default_responses.stop_transaction).unwrap()))
+                                            }
+                                            Err(e) => {
+                                                ctx.text(wrap_call_error_result(
+                                                    unpacked.get("MessageId").unwrap(),
+                                                    ErrorCode::FormatViolation,
+                                                    &format!("{:#?}", e)))
+                                            }
+                                        }
+                                    }
                                     "LogStatusNotification" => {
                                         let response = log_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
-                                    },
+                                    }
                                     "SecurityEventNotification" => {
                                         let response = security_event_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
                                         println!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
-                                    },
+                                    }
                                     "SignCertificate" => {
-                                        self.address.do_send(MessageFromChargeStation{
-                                            charger_id: self.name.clone(),
-                                            call: Some(call),
-                                            call_result: None,
-                                            call_error: None
-                                        });
-                                    },
+                                        match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::SignCertificateRequest, serde_json::Error> {
+                                            Ok(_) => {
+                                                ctx.text(wrap_call_result(
+                                                    unpacked.get("MessageId").unwrap(),
+                                                    serde_json::to_string(&self.default_responses.stop_transaction).unwrap()))
+                                            }
+                                            Err(e) => {
+                                                ctx.text(wrap_call_error_result(
+                                                    unpacked.get("MessageId").unwrap(),
+                                                    ErrorCode::FormatViolation,
+                                                    &format!("{:#?}", e)))
+                                            }
+                                        }
+                                    }
                                     "SignedFirmwareStatusNotification" => {
                                         let response = signed_firmware_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
@@ -248,15 +289,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                 let message_id_option = unpacked.get("MessageId");
                                 let payload_option = unpacked.get("Payload");
                                 if message_id_option.is_some() && payload_option.is_some() {
-                                    let call_result = CallResult{
+                                    let call_result = CallResult {
                                         unique_id: message_id_option.unwrap().clone(),
-                                        payload: serde_json::from_str(payload_option.unwrap().clone().as_str()).unwrap()
+                                        payload: serde_json::from_str(payload_option.unwrap().clone().as_str()).unwrap(),
                                     };
-                                    self.address.do_send(MessageFromChargeStation{
+                                    self.address.do_send(MessageFromChargeStation {
                                         charger_id: self.name.clone(),
                                         call: None,
                                         call_result: Some(call_result),
-                                        call_error: None
+                                        call_error: None,
                                     });
                                 }
                             }
@@ -268,18 +309,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
 
                                 if message_id_option.is_some() && error_code_option.is_some() &&
                                     error_description_option.is_some() && error_details_option.is_some() {
-
-                                    let call_error = CallError{
-                                        unique_id : strip_quotes(&message_id_option.unwrap()).parse().unwrap(),
+                                    let call_error = CallError {
+                                        unique_id: strip_quotes(&message_id_option.unwrap()).parse().unwrap(),
                                         error_code: strip_quotes(&error_code_option.unwrap()).parse().unwrap(),
                                         error_description: strip_quotes(&error_description_option.unwrap()).parse().unwrap(),
-                                        error_details: error_details_option.unwrap().clone()
+                                        error_details: error_details_option.unwrap().clone(),
                                     };
-                                    self.address.do_send(MessageFromChargeStation{
+                                    self.address.do_send(MessageFromChargeStation {
                                         charger_id: self.name.clone(),
                                         call: None,
                                         call_result: None,
-                                        call_error: Some(call_error)
+                                        call_error: Some(call_error),
                                     })
                                 }
                             }
