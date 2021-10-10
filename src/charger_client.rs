@@ -3,6 +3,7 @@ use actix_web_actors::ws;
 use std::time::Instant;
 use crate::messages::*;
 use crate::server;
+use log::{info, warn, error};
 use actix_web_actors::ws::ProtocolError;
 use crate::server::MessageFromChargeStation;
 
@@ -68,7 +69,7 @@ impl ChargeStationWebSocketSession {
             // check client heartbeats
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
                 // heartbeat timed out
-                println!("Websocket Client heartbeat failed, disconnecting!");
+                info!("Websocket Client heartbeat failed, disconnecting!");
                 act.address.do_send(server::DisconnectCharger { serial_id: act.name.clone() });
                 // stop actor
                 ctx.stop();
@@ -125,7 +126,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                 self.hb = Instant::now();
             }
             ws::Message::Text(text) => {
-                println!("{}: incoming message: {:?}", self.name, text);
+                info!("{}: incoming message: {:?}", self.name, text);
                 match unpack_ocpp_message(&text) {
                     Ok(unpacked) => {
                         let message_type_id: u8 = unpacked.get("MessageTypeId").unwrap().parse()
@@ -154,7 +155,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                         let response = boot_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
+                                        info!("{}: outgoing response: {}", self.name, response.clone());
                                         ctx.text(response);
                                     }
                                     "DataTransfer" => {
@@ -176,41 +177,46 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                         let response = diagnostics_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
+                                        info!("{}: outgoing response: {}", self.name, response.clone());
                                         ctx.text(response);
                                     }
                                     "FirmwareStatusNotification" => {
                                         let response = firmware_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
+                                        info!("{}: outgoing response: {}", self.name, response.clone());
                                         ctx.text(response)
                                     }
                                     "Heartbeat" => {
                                         let response = heartbeat_response(
                                             unpacked.get("MessageId").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
+                                        info!("{}: outgoing response: {}", self.name, response.clone());
                                         ctx.text(response)
                                     }
                                     "MeterValues" => {
                                         let response = meter_values_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
+                                        info!("{}: outgoing response: {}", self.name, response.clone());
                                         ctx.text(response);
                                     }
                                     "StartTransaction" => {
                                         match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::StartTransactionRequest, serde_json::Error> {
                                             Ok(_) => {
-                                                ctx.text(wrap_call_result(
+                                                let response = wrap_call_result(
                                                     unpacked.get("MessageId").unwrap(),
-                                                    serde_json::to_string(&self.default_responses.start_transaction).unwrap()))
+                                                    serde_json::to_string(&self.default_responses.start_transaction).unwrap());
+                                                info!("{}: outgoing response: {}", self.name, response.clone());
+                                                ctx.text(response);
                                             }
                                             Err(e) => {
-                                                ctx.text(wrap_call_error_result(
+                                                let response = wrap_call_error_result(
                                                     unpacked.get("MessageId").unwrap(),
                                                     ErrorCode::FormatViolation,
-                                                    &format!("{:#?}", e)))
+                                                    &format!("{:#?}", e));
+                                                ctx.text(response.clone());
+                                                warn!("{}: outgoing response: {}", self.name, response);
+
                                             }
                                         }
                                     }
@@ -218,21 +224,26 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                         let response = status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
+                                        info!("{}: outgoing response: {}", self.name, response.clone());
                                         ctx.text(response);
                                     }
                                     "StopTransaction" => {
                                         match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::StopTransactionRequest, serde_json::Error> {
                                             Ok(_) => {
-                                                ctx.text(wrap_call_result(
+                                                let response = wrap_call_result(
                                                     unpacked.get("MessageId").unwrap(),
-                                                    serde_json::to_string(&self.default_responses.stop_transaction).unwrap()))
+                                                    serde_json::to_string(&self.default_responses.stop_transaction).unwrap());
+                                                info!("{}: outgoing response: {}", self.name, response.clone());
+                                                ctx.text(response);
+
                                             }
                                             Err(e) => {
-                                                ctx.text(wrap_call_error_result(
+                                                let response = wrap_call_error_result(
                                                     unpacked.get("MessageId").unwrap(),
                                                     ErrorCode::FormatViolation,
-                                                    &format!("{:#?}", e)))
+                                                    &format!("{:#?}", e));
+                                                ctx.text(response.clone());
+                                                warn!("{}: outgoing response: {}", self.name, response);
                                             }
                                         }
                                     }
@@ -240,28 +251,32 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                         let response = log_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
+                                        info!("{}: outgoing response: {}", self.name, response);
                                         ctx.text(response);
                                     }
                                     "SecurityEventNotification" => {
                                         let response = security_event_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
+                                        info!("{}: outgoing response: {}", self.name, response.clone());
                                         ctx.text(response);
                                     }
                                     "SignCertificate" => {
                                         match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::SignCertificateRequest, serde_json::Error> {
                                             Ok(_) => {
-                                                ctx.text(wrap_call_result(
+                                                let response = wrap_call_result(
                                                     unpacked.get("MessageId").unwrap(),
-                                                    serde_json::to_string(&self.default_responses.stop_transaction).unwrap()))
+                                                    serde_json::to_string(&self.default_responses.stop_transaction).unwrap());
+                                                ctx.text(response.clone());
+                                                info!("{}: outgoing response: {}", self.name, response);
                                             }
                                             Err(e) => {
-                                                ctx.text(wrap_call_error_result(
+                                                let response = wrap_call_error_result(
                                                     unpacked.get("MessageId").unwrap(),
                                                     ErrorCode::FormatViolation,
-                                                    &format!("{:#?}", e)))
+                                                    &format!("{:#?}", e));
+                                                ctx.text(response.clone());
+                                                warn!("{}: outgoing response: {}", self.name, response)
                                             }
                                         }
                                     }
@@ -269,7 +284,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                         let response = signed_firmware_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
                                             unpacked.get("Payload").unwrap());
-                                        println!("{}: outgoing response: {}", self.name, response);
+                                        info!("{}: outgoing response: {}", self.name, response.clone());
                                         ctx.text(response);
                                     }
 
@@ -281,7 +296,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                                 &String::from(
                                                     "\"Not all messages are implemented yet. \
                                                     Ocpp server is still in development\""));
-                                        ctx.text(response);
+                                        ctx.text(response.clone());
+                                        error!("{}", response);
                                     }
                                 }
                             }
@@ -329,7 +345,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                     _ => {}
                 }
             }
-            ws::Message::Binary(_) => println!("Unexpected binary"),
+            ws::Message::Binary(_) => warn!("Unexpected binary"),
             ws::Message::Close(reason) => {
                 ctx.close(reason);
                 ctx.stop();

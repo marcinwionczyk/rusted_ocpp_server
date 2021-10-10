@@ -200,7 +200,6 @@ pub fn boot_notification_response(message_id: &String, payload: &String) -> Stri
     }
 }
 
-
 pub fn heartbeat_response(message_id: &String) -> String {
     let config = crate::config::Config::from_env().unwrap();
     let at_now:DateTime<Utc> = Utc::now() + ChronoDuration::hours(config.server.time_offset);

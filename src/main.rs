@@ -3,6 +3,7 @@ use std::io::BufReader;
 use std::time::Instant;
 use actix::{Actor, Addr};
 use actix_files::Files;
+use log::{log_enabled, info, Level};
 use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, post,
                 Responder, web};
 use actix_web_actors::ws;
@@ -48,7 +49,7 @@ async fn ws_ocpp_index(r: HttpRequest, stream: web::Payload, srv: web::Data<Addr
                                 expiry_date: None,
                                 parent_id_tag: None,
                                 status: messages::responses::IdTagInfoStatus::Accepted
-                            }, transaction_id: 0 },
+                            }, transaction_id: 123 },
                         stop_transaction: messages::responses::StopTransactionResponse {
                             id_tag_info: None }
                     }
@@ -94,18 +95,24 @@ async fn post_request(srv: web::Data<Addr<server::OcppServer>>,
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    env_logger::init();
     dotenv::from_filename("settings.env").ok();
     let config = crate::config::Config::from_env().unwrap();
     if config.server.use_tls {
-        println!("Server is listening.\r\n \
+        if log_enabled!(Level::Info){
+            info!("Server is listening.\r\n \
               Open web-browser with the url https://{host}:{port}/\r\n \
               Connect chargers with the url wss://{host}:{port}/ocpp/",
                  host = config.server.host, port = config.server.port);
+        }
+
     }  else {
-        println!("Server is listening.\r\n \
-              Open web-browser with the url http://{host}:{port}/\r\n \
-              Connect chargers with the url ws://{host}:{port}/ocpp/",
-                 host = config.server.host, port = config.server.port);
+        if log_enabled!(Level::Info) {
+            info!("Server is listening.\r\n \
+                  Open web-browser with the url http://{host}:{port}/\r\n \
+                  Connect chargers with the url ws://{host}:{port}/ocpp/",
+                     host = config.server.host, port = config.server.port);
+        }
     }
     let ocpp_server = server::OcppServer::new().start();
     let http_server = HttpServer::new(move || {
@@ -120,6 +127,7 @@ async fn main() -> std::io::Result<()> {
             .service(Files::new("/", "./webclient/").index_file("index.html"))
     });
     if config.server.use_tls {
+        // TODO: TLS is not working at the moment
         let root_cert_store = RootCertStore::empty();
         let mut tls_config = rustls::ServerConfig::new(
             AllowAnyAnonymousOrAuthenticatedClient::new(root_cert_store));
