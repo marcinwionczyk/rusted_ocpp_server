@@ -3,7 +3,7 @@ use std::io::BufReader;
 use std::time::Instant;
 use actix::{Actor, Addr};
 use actix_files::Files;
-use log::{log_enabled, info, Level};
+use log::info;
 use actix_web::{App, Error as ActixWebError, get, HttpRequest, HttpResponse, HttpServer, post,
                 Responder, web};
 use actix_web_actors::ws;
@@ -99,20 +99,16 @@ async fn main() -> std::io::Result<()> {
     dotenv::from_filename("settings.env").ok();
     let config = crate::config::Config::from_env().unwrap();
     if config.server.use_tls {
-        if log_enabled!(Level::Info){
-            info!("Server is listening.\r\n \
+        info!("Server is listening.\r\n \
               Open web-browser with the url https://{host}:{port}/\r\n \
               Connect chargers with the url wss://{host}:{port}/ocpp/",
-                 host = config.server.host, port = config.server.port);
-        }
+              host = config.server.host, port = config.server.port);
 
     }  else {
-        if log_enabled!(Level::Info) {
-            info!("Server is listening.\r\n \
-                  Open web-browser with the url http://{host}:{port}/\r\n \
-                  Connect chargers with the url ws://{host}:{port}/ocpp/",
-                     host = config.server.host, port = config.server.port);
-        }
+        info!("Server is listening.\r\n \
+               Open web-browser with the url http://{host}:{port}/\r\n \
+               Connect chargers with the url ws://{host}:{port}/ocpp/",
+               host = config.server.host, port = config.server.port);
     }
     let ocpp_server = server::OcppServer::new().start();
     let http_server = HttpServer::new(move || {
@@ -120,6 +116,7 @@ async fn main() -> std::io::Result<()> {
             .data(ocpp_server.clone())
             //.data(pool.clone())
             //.service(web::resource("/").route(web::get().to(index)))
+            .service(Files::new("/logs", "./logs/"))
             .service(get_chargers)
             .service(post_request)
             .service(ws_ocpp_index)

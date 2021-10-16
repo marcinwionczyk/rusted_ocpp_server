@@ -58,7 +58,8 @@ pub struct MessageFromChargeStation{
 #[derive(Message, Serialize, Deserialize)]
 #[rtype(result = "()")]
 pub struct MessageToWebBrowser{
-    pub message: String
+    pub message: String,
+    pub payload: Option<Value>
 }
 
 /// a OCPP message to OCPP server from web client
@@ -136,13 +137,24 @@ impl OcppServer {
         }
     }
 
-    fn send_message_to_web_client(&self, web_client: &String, message: &String) {
+    fn send_message_to_web_client(&self, web_client: &String, message: &String, payload: Option<Value>) {
         if let Some(session) = self.webclient_workers.get(web_client) {
-            match session.do_send(MessageToWebBrowser{message: message.to_owned()}) {
+            match session.do_send(MessageToWebBrowser{message: message.to_owned(), payload }) {
                 Err(e) => {error!("{}", e.to_string())}
                 Ok(_) => {}
             }
         }
+    }
+
+    fn _create_log(&self, charger: &String, time_date_start: &String, time_date_stop: Option<&String>) -> Result<String, std::io::Error> {
+        let path = match time_date_stop {
+            None => format!("./logs/{}_{}.log", charger, time_date_start),
+            Some(tds) => format!("./logs/{}_{}_{}.log", charger, time_date_start, tds)
+        };
+        let mut _f = std::fs::File::create(path.clone())?;
+        // TODO: get logs from database for specific charger and time period and write to file
+        // under path
+        Ok(path)
     }
 
     fn message_from_web_browser_is_valid(msg: MessageFromWebBrowser) -> bool {
@@ -387,7 +399,7 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
                     info!("Inserting charger_webclient_pair: {} -> {}", msg.charger.clone(), msg.client_id.clone());
                     self.chargers_webclients_pair.insert(msg.charger.clone(), msg.client_id.clone());
                 }
-                self.send_message_to_web_client(&msg.client_id, &format!("call sent to charger {}:\r\n{}", &msg.charger, call))
+                self.send_message_to_web_client(&msg.client_id, &format!("call sent to charger {}:\r\n{}", &msg.charger, call), None)
             }
             if msg.message_id == 3 {
                 let mut message_to_charge_station = MessageToChargeStation::default();
@@ -401,7 +413,7 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
                                          serde_json::to_string(&msg.payload).unwrap());
                                 self.send_message_to_web_client(&msg.client_id,
                                                                 &format!("Setting default Authorize response for charger {}:\r\n {}", &msg.charger,
-                                                                                        serde_json::to_string(&msg.payload).unwrap()))
+                                                                                        serde_json::to_string(&msg.payload).unwrap()), None)
                             }
                             Err(err) => {
                                 error!("Unable to parse Authorize response. Error: {:#?}", err);
@@ -417,7 +429,7 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
                                          serde_json::to_string(&msg.payload).unwrap());
                                 self.send_message_to_web_client(&msg.client_id,
                                                                 &format!("Setting default DataTransfer response for charger {}:\r\n {}", &msg.charger,
-                                                                         serde_json::to_string(&msg.payload).unwrap()))
+                                                                         serde_json::to_string(&msg.payload).unwrap()), None)
                             }
                             Err(err) => {
                                 error!("Unable to parse DataTransfer response. Error: {:#?}", err);
@@ -433,7 +445,7 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
                                          serde_json::to_string(&msg.payload).unwrap());
                                 self.send_message_to_web_client(&msg.client_id,
                                                                 &format!("Setting default SignCertificate response for charger {}:\r\n {}", &msg.charger,
-                                                                         serde_json::to_string(&msg.payload).unwrap()))
+                                                                         serde_json::to_string(&msg.payload).unwrap()), None)
                             }
                             Err(err) => {
                                 error!("Unable to parse SignCertificate response. Error: {:#?}", err);
@@ -449,7 +461,7 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
                                          serde_json::to_string(&msg.payload).unwrap());
                                 self.send_message_to_web_client(&msg.client_id,
                                                                 &format!("Setting default StartTransaction response for charger {}:\r\n {}", &msg.charger,
-                                                                         serde_json::to_string(&msg.payload).unwrap()))
+                                                                         serde_json::to_string(&msg.payload).unwrap()), None)
                             }
                             Err(err) => {
                                 error!("Unable to parse StartTransaction response. Error: {:#?}", err);
@@ -465,7 +477,7 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
                                          serde_json::to_string(&msg.payload).unwrap());
                                 self.send_message_to_web_client(&msg.client_id,
                                                                 &format!("Setting default StopTransaction response for charger {}:\r\n {}", &msg.charger,
-                                                                         serde_json::to_string(&msg.payload).unwrap()))
+                                                                         serde_json::to_string(&msg.payload).unwrap()), None)
                             }
                             Err(err) => {
                                 error!("Unable to parse StopTransaction response. Error: {:#?}", err);
@@ -476,7 +488,7 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
                 }
             }
         } else {
-            self.send_message_to_web_client(&msg.client_id, &format!("improper payload:\r\n{}", &msg.payload))
+            self.send_message_to_web_client(&msg.client_id, &format!("improper payload:\r\n{}", &msg.payload), None)
         }
     }
 }
@@ -491,7 +503,7 @@ impl Handler<MessageFromChargeStation> for OcppServer {
             if let Some(webclient_id) = self.chargers_webclients_pair.get(msg.charger_id.as_str()){
                 let call_as_string = format!("Call from {}:\r\n[2, \"{}\", \"{}\", {}]", call.unique_id,
                                              msg.charger_id, call.action, call.payload.as_str().unwrap());
-                self.send_message_to_web_client(webclient_id, &call_as_string);
+                self.send_message_to_web_client(webclient_id, &call_as_string, None);
             }
         }
         if msg.call_error.is_some() {
@@ -502,7 +514,7 @@ impl Handler<MessageFromChargeStation> for OcppServer {
                                                      call_error.unique_id,
                                                      call_error.error_code, call_error.error_description,
                                                      call_error.error_details);
-                self.send_message_to_web_client(webclient_id, &call_error_as_a_string);
+                self.send_message_to_web_client(webclient_id, &call_error_as_a_string, None);
                 self.awaiting_call_result.remove(call_error.unique_id.as_str());
             }
         }
@@ -516,7 +528,7 @@ impl Handler<MessageFromChargeStation> for OcppServer {
                             msg.charger_id,
                             wrap_call_result(&call_result.unique_id,
                                              (&call_result.payload).to_string()));
-                self.send_message_to_web_client(webclient_id, &call_result_as_a_string);
+                self.send_message_to_web_client(webclient_id, &call_result_as_a_string, None);
                 self.awaiting_call_result.remove(call_result.unique_id.as_str());
             }
         }

@@ -5,7 +5,9 @@ use crate::messages::*;
 use crate::server;
 use actix_web_actors::ws::ProtocolError;
 use crate::server::{MessageToWebBrowser, ConnectWebClient, DisconnectWebClient};
-use serde_json::Value;
+use serde_json::{Value};
+
+use chrono::{Local, SecondsFormat};
 
 pub struct WebBrowserWebSocketSession {
     pub id: String,
@@ -83,33 +85,53 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
             }
             ws::Message::Text(text) => {
                 let json: Value = serde_json::from_str(text.as_str()).expect("JSON string is wrong");
-                let message = json.get("message");
-                if message.is_some() {
-                    match message.unwrap().as_str() {
-                        None => {}
-                        Some("connect") => {
-                            match serde_json::to_string(&MessageToWebBrowser{ message: "connected to the ocpp server".to_string() }){
-                                Ok(text) => ctx.text(text),
-                                Err(_) => {}
+                match json.get("message") {
+                    None => {}
+                    Some(value) => {
+                        match value.as_str().unwrap().to_lowercase().as_str() {
+                            "connect" => {
+                                match serde_json::to_string(&MessageToWebBrowser {
+                                    message: "connected to the ocpp server".to_string(),
+                                    payload: None
+                                }) {
+                                    Ok(text) => ctx.text(text),
+                                    Err(_) => {}
+                                }
+                            }
+                            "disconnect" => {
+                                match serde_json::to_string(&MessageToWebBrowser {
+                                    message: "disconnecting from the ocpp server".to_string(),
+                                    payload: None
+                                }) {
+                                    Ok(text) => { ctx.text(text) },
+                                    Err(_) => {}
+                                }
+                                self.address.do_send(DisconnectWebClient { serial_id: self.id.clone() });
+                            }
+                            "getcurrenttimestamp" => {
+
+                                match serde_json::to_string(&MessageToWebBrowser {
+                                    message: "currentTimestamp".to_string(),
+                                    payload: Some(format!("\"{}\"", Local::now().to_rfc3339_opts(SecondsFormat::Millis, false)).parse().unwrap())
+                                }) {
+                                    Ok(text) => { ctx.text(text) },
+                                    Err(_) => {}
+                                }
+                            }
+                            _ => {
+                                match serde_json::to_string(&MessageToWebBrowser {
+                                    message: "unrecognized command".to_string(),
+                                    payload: None
+                                }) {
+                                    Ok(text) => { ctx.text(text) },
+                                    Err(_) => {}
+                                }
                             }
                         }
-                        Some("disconnect") => {
-                            match serde_json::to_string(&MessageToWebBrowser{ message: "disconnecting from the ocpp server".to_string() }){
-                                Ok(text) => {
-                                    ctx.text(text)
-                                },
-                                Err(_) => {}
-                            }
-                            self.address.do_send(
-                                DisconnectWebClient{
-                                    serial_id: self.id.clone()
-                                });
-                        }
-                        _ => {}
                     }
                 }
             }
-            _ => ctx.stop()
+            _ => {}
         }
     }
 }
