@@ -93,9 +93,12 @@ async fn post_request(srv: web::Data<Addr<server::OcppServer>>,
     }
 }
 
+
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
+    std::env::set_var("RUST_LOG", "info");
     dotenv::from_filename("settings.env").ok();
     let config = crate::config::Config::from_env().unwrap();
     if config.server.use_tls {
