@@ -1,5 +1,6 @@
 use rusqlite::{Connection, Result, params};
 use chrono::{Local, SecondsFormat};
+use log::{error, warn, info, debug, trace};
 
 pub(crate) fn create_database() -> Result<(), rusqlite::Error> {
     let conn = Connection::open("logs.db")?;
@@ -20,7 +21,7 @@ pub(crate) fn add_charger(conn: &Connection, charger_name: &str) -> Result<(), r
     Ok(())
 }
 
-pub(crate) fn add_log(conn: &Connection, charger_name: &str, log_level_option: Option<String>, message: String) -> Result<()> {
+fn add_log_priv(conn: &Connection, charger_name: &str, log_level_option: Option<String>, message: String) -> Result<()> {
     let timestamp = Local::now().to_rfc3339_opts(SecondsFormat::Millis, false);
     let charger_id: String = conn.query_row("SELECT id FROM chargers WHERE name = ?1;",
                                     params![charger_name],
@@ -37,4 +38,28 @@ pub(crate) fn add_log(conn: &Connection, charger_name: &str, log_level_option: O
         }
     }
     Ok(())
+}
+
+pub(crate) fn add_log(conn: &Connection, charger_name: &str, log_level_option: Option<String>, message: String){
+    match add_log_priv(conn, charger_name.clone(), log_level_option.clone(), message.clone()){
+        Ok(_) => {}
+        Err(e) => {
+            error!("Failed at adding log to the database. Reason: {:#?}", e);
+        }
+    }
+    match log_level_option{
+        None => {
+            info!("{}: {}", charger_name, message);
+        }
+        Some(log_level) => {
+            match log_level.as_str() {
+                "error" => error!("{}: {}", charger_name, message),
+                "warn" => warn!("{}: {}", charger_name, message),
+                "info" => info!("{}: {}", charger_name, message),
+                "debug" => debug!("{}: {}", charger_name, message),
+                "trace" => trace!("{}: {}", charger_name, message),
+                &_ => {}
+            }
+        }
+    }
 }

@@ -8,11 +8,14 @@ use crate::server::{MessageToWebBrowser, ConnectWebClient, DisconnectWebClient};
 use serde_json::{Value};
 
 use chrono::{Local, SecondsFormat};
+use r2d2_sqlite::SqliteConnectionManager;
+use r2d2::PooledConnection;
 
 pub struct WebBrowserWebSocketSession {
     pub id: String,
     pub hb: Instant,
     pub address: Addr<server::OcppServer>,
+    pub db_connection: PooledConnection<SqliteConnectionManager>
 }
 
 

@@ -22,7 +22,7 @@ mod server;
 mod charger_client;
 mod webclient;
 mod error;
-mod database;
+mod logs;
 
 const ALLOWED_SUB_PROTOCOLS: [&'static str; 1] = ["ocpp1.6"];
 
@@ -39,12 +39,13 @@ async fn ws_ocpp_index(r: HttpRequest,
     match r.match_info().get("serial_id") {
         Some(serial_id) => {
             let conn = db.get().unwrap();
-            database::add_charger(&conn, serial_id).expect("Could not add charger to the dtaabase");
+            logs::add_charger(&conn, serial_id).expect("Could not add charger to the database");
             ws::start_with_protocols(
                 charger_client::ChargeStationWebSocketSession {
                     hb: Instant::now(),
                     name: String::from(serial_id),
                     address: srv.get_ref().clone(),
+                    db_connection: conn,
                     default_responses: charger_client::DefaultResponses {
                         authorize: messages::responses::AuthorizeResponse {
                             id_tag_info: messages::responses::IdTagInfo {
@@ -76,18 +77,22 @@ async fn ws_ocpp_index(r: HttpRequest,
         }
         None => Err(ActixWebError::from(HttpResponse::BadRequest()))
     }
+
 }
 
 #[get("/api/webclient-socket/{serial_id}")]
 async fn ws_webclient_index(r: HttpRequest,
                             stream: web::Payload,
-                            srv: web::Data<Addr<server::OcppServer>>) -> Result<HttpResponse, ActixWebError> {
+                            srv: web::Data<Addr<server::OcppServer>>,
+                            db: web::Data<Pool<SqliteConnectionManager>>) -> Result<HttpResponse, ActixWebError> {
     match r.match_info().get("serial_id") {
         Some(serial_id) => {
+
             ws::start(webclient::WebBrowserWebSocketSession {
                 id: String::from(serial_id),
                 hb: Instant::now(),
                 address: srv.get_ref().clone(),
+                db_connection: db.get().unwrap()
             }, &r, stream)
         }
         None => Err(ActixWebError::from(HttpResponse::BadRequest()))
@@ -120,7 +125,7 @@ async fn post_request(srv: web::Data<Addr<server::OcppServer>>,
 async fn main() -> std::io::Result<()> {
     let _ = fs::create_dir("./logs");
     env_logger::init();
-    match database::create_database(){
+    match logs::create_database(){
         Err(e) => {
             error!("Unable to create database logs.db. Reason: {:#?}", e);
         }
