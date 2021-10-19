@@ -9,6 +9,7 @@ pub(crate) fn create_database() -> Result<(), rusqlite::Error> {
         name TEXT NOT NULL)", [])?;
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS chargers_name_uindex ON chargers (name)", [])?;
     conn.execute("CREATE TABLE  IF NOT EXISTS logs (
+        id INTEGER CONSTRAINT chargers_pk PRIMARY KEY AUTOINCREMENT,
         timestamp DATETIME NOT NULL,
         charger_id INTEGER REFERENCES chargers ON UPDATE CASCADE ON DELETE CASCADE,
         level TEXT DEFAULT 'info' not null,
@@ -23,22 +24,24 @@ pub(crate) fn add_charger(conn: &Connection, charger_name: &str) -> Result<(), r
 
 fn add_log_priv(conn: &Connection, charger_name: &str, log_level_option: Option<String>, message: String) -> Result<()> {
     let timestamp = Local::now().to_rfc3339_opts(SecondsFormat::Millis, false);
-    let charger_id: String = conn.query_row("SELECT id FROM chargers WHERE name = ?1;",
+    let charger_id: i32 = conn.query_row("SELECT id FROM chargers WHERE name = ?1;",
                                     params![charger_name],
                                     |row| row.get(0))?;
 
     match log_level_option{
         None => {
             conn.execute("INSERT INTO logs (timestamp, charger_id, message) VALUES (?1, ?2, ?3)",
-                         &[&timestamp, &charger_id, &message])?;
+                         &[&timestamp, &charger_id.to_string(), &message])?;
         }
         Some(log_level) => {
             conn.execute("INSERT INTO logs (timestamp, charger_id, level, message) VALUES (?1, ?2, ?3, ?4)",
-                         &[&timestamp, &charger_id, &log_level, &message])?;
+                         &[&timestamp, &charger_id.to_string(), &log_level, &message])?;
         }
     }
     Ok(())
 }
+
+//select timestamp, level, message from logs left join chargers c on logs.charger_id = c.id where c.name = 'ORAC2-KR1-0001-013' and timestamp >= 1634653600000;
 
 pub(crate) fn add_log(conn: &Connection, charger_name: &str, log_level_option: Option<String>, message: String){
     match add_log_priv(conn, charger_name.clone(), log_level_option.clone(), message.clone()){

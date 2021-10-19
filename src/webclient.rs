@@ -121,6 +121,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
                                     Err(_) => {}
                                 }
                             }
+                            "getlog" => {
+                                dotenv::from_filename("settings.env").ok();
+                                let config = crate::config::Config::from_env().unwrap();
+                                ctx.text(format!("http://{}:{}/logs/server.log", config.server.host, config.server.port));
+                            }
                             _ => {
                                 match serde_json::to_string(&MessageToWebBrowser {
                                     message: "unrecognized command".to_string(),
