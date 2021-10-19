@@ -124,7 +124,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
                             "getlog" => {
                                 dotenv::from_filename("settings.env").ok();
                                 let config = crate::config::Config::from_env().unwrap();
-                                ctx.text(format!("http://{}:{}/logs/server.log", config.server.host, config.server.port));
+                                ctx.text(format!("{{\"message\":\"GetLog\", \"payload\":{{\"address\":\"http://{}:{}/logs/server.log\"}}", config.server.host, config.server.port));
                             }
                             _ => {
                                 match serde_json::to_string(&MessageToWebBrowser {
