@@ -147,3 +147,13 @@ pub fn get_logs(
     }
     Ok(filename)
 }
+
+pub fn delete_logs(conn: &Connection) -> Return<usize>{
+    for entry in std::fs::read_dir("./logs").unwrap() {
+        std::fs::remove_file(entry.unwrap().path());
+    }
+    match conn.execute("DELETE FROM logs where timestamp < DATETIME('now', '-1 day')", []){
+        Ok(deleted) => {ctx.text(format!("{{\"message\":\"clear_log\", \"payload\":{{\"removed\":{}}}}}", deleted))}
+        Err(e) => {error!("Unable to delete logs. Reason: {:#?}", e)}
+    }
+}
