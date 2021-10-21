@@ -1,9 +1,9 @@
+use chrono::{DateTime, Duration as ChronoDuration, SecondsFormat, Utc};
+use dotenv;
+use serde::Deserialize;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::time::Duration;
-use chrono::{DateTime, Utc, SecondsFormat, Duration as ChronoDuration};
-use serde::Deserialize;
-use serde_json::{Value};
-use dotenv;
 
 pub mod requests;
 pub mod responses;
@@ -11,50 +11,40 @@ pub mod responses;
 pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(60);
 pub const CLIENT_TIMEOUT: Duration = Duration::from_secs(600);
 
+#[allow(dead_code)]
 pub enum ErrorCode {
-    FormatViolation,
-    // Payload for Action is syntactically incorrect
-    GenericError,
-    // Any other error not covered by the more specific error codes in this table
-    InternalError,
-    // An internal error occurred and the receiver was not able to process the requested Action successfully
-    MessageTypeNotSupported,
-    // A message with an Message Type Number received that is not supported by this implementation.
-    NotImplemented,
-    // Requested Action is not known by receiver
-    NotSupported,
-    // Requested Action is recognized but not supported by the receiver
-    OccurrenceConstraintViolation,
-    // Payload for Action is syntactically correct but at least one of the fields violates occurrence constraints
-    PropertyConstraintViolation,
-    // Payload is syntactically correct but at least one field contains an invalid value
-    ProtocolError,
-    // Payload for Action is not conform the PDU structure
-    RpcFrameworkError,
-    // Content of the call is not a valid RPC Request, for example: MessageId could not be read.
-    SecurityError,
-    // During the processing of Action a security issue occurred preventing receiver from completing the Action successfully
+    FormatViolation, // Payload for Action is syntactically incorrect
+    GenericError, // Any other error not covered by the more specific error codes in this table
+    InternalError, // An internal error occurred and the receiver was not able to process the requested Action successfully
+    MessageTypeNotSupported, // A message with an Message Type Number received that is not supported by this implementation.
+    NotImplemented, // Requested Action is not known by receiver
+    NotSupported, // Requested Action is recognized but not supported by the receiver
+    OccurrenceConstraintViolation, // Payload for Action is syntactically correct but at least one of the fields violates occurrence constraints
+    PropertyConstraintViolation, // Payload is syntactically correct but at least one field contains an invalid value
+    ProtocolError, // Payload for Action is not conform the PDU structure
+    RpcFrameworkError, // Content of the call is not a valid RPC Request, for example: MessageId could not be read.
+    SecurityError, // During the processing of Action a security issue occurred preventing receiver from completing the Action successfully
     TypeConstraintViolation, // Payload for Action is syntactically correct but at least one of the fields violates data type constraints
 }
 
 #[derive(Deserialize)]
-pub struct Call{
+pub struct Call {
     pub unique_id: String,
     pub action: String,
-    pub payload: serde_json::Value
+    pub payload: serde_json::Value,
 }
 
 #[derive(Deserialize)]
-pub struct CallResult{
+pub struct CallResult {
     pub unique_id: String,
-    pub payload: serde_json::Value
+    pub payload: serde_json::Value,
 }
 #[derive(Deserialize)]
-pub struct CallError{
+pub struct CallError {
     pub unique_id: String,
     pub error_code: String,
     pub error_description: String,
-    pub error_details: String
+    pub error_details: String,
 }
 
 pub fn wrap_call(message_id: &String, action: &String, payload: &String) -> String {
@@ -81,64 +71,96 @@ pub fn wrap_call_result(unique_id: &String, payload: String) -> String {
     format!("[3, {}, {}]", m, payload)
 }
 
-
-
 // [<MessageTypeId>, "<UniqueId>", "<errorCode>", "<errorDescription>", {<errorDetails>}]
-pub fn wrap_call_error_result(msg_id: &String, error_code: ErrorCode, error_details: &String) -> String {
+pub fn wrap_call_error_result(
+    msg_id: &String,
+    error_code: ErrorCode,
+    error_details: &String,
+) -> String {
     match error_code {
         ErrorCode::FormatViolation => {
-            format!("[4, {}, \"FormationViolation\", \"Payload for Action is syntactically \
-                incorrect or not conform the PDU structure for Action\", {}]", msg_id, error_details)
+            format!(
+                "[4, {}, \"FormationViolation\", \"Payload for Action is syntactically \
+                incorrect or not conform the PDU structure for Action\", {}]",
+                msg_id, error_details
+            )
         }
         ErrorCode::GenericError => {
-            format!("[4, {}, \"GenericError\", \"Non specific error\", {}]",
-                    msg_id, error_details)
+            format!(
+                "[4, {}, \"GenericError\", \"Non specific error\", {}]",
+                msg_id, error_details
+            )
         }
         ErrorCode::InternalError => {
-            format!("[4, {}, \"InternalError\", \"An internal error occurred and the receiver \
+            format!(
+                "[4, {}, \"InternalError\", \"An internal error occurred and the receiver \
                 was not able to process the requested Action successfully\", {}]",
-                    msg_id, error_details)
+                msg_id, error_details
+            )
         }
         ErrorCode::MessageTypeNotSupported => {
-            format!("[4, {}, \"MessageTypeNotSupported\", \"A message with an Message Type \
+            format!(
+                "[4, {}, \"MessageTypeNotSupported\", \"A message with an Message Type \
                 Number received that is not supported by this implementation\", {}]",
-                    msg_id, error_details)
+                msg_id, error_details
+            )
         }
         ErrorCode::NotImplemented => {
-            format!("[4, {}, \"NotImplemented\", \"Requested Action is not known by receiver\", {}]",
-                    msg_id, error_details)
+            format!(
+                "[4, {}, \"NotImplemented\", \"Requested Action is not known by receiver\", {}]",
+                msg_id, error_details
+            )
         }
         ErrorCode::NotSupported => {
-            format!("[4, {}, \"NotSupported\", \"Requested Action is recognized but not supported \
-                by the receiver\", {}]", msg_id, error_details)
+            format!(
+                "[4, {}, \"NotSupported\", \"Requested Action is recognized but not supported \
+                by the receiver\", {}]",
+                msg_id, error_details
+            )
         }
         ErrorCode::OccurrenceConstraintViolation => {
-            format!("[4, {}, \"OccurrenceConstraintViolation\", \"Payload for Action is \
+            format!(
+                "[4, {}, \"OccurrenceConstraintViolation\", \"Payload for Action is \
                 syntactically correct but at least one of the fields violates occurrence \
-                constraints\", {}]", msg_id, error_details)
+                constraints\", {}]",
+                msg_id, error_details
+            )
         }
         ErrorCode::PropertyConstraintViolation => {
-            format!("[4, {}, \"PropertyConstraintViolation\", \"Payload for Action is \
+            format!(
+                "[4, {}, \"PropertyConstraintViolation\", \"Payload for Action is \
                 syntactically correct but at least one of the fields violates occurrence \
-                constraints\", {}]", msg_id, error_details)
+                constraints\", {}]",
+                msg_id, error_details
+            )
         }
         ErrorCode::ProtocolError => {
-            format!("[4, {}, \"ProtocolError\", \"Payload for Action is not conform the PDU \
-                structure\", {}]", msg_id, error_details)
+            format!(
+                "[4, {}, \"ProtocolError\", \"Payload for Action is not conform the PDU \
+                structure\", {}]",
+                msg_id, error_details
+            )
         }
         ErrorCode::RpcFrameworkError => {
-            format!("[4, {}, \"RpcFrameworkError\", \"Content of the call is not a valid RPC Request, \
-            for example: MessageId could not be read.\", {}]", msg_id, error_details)
+            format!(
+                "[4, {}, \"RpcFrameworkError\", \"Content of the call is not a valid RPC Request, \
+            for example: MessageId could not be read.\", {}]",
+                msg_id, error_details
+            )
         }
         ErrorCode::SecurityError => {
-            format!("[4, {}, \"SecurityError\", \"During the processing of Action a security issue \
+            format!(
+                "[4, {}, \"SecurityError\", \"During the processing of Action a security issue \
             occurred preventing receiver from completing the Action successfully\", {}]",
-                    msg_id, error_details)
+                msg_id, error_details
+            )
         }
         ErrorCode::TypeConstraintViolation => {
-            format!("[4, {}, \"TypeConstraintViolation\", \"Payload for Action is syntactically \
+            format!(
+                "[4, {}, \"TypeConstraintViolation\", \"Payload for Action is syntactically \
             correct but at least one of the fields violates data type constraints\", {}]",
-                    msg_id, error_details)
+                msg_id, error_details
+            )
         }
     }
 }
@@ -171,26 +193,38 @@ pub fn unpack_ocpp_message(msg: &String) -> Result<HashMap<&str, String>, String
         }
         None => {
             let message_id = (json.get(1).unwrap()).to_string();
-            Err(wrap_call_error_result(&message_id, ErrorCode::MessageTypeNotSupported, msg))
+            Err(wrap_call_error_result(
+                &message_id,
+                ErrorCode::MessageTypeNotSupported,
+                msg,
+            ))
         }
         _ => {
             let message_id = (json.get(1).unwrap()).to_string();
-            Err(wrap_call_error_result(&message_id, ErrorCode::MessageTypeNotSupported, msg))
+            Err(wrap_call_error_result(
+                &message_id,
+                ErrorCode::MessageTypeNotSupported,
+                msg,
+            ))
         }
     }
 }
 
 pub fn boot_notification_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::BootNotificationRequest, serde_json::Error> {
+    match serde_json::from_str(&payload)
+        as Result<requests::BootNotificationRequest, serde_json::Error>
+    {
         Ok(_) => {
             dotenv::from_filename("settings.env").ok();
             let config = crate::config::Config::from_env().unwrap();
-            let at_now:DateTime<Utc> = Utc::now() + ChronoDuration::hours(config.server.time_offset);
-            let boot_response: responses::BootNotificationResponse = responses::BootNotificationResponse {
-                current_time: at_now.to_rfc3339_opts(SecondsFormat::Millis, false),
-                interval: config.server.heartbeat_interval,
-                status: responses::BootNotificationStatus::Accepted,
-            };
+            let at_now: DateTime<Utc> =
+                Utc::now() + ChronoDuration::hours(config.server.time_offset);
+            let boot_response: responses::BootNotificationResponse =
+                responses::BootNotificationResponse {
+                    current_time: at_now.to_rfc3339_opts(SecondsFormat::Millis, false),
+                    interval: config.server.heartbeat_interval,
+                    status: responses::BootNotificationStatus::Accepted,
+                };
 
             wrap_call_result(message_id, serde_json::to_string(&boot_response).unwrap())
         }
@@ -202,7 +236,7 @@ pub fn boot_notification_response(message_id: &String, payload: &String) -> Stri
 
 pub fn heartbeat_response(message_id: &String) -> String {
     let config = crate::config::Config::from_env().unwrap();
-    let at_now:DateTime<Utc> = Utc::now() + ChronoDuration::hours(config.server.time_offset);
+    let at_now: DateTime<Utc> = Utc::now() + ChronoDuration::hours(config.server.time_offset);
     let heartbeat_resp: responses::HeartbeatResponse = responses::HeartbeatResponse {
         current_time: at_now.to_rfc3339_opts(SecondsFormat::Millis, false),
     };
@@ -210,11 +244,17 @@ pub fn heartbeat_response(message_id: &String) -> String {
 }
 
 pub fn diagnostics_status_notification_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::DiagnosticsStatusNotificationRequest, serde_json::Error> {
+    match serde_json::from_str(&payload)
+        as Result<requests::DiagnosticsStatusNotificationRequest, serde_json::Error>
+    {
         Ok(_) => {
-            let diagnostics_status_notification_resp = responses::DiagnosticsStatusNotificationResponse{};
-            wrap_call_result(message_id, serde_json::to_string(&diagnostics_status_notification_resp).unwrap())
-        },
+            let diagnostics_status_notification_resp =
+                responses::DiagnosticsStatusNotificationResponse {};
+            wrap_call_result(
+                message_id,
+                serde_json::to_string(&diagnostics_status_notification_resp).unwrap(),
+            )
+        }
         Err(e) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }
@@ -222,12 +262,17 @@ pub fn diagnostics_status_notification_response(message_id: &String, payload: &S
 }
 
 pub fn firmware_status_notification_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::FirmwareStatusNotificationRequest,
-            serde_json::Error> {
+    match serde_json::from_str(&payload)
+        as Result<requests::FirmwareStatusNotificationRequest, serde_json::Error>
+    {
         Ok(_) => {
-            let firmware_status_notification_resp = responses::FirmwareStatusNotificationResponse{};
-            wrap_call_result(message_id, serde_json::to_string(&firmware_status_notification_resp).unwrap())
-        },
+            let firmware_status_notification_resp =
+                responses::FirmwareStatusNotificationResponse {};
+            wrap_call_result(
+                message_id,
+                serde_json::to_string(&firmware_status_notification_resp).unwrap(),
+            )
+        }
         Err(e) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }
@@ -235,11 +280,15 @@ pub fn firmware_status_notification_response(message_id: &String, payload: &Stri
 }
 
 pub fn meter_values_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::MeterValuesRequest, serde_json::Error> {
+    match serde_json::from_str(&payload) as Result<requests::MeterValuesRequest, serde_json::Error>
+    {
         Ok(_) => {
-            let meter_values_resp = responses::MeterValuesResponse{};
-            wrap_call_result(message_id, serde_json::to_string(&meter_values_resp).unwrap())
-        },
+            let meter_values_resp = responses::MeterValuesResponse {};
+            wrap_call_result(
+                message_id,
+                serde_json::to_string(&meter_values_resp).unwrap(),
+            )
+        }
         Err(e) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }
@@ -247,11 +296,16 @@ pub fn meter_values_response(message_id: &String, payload: &String) -> String {
 }
 
 pub fn status_notification_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::StatusNotificationRequest, serde_json::Error> {
+    match serde_json::from_str(&payload)
+        as Result<requests::StatusNotificationRequest, serde_json::Error>
+    {
         Ok(_) => {
-            let status_notification_resp = responses::StatusNotificationResponse{};
-            wrap_call_result(message_id, serde_json::to_string(&status_notification_resp).unwrap())
-        },
+            let status_notification_resp = responses::StatusNotificationResponse {};
+            wrap_call_result(
+                message_id,
+                serde_json::to_string(&status_notification_resp).unwrap(),
+            )
+        }
         Err(e) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }
@@ -259,11 +313,16 @@ pub fn status_notification_response(message_id: &String, payload: &String) -> St
 }
 
 pub fn log_status_notification_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::LogStatusNotificationRequest, serde_json::Error> {
+    match serde_json::from_str(&payload)
+        as Result<requests::LogStatusNotificationRequest, serde_json::Error>
+    {
         Ok(_) => {
-            let log_status_notification_resp = responses::LogStatusNotificationResponse{};
-            wrap_call_result(message_id, serde_json::to_string(&log_status_notification_resp).unwrap())
-        },
+            let log_status_notification_resp = responses::LogStatusNotificationResponse {};
+            wrap_call_result(
+                message_id,
+                serde_json::to_string(&log_status_notification_resp).unwrap(),
+            )
+        }
         Err(e) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }
@@ -271,23 +330,37 @@ pub fn log_status_notification_response(message_id: &String, payload: &String) -
 }
 
 pub fn security_event_notification_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::SecurityEventNotificationRequest, serde_json::Error> {
+    match serde_json::from_str(&payload)
+        as Result<requests::SecurityEventNotificationRequest, serde_json::Error>
+    {
         Ok(_) => {
-            let security_event_notification_resp = responses::SecurityEventNotificationResponse{};
-            wrap_call_result(message_id, serde_json::to_string(&security_event_notification_resp).unwrap())
-        },
+            let security_event_notification_resp = responses::SecurityEventNotificationResponse {};
+            wrap_call_result(
+                message_id,
+                serde_json::to_string(&security_event_notification_resp).unwrap(),
+            )
+        }
         Err(e) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }
     }
 }
 
-pub fn signed_firmware_status_notification_response(message_id: &String, payload: &String) -> String {
-    match serde_json::from_str(&payload) as Result<requests::SignedFirmwareStatusNotificationRequest, serde_json::Error> {
+pub fn signed_firmware_status_notification_response(
+    message_id: &String,
+    payload: &String,
+) -> String {
+    match serde_json::from_str(&payload)
+        as Result<requests::SignedFirmwareStatusNotificationRequest, serde_json::Error>
+    {
         Ok(_) => {
-            let signed_firmware_status_notification_resp = responses::SignedFirmwareStatusNotificationResponse{};
-            wrap_call_result(message_id, serde_json::to_string(&signed_firmware_status_notification_resp).unwrap())
-        },
+            let signed_firmware_status_notification_resp =
+                responses::SignedFirmwareStatusNotificationResponse {};
+            wrap_call_result(
+                message_id,
+                serde_json::to_string(&signed_firmware_status_notification_resp).unwrap(),
+            )
+        }
         Err(e) => {
             wrap_call_error_result(message_id, ErrorCode::FormatViolation, &format!("{:#?}", e))
         }

@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // structures created with the help of https://app.quicktype.io/ and json schema provided by
 // https://www.openchargealliance.org/

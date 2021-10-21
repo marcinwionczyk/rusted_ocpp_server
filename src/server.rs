@@ -327,7 +327,7 @@ impl Handler<ConnectCharger> for OcppServer {
 
     fn handle(&mut self, msg: ConnectCharger, _: &mut Context<Self>) -> Self::Result {
         self.websocket_workers.insert(msg.serial_id.clone(), msg.addr);
-        info!("OcppServer: Inserting charger: {}", msg.serial_id);
+        info!("Inserting charger: {}", msg.serial_id);
         msg.serial_id
     }
 }
@@ -337,7 +337,7 @@ impl Handler<ConnectWebClient> for OcppServer {
 
     fn handle(&mut self, msg: ConnectWebClient, _: &mut Context<Self>) -> Self::Result {
         self.webclient_workers.insert(msg.serial_id.clone(), msg.addr);
-        info!("OcppServer: Inserting web client: {}", msg.serial_id);
+        info!("Inserting web client: {}", msg.serial_id);
         msg.serial_id
     }
 }
@@ -345,10 +345,10 @@ impl Handler<ConnectWebClient> for OcppServer {
 impl Handler<DisconnectCharger> for OcppServer {
     type Result = ();
     fn handle(&mut self, msg: DisconnectCharger, _: &mut Context<Self>) -> Self::Result {
-        info!("OcppServer: Removing charger: {}", msg.serial_id);
+        info!("Removing charger: {}", msg.serial_id);
         self.websocket_workers.remove(msg.serial_id.as_str());
         if self.chargers_webclients_pair.contains_key(msg.serial_id.as_str()){
-            info!("OcppServer: Removing charger<->webclient pair: {}", msg.serial_id);
+            info!("Removing charger<->webclient pair: {}", msg.serial_id);
             self.chargers_webclients_pair.remove(msg.serial_id.as_str());
         }
     }
@@ -361,11 +361,11 @@ impl Handler<DisconnectWebClient> for OcppServer {
     fn handle(&mut self, msg: DisconnectWebClient, _: &mut Context<Self>) -> Self::Result {
         for (item, value) in self.chargers_webclients_pair.clone() {
             if value == msg.serial_id {
-                info!("OcppServer: Removing pair {}<->{}", &item, &value);
+                info!("Removing pair {}<->{}", &item, &value);
                 self.chargers_webclients_pair.remove(&item);
             }
         }
-        info!("OcppServer: Removing web client: {}", msg.serial_id);
+        info!("Removing web client: {}", msg.serial_id);
         self.webclient_workers.remove(&msg.serial_id);
     }
 }

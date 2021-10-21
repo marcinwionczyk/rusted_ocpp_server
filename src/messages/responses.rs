@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // structures created with the help of https://app.quicktype.io/ and json schema provided by
 // https://www.openchargealliance.org/
@@ -118,12 +118,10 @@ pub enum DataTransferStatus {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct DiagnosticsStatusNotificationResponse {
-}
+pub struct DiagnosticsStatusNotificationResponse {}
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct FirmwareStatusNotificationResponse {
-}
+pub struct FirmwareStatusNotificationResponse {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetCompositeScheduleResponse {
@@ -215,8 +213,7 @@ pub struct HeartbeatResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct MeterValuesResponse {
-}
+pub struct MeterValuesResponse {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RemoteStartTransactionResponse {
@@ -299,8 +296,7 @@ pub struct StartTransactionResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct StatusNotificationResponse {
-}
+pub struct StatusNotificationResponse {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct StopTransactionResponse {
@@ -334,8 +330,7 @@ pub enum UnlockConnectorStatus {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct UpdateFirmwareResponse {
-}
+pub struct UpdateFirmwareResponse {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CertificateSignedResponse {
@@ -435,12 +430,10 @@ pub enum InstallCertificateStatusEnumType {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct LogStatusNotificationResponse {
-}
+pub struct LogStatusNotificationResponse {}
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SecurityEventNotificationResponse {
-}
+pub struct SecurityEventNotificationResponse {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SignCertificateResponse {
@@ -454,8 +447,7 @@ pub enum GenericStatusEnumType {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SignedFirmwareStatusNotificationResponse {
-}
+pub struct SignedFirmwareStatusNotificationResponse {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SignedUpdateFirmwareResponse {

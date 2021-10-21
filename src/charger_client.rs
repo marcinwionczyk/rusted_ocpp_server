@@ -43,10 +43,12 @@ impl Actor for ChargeStationWebSocketSession {
         // HttpContext::state() is instance of ChargePointWebSocketSession, state is shared
         // across all routes within application
         let addr = ctx.address();
-        self.address.send(server::ConnectCharger {
-            addr: addr.recipient(),
-            serial_id: self.name.clone(),
-        }).into_actor(self)
+        self.address
+            .send(server::ConnectCharger {
+                addr: addr.recipient(),
+                serial_id: self.name.clone(),
+            })
+            .into_actor(self)
             .then(|res, act, ctx| {
                 match res {
                     Ok(res) => act.name = res,
@@ -54,17 +56,24 @@ impl Actor for ChargeStationWebSocketSession {
                     _ => ctx.stop(),
                 }
                 fut::ready(())
-            }).wait(ctx);
+            })
+            .wait(ctx);
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
-        self.address.do_send(server::DisconnectCharger { serial_id: self.name.clone() });
+        self.address.do_send(server::DisconnectCharger {
+            serial_id: self.name.clone(),
+        });
         Running::Stop
     }
 }
 
 fn strip_quotes(input: &String) -> &str {
-    input.strip_prefix("\"").unwrap().strip_suffix("\"").unwrap()
+    input
+        .strip_prefix("\"")
+        .unwrap()
+        .strip_suffix("\"")
+        .unwrap()
 }
 
 impl ChargeStationWebSocketSession {
@@ -76,7 +85,9 @@ impl ChargeStationWebSocketSession {
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
                 // heartbeat timed out
                 info!("Websocket Client heartbeat failed, disconnecting!");
-                act.address.do_send(server::DisconnectCharger { serial_id: act.name.clone() });
+                act.address.do_send(server::DisconnectCharger {
+                    serial_id: act.name.clone(),
+                });
                 // stop actor
                 ctx.stop();
 
@@ -92,7 +103,11 @@ impl ChargeStationWebSocketSession {
 impl Handler<server::MessageToChargeStation> for ChargeStationWebSocketSession {
     type Result = ();
 
-    fn handle(&mut self, msg: server::MessageToChargeStation, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: server::MessageToChargeStation,
+        ctx: &mut Self::Context,
+    ) -> Self::Result {
         if msg.authorize.is_some() {
             self.default_responses.authorize = msg.authorize.unwrap();
         }
@@ -121,7 +136,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                 ctx.stop();
                 return;
             }
-            Ok(msg) => msg
+            Ok(msg) => msg,
         };
         match msg {
             ws::Message::Ping(msg) => {
@@ -132,40 +147,61 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                 self.hb = Instant::now();
             }
             ws::Message::Text(text) => {
-                logs::add_log(&self.db_connection,
-                              &self.name,
-                              None,
-                              format!("incoming message: {}", text.clone()));
+                logs::add_log(
+                    &self.db_connection,
+                    &self.name,
+                    None,
+                    format!("incoming message: {}", text.clone()),
+                );
                 match unpack_ocpp_message(&text) {
                     Ok(unpacked) => {
-                        let message_type_id: u8 = unpacked.get("MessageTypeId").unwrap().parse()
-                            .unwrap();
+                        let message_type_id: u8 =
+                            unpacked.get("MessageTypeId").unwrap().parse().unwrap();
                         match message_type_id {
                             2 => {
-                                let action: &str = &unpacked.get("Action").unwrap().as_str()
-                                    .replace("\"", "");
+                                let action: &str =
+                                    &unpacked.get("Action").unwrap().as_str().replace("\"", "");
                                 match action {
                                     "Authorize" => {
-                                        match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::AuthorizeRequest, serde_json::Error> {
+                                        match serde_json::from_str(
+                                            &unpacked.get("Payload").unwrap(),
+                                        )
+                                            as Result<requests::AuthorizeRequest, serde_json::Error>
+                                        {
                                             Ok(_) => {
                                                 let call_result = wrap_call_result(
                                                     unpacked.get("MessageId").unwrap(),
-                                                    serde_json::to_string(&self.default_responses.authorize).unwrap());
-                                                logs::add_log(&self.db_connection,
-                                                              &self.name,
-                                                              None,
-                                                              format!("outgoing response: {}", call_result.clone()));
+                                                    serde_json::to_string(
+                                                        &self.default_responses.authorize,
+                                                    )
+                                                    .unwrap(),
+                                                );
+                                                logs::add_log(
+                                                    &self.db_connection,
+                                                    &self.name,
+                                                    None,
+                                                    format!(
+                                                        "outgoing response: {}",
+                                                        call_result.clone()
+                                                    ),
+                                                );
                                                 ctx.text(call_result);
                                             }
                                             Err(e) => {
                                                 let call_error_result = wrap_call_error_result(
                                                     unpacked.get("MessageId").unwrap(),
                                                     ErrorCode::FormatViolation,
-                                                    &format!("{:#?}", e));
-                                                logs::add_log(&self.db_connection,
-                                                              &self.name,
-                                                              Some(String::from("error")),
-                                                              format!("outgoing response: {}", call_error_result.clone()));
+                                                    &format!("{:#?}", e),
+                                                );
+                                                logs::add_log(
+                                                    &self.db_connection,
+                                                    &self.name,
+                                                    Some(String::from("error")),
+                                                    format!(
+                                                        "outgoing response: {}",
+                                                        call_error_result.clone()
+                                                    ),
+                                                );
                                                 ctx.text(call_error_result)
                                             }
                                         }
@@ -173,34 +209,58 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                     "BootNotification" => {
                                         let call_result = boot_notification_response(
                                             unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        logs::add_log(&self.db_connection,
-                                                            &self.name,
-                                                            None,
-                                                            format!("outgoing response: {}", call_result.clone()));
+                                            unpacked.get("Payload").unwrap(),
+                                        );
+                                        logs::add_log(
+                                            &self.db_connection,
+                                            &self.name,
+                                            None,
+                                            format!("outgoing response: {}", call_result.clone()),
+                                        );
                                         ctx.text(call_result);
                                     }
                                     "DataTransfer" => {
-                                        match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::DataTransferRequest, serde_json::Error> {
+                                        match serde_json::from_str(
+                                            &unpacked.get("Payload").unwrap(),
+                                        )
+                                            as Result<
+                                                requests::DataTransferRequest,
+                                                serde_json::Error,
+                                            > {
                                             Ok(_) => {
                                                 let call_result = wrap_call_result(
                                                     unpacked.get("MessageId").unwrap(),
-                                                    serde_json::to_string(&self.default_responses.data_transfer).unwrap());
-                                                logs::add_log(&self.db_connection,
-                                                                    &self.name,
-                                                                    None,
-                                                                    format!("outgoing response: {}", call_result.clone()));
+                                                    serde_json::to_string(
+                                                        &self.default_responses.data_transfer,
+                                                    )
+                                                    .unwrap(),
+                                                );
+                                                logs::add_log(
+                                                    &self.db_connection,
+                                                    &self.name,
+                                                    None,
+                                                    format!(
+                                                        "outgoing response: {}",
+                                                        call_result.clone()
+                                                    ),
+                                                );
                                                 ctx.text(call_result);
                                             }
                                             Err(e) => {
                                                 let call_error_result = wrap_call_error_result(
                                                     unpacked.get("MessageId").unwrap(),
                                                     ErrorCode::FormatViolation,
-                                                    &format!("{:#?}", e));
-                                                logs::add_log(&self.db_connection,
-                                                                    &self.name,
-                                                                    Some(String::from("error")),
-                                                                    format!("outgoing response: {}", call_error_result.clone()));
+                                                    &format!("{:#?}", e),
+                                                );
+                                                logs::add_log(
+                                                    &self.db_connection,
+                                                    &self.name,
+                                                    Some(String::from("error")),
+                                                    format!(
+                                                        "outgoing response: {}",
+                                                        call_error_result.clone()
+                                                    ),
+                                                );
                                                 ctx.text(call_error_result);
                                             }
                                         }
@@ -208,100 +268,155 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                     "DiagnosticsStatusNotification" => {
                                         let call_result = diagnostics_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        logs::add_log(&self.db_connection,
-                                                            &self.name,
-                                                            None,
-                                                            format!("outgoing response: {}", call_result.clone()));
+                                            unpacked.get("Payload").unwrap(),
+                                        );
+                                        logs::add_log(
+                                            &self.db_connection,
+                                            &self.name,
+                                            None,
+                                            format!("outgoing response: {}", call_result.clone()),
+                                        );
                                         ctx.text(call_result);
                                     }
                                     "FirmwareStatusNotification" => {
                                         let call_result = firmware_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        logs::add_log(&self.db_connection,
-                                                            &self.name,
-                                                            None,
-                                                            format!("outgoing response: {}", call_result.clone()));
+                                            unpacked.get("Payload").unwrap(),
+                                        );
+                                        logs::add_log(
+                                            &self.db_connection,
+                                            &self.name,
+                                            None,
+                                            format!("outgoing response: {}", call_result.clone()),
+                                        );
                                         ctx.text(call_result)
                                     }
                                     "Heartbeat" => {
-                                        let call_result = heartbeat_response(
-                                            unpacked.get("MessageId").unwrap());
-                                        logs::add_log(&self.db_connection,
-                                                            &self.name,
-                                                            None,
-                                                            format!("outgoing response: {}", call_result.clone()));
+                                        let call_result =
+                                            heartbeat_response(unpacked.get("MessageId").unwrap());
+                                        logs::add_log(
+                                            &self.db_connection,
+                                            &self.name,
+                                            None,
+                                            format!("outgoing response: {}", call_result.clone()),
+                                        );
                                         ctx.text(call_result)
                                     }
                                     "MeterValues" => {
                                         let call_result = meter_values_response(
                                             unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        logs::add_log(&self.db_connection,
-                                                            &self.name,
-                                                            None,
-                                                            format!("outgoing response: {}", call_result.clone()));
+                                            unpacked.get("Payload").unwrap(),
+                                        );
+                                        logs::add_log(
+                                            &self.db_connection,
+                                            &self.name,
+                                            None,
+                                            format!("outgoing response: {}", call_result.clone()),
+                                        );
                                         ctx.text(call_result);
                                     }
                                     "StartTransaction" => {
-                                        match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::StartTransactionRequest, serde_json::Error> {
+                                        match serde_json::from_str(
+                                            &unpacked.get("Payload").unwrap(),
+                                        )
+                                            as Result<
+                                                requests::StartTransactionRequest,
+                                                serde_json::Error,
+                                            > {
                                             Ok(_) => {
                                                 let call_result = wrap_call_result(
                                                     unpacked.get("MessageId").unwrap(),
-                                                    serde_json::to_string(&self.default_responses.start_transaction).unwrap());
-                                                logs::add_log(&self.db_connection,
-                                                                    &self.name,
-                                                                    None,
-                                                                    format!("outgoing response: {}", call_result.clone()));
+                                                    serde_json::to_string(
+                                                        &self.default_responses.start_transaction,
+                                                    )
+                                                    .unwrap(),
+                                                );
+                                                logs::add_log(
+                                                    &self.db_connection,
+                                                    &self.name,
+                                                    None,
+                                                    format!(
+                                                        "outgoing response: {}",
+                                                        call_result.clone()
+                                                    ),
+                                                );
                                                 ctx.text(call_result);
                                             }
                                             Err(e) => {
                                                 let call_error_result = wrap_call_error_result(
                                                     unpacked.get("MessageId").unwrap(),
                                                     ErrorCode::FormatViolation,
-                                                    &format!("{:#?}", e));
+                                                    &format!("{:#?}", e),
+                                                );
 
-                                                logs::add_log(&self.db_connection,
-                                                                    &self.name,
-                                                                    Some(String::from("error")),
-                                                                    format!("outgoing response: {}", call_error_result.clone()));
+                                                logs::add_log(
+                                                    &self.db_connection,
+                                                    &self.name,
+                                                    Some(String::from("error")),
+                                                    format!(
+                                                        "outgoing response: {}",
+                                                        call_error_result.clone()
+                                                    ),
+                                                );
                                                 ctx.text(call_error_result);
-
                                             }
                                         }
                                     }
                                     "StatusNotification" => {
                                         let call_result = status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        logs::add_log(&self.db_connection,
-                                                            &self.name,
-                                                            None,
-                                                            format!("outgoing response: {}", call_result.clone()));
+                                            unpacked.get("Payload").unwrap(),
+                                        );
+                                        logs::add_log(
+                                            &self.db_connection,
+                                            &self.name,
+                                            None,
+                                            format!("outgoing response: {}", call_result.clone()),
+                                        );
                                         ctx.text(call_result);
                                     }
                                     "StopTransaction" => {
-                                        match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::StopTransactionRequest, serde_json::Error> {
+                                        match serde_json::from_str(
+                                            &unpacked.get("Payload").unwrap(),
+                                        )
+                                            as Result<
+                                                requests::StopTransactionRequest,
+                                                serde_json::Error,
+                                            > {
                                             Ok(_) => {
                                                 let call_result = wrap_call_result(
                                                     unpacked.get("MessageId").unwrap(),
-                                                    serde_json::to_string(&self.default_responses.stop_transaction).unwrap());
-                                                logs::add_log(&self.db_connection,
-                                                                    &self.name,
-                                                                    None,
-                                                                    format!("outgoing response: {}", call_result.clone()));
+                                                    serde_json::to_string(
+                                                        &self.default_responses.stop_transaction,
+                                                    )
+                                                    .unwrap(),
+                                                );
+                                                logs::add_log(
+                                                    &self.db_connection,
+                                                    &self.name,
+                                                    None,
+                                                    format!(
+                                                        "outgoing response: {}",
+                                                        call_result.clone()
+                                                    ),
+                                                );
                                                 ctx.text(call_result);
                                             }
                                             Err(e) => {
                                                 let call_error_result = wrap_call_error_result(
                                                     unpacked.get("MessageId").unwrap(),
                                                     ErrorCode::FormatViolation,
-                                                    &format!("{:#?}", e));
-                                                logs::add_log(&self.db_connection,
-                                                                    &self.name,
-                                                                    Some(String::from("error")),
-                                                                    format!("outgoing response: {}", call_error_result.clone()));
+                                                    &format!("{:#?}", e),
+                                                );
+                                                logs::add_log(
+                                                    &self.db_connection,
+                                                    &self.name,
+                                                    Some(String::from("error")),
+                                                    format!(
+                                                        "outgoing response: {}",
+                                                        call_error_result.clone()
+                                                    ),
+                                                );
                                                 ctx.text(call_error_result.clone());
                                             }
                                         }
@@ -309,71 +424,108 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                     "LogStatusNotification" => {
                                         let call_result = log_status_notification_response(
                                             unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        logs::add_log(&self.db_connection,
-                                                            &self.name,
-                                                            None,
-                                                            format!("outgoing response: {}", call_result.clone()));
+                                            unpacked.get("Payload").unwrap(),
+                                        );
+                                        logs::add_log(
+                                            &self.db_connection,
+                                            &self.name,
+                                            None,
+                                            format!("outgoing response: {}", call_result.clone()),
+                                        );
                                         ctx.text(call_result);
                                     }
                                     "SecurityEventNotification" => {
                                         let call_result = security_event_notification_response(
                                             unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        logs::add_log(&self.db_connection,
-                                                            &self.name,
-                                                            Some(String::from("error")),
-                                                            format!("outgoing response: {}", call_result.clone()));
+                                            unpacked.get("Payload").unwrap(),
+                                        );
+                                        logs::add_log(
+                                            &self.db_connection,
+                                            &self.name,
+                                            Some(String::from("error")),
+                                            format!("outgoing response: {}", call_result.clone()),
+                                        );
                                         ctx.text(call_result);
                                     }
                                     "SignCertificate" => {
-                                        match serde_json::from_str(&unpacked.get("Payload").unwrap()) as Result<requests::SignCertificateRequest, serde_json::Error> {
+                                        match serde_json::from_str(
+                                            &unpacked.get("Payload").unwrap(),
+                                        )
+                                            as Result<
+                                                requests::SignCertificateRequest,
+                                                serde_json::Error,
+                                            > {
                                             Ok(_) => {
                                                 let call_result = wrap_call_result(
                                                     unpacked.get("MessageId").unwrap(),
-                                                    serde_json::to_string(&self.default_responses.stop_transaction).unwrap());
-                                                logs::add_log(&self.db_connection,
-                                                              &self.name,
-                                                              None,
-                                                              format!("outgoing response: {}", call_result.clone()));
+                                                    serde_json::to_string(
+                                                        &self.default_responses.stop_transaction,
+                                                    )
+                                                    .unwrap(),
+                                                );
+                                                logs::add_log(
+                                                    &self.db_connection,
+                                                    &self.name,
+                                                    None,
+                                                    format!(
+                                                        "outgoing response: {}",
+                                                        call_result.clone()
+                                                    ),
+                                                );
                                                 ctx.text(call_result.clone());
                                             }
                                             Err(e) => {
                                                 let call_error_result = wrap_call_error_result(
                                                     unpacked.get("MessageId").unwrap(),
                                                     ErrorCode::FormatViolation,
-                                                    &format!("{:#?}", e));
-                                                logs::add_log(&self.db_connection,
-                                                              &self.name,
-                                                              Some(String::from("error")),
-                                                              format!("outgoing response: {}", call_error_result.clone()));
+                                                    &format!("{:#?}", e),
+                                                );
+                                                logs::add_log(
+                                                    &self.db_connection,
+                                                    &self.name,
+                                                    Some(String::from("error")),
+                                                    format!(
+                                                        "outgoing response: {}",
+                                                        call_error_result.clone()
+                                                    ),
+                                                );
                                                 ctx.text(call_error_result.clone());
                                             }
                                         }
                                     }
                                     "SignedFirmwareStatusNotification" => {
-                                        let call_result = signed_firmware_status_notification_response(
-                                            unpacked.get("MessageId").unwrap(),
-                                            unpacked.get("Payload").unwrap());
-                                        logs::add_log(&self.db_connection,
-                                                      &self.name,
-                                                      None,
-                                                      format!("outgoing response: {}", call_result.clone()));
+                                        let call_result =
+                                            signed_firmware_status_notification_response(
+                                                unpacked.get("MessageId").unwrap(),
+                                                unpacked.get("Payload").unwrap(),
+                                            );
+                                        logs::add_log(
+                                            &self.db_connection,
+                                            &self.name,
+                                            None,
+                                            format!("outgoing response: {}", call_result.clone()),
+                                        );
                                         ctx.text(call_result);
                                     }
 
                                     _ => {
-                                        let call_error_result =
-                                            wrap_call_error_result(
-                                                unpacked.get("MessageId").unwrap(),
-                                                ErrorCode::NotImplemented,
-                                                &String::from(
-                                                    "\"Not all messages are implemented yet. \
-                                                    Ocpp server is still in development\""));
-                                        logs::add_log(&self.db_connection,
-                                                      &self.name,
-                                                      Some(String::from("error")),
-                                                      format!("outgoing response: {}", call_error_result.clone()));
+                                        let call_error_result = wrap_call_error_result(
+                                            unpacked.get("MessageId").unwrap(),
+                                            ErrorCode::NotImplemented,
+                                            &String::from(
+                                                "\"Not all messages are implemented yet. \
+                                                    Ocpp server is still in development\"",
+                                            ),
+                                        );
+                                        logs::add_log(
+                                            &self.db_connection,
+                                            &self.name,
+                                            Some(String::from("error")),
+                                            format!(
+                                                "outgoing response: {}",
+                                                call_error_result.clone()
+                                            ),
+                                        );
                                         ctx.text(call_error_result.clone());
                                     }
                                 }
@@ -384,7 +536,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                 if message_id_option.is_some() && payload_option.is_some() {
                                     let call_result = CallResult {
                                         unique_id: message_id_option.unwrap().clone(),
-                                        payload: serde_json::from_str(payload_option.unwrap().clone().as_str()).unwrap(),
+                                        payload: serde_json::from_str(
+                                            payload_option.unwrap().clone().as_str(),
+                                        )
+                                        .unwrap(),
                                     };
                                     self.address.do_send(MessageFromChargeStation {
                                         charger_id: self.name.clone(),
@@ -400,12 +555,23 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                 let error_description_option = unpacked.get("ErrorDescription");
                                 let error_details_option = unpacked.get("ErrorDetails");
 
-                                if message_id_option.is_some() && error_code_option.is_some() &&
-                                    error_description_option.is_some() && error_details_option.is_some() {
+                                if message_id_option.is_some()
+                                    && error_code_option.is_some()
+                                    && error_description_option.is_some()
+                                    && error_details_option.is_some()
+                                {
                                     let call_error = CallError {
-                                        unique_id: strip_quotes(&message_id_option.unwrap()).parse().unwrap(),
-                                        error_code: strip_quotes(&error_code_option.unwrap()).parse().unwrap(),
-                                        error_description: strip_quotes(&error_description_option.unwrap()).parse().unwrap(),
+                                        unique_id: strip_quotes(&message_id_option.unwrap())
+                                            .parse()
+                                            .unwrap(),
+                                        error_code: strip_quotes(&error_code_option.unwrap())
+                                            .parse()
+                                            .unwrap(),
+                                        error_description: strip_quotes(
+                                            &error_description_option.unwrap(),
+                                        )
+                                        .parse()
+                                        .unwrap(),
                                         error_details: error_details_option.unwrap().clone(),
                                     };
                                     self.address.do_send(MessageFromChargeStation {
@@ -427,7 +593,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                 ctx.close(reason);
                 ctx.stop();
             }
-            _ => ctx.stop()
+            _ => ctx.stop(),
         }
     }
 }
