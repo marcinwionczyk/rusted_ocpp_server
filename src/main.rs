@@ -1,6 +1,6 @@
 use std::fs;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader};
 use std::time::Instant;
 
 use actix::{Actor, Addr};
@@ -14,8 +14,9 @@ use log::{error, info};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rustls::internal::pemfile::{certs, pkcs8_private_keys};
-use rustls::{AllowAnyAnonymousOrAuthenticatedClient, RootCertStore};
+use rustls::{NoClientAuth};
 use serde::Serialize;
+use actix_web::middleware::Logger;
 
 mod charger_client;
 mod config;
@@ -112,7 +113,6 @@ async fn ws_webclient_index(
 async fn get_chargers(
     srv: web::Data<Addr<server::OcppServer>>,
 ) -> Result<impl Responder, error::Error> {
-    //Ok(web::Json(vec!["charger1", "charger2", "charger3", "charger4"]).with_header("Access-Control-Allow-Origin", "*"))
     match srv.send(server::GetChargers).await {
         Ok(chargers) => Ok(web::Json(chargers).with_header("Access-Control-Allow-Origin", "*")),
         Err(e) => {
@@ -174,6 +174,7 @@ async fn main() -> std::io::Result<()> {
     let ocpp_server = server::OcppServer::new().start();
     let http_server = HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .data(ocpp_server.clone())
             .data(pool.clone())
             //.service(web::resource("/").route(web::get().to(index)))
@@ -186,16 +187,20 @@ async fn main() -> std::io::Result<()> {
     });
     if config.server.use_tls {
         // TODO: TLS is not working at the moment
-        let root_cert_store = RootCertStore::empty();
         let mut tls_config =
-            rustls::ServerConfig::new(AllowAnyAnonymousOrAuthenticatedClient::new(root_cert_store));
-        let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
-        let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
+            rustls::ServerConfig::new(NoClientAuth::new());
+        tls_config.alpn_protocols = vec![b"http/1.1".to_vec()];
+        let cert_file = &mut BufReader::new(File::open("certs/pl-s-elem.pl.abb.com+3.pem").unwrap());
+        let key_file = &mut BufReader::new(File::open("certs/pl-s-elem.pl.abb.com+3-key.pem").unwrap());
         let cert_chain = certs(cert_file).unwrap();
         let mut keys = pkcs8_private_keys(key_file).unwrap();
-        tls_config
-            .set_single_cert(cert_chain, keys.remove(0))
-            .unwrap();
+        if keys.is_empty(){
+            error!("Could not locate PKCS 8 private keys.");
+            std::process::exit(1);
+        }
+        if let Err(e) = tls_config.set_single_cert(cert_chain, keys.remove(0)) {
+            error!("Cannot set single Cert. Reason: {:#?}", e)
+        };
         http_server
             .bind_rustls(
                 format!("{}:{}", config.server.host, config.server.port),

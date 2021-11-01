@@ -11,7 +11,6 @@ use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
 use serde_json::Value;
 use std::time::Instant;
-use r2d2_sqlite::rusqlite::Error;
 
 pub struct WebBrowserWebSocketSession {
     pub id: String,
@@ -200,9 +199,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
                                     }
                                 };
                             }
-                            "clear_log" => {
-                                logs::delete_logs(&self.db_connection);
-                            }
+                            "clear_log" => match logs::clear_logs(&self.db_connection) {
+                                Ok(_) => {}
+                                Err(e) => {
+                                    error!("Unable to delete logs from database. Reason: {:#?}", e)
+                                }
+                            },
                             _ => {
                                 match serde_json::to_string(&MessageToWebBrowser {
                                     message: "unrecognized command".to_string(),

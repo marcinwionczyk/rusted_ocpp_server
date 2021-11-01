@@ -1,7 +1,8 @@
+use std::ffi::OsStr;
 use chrono::{DateTime, Local, SecondsFormat};
 use log::{debug, error, info, trace, warn};
 use rusqlite::{params, Connection, Result};
-use std::fs::File;
+use std::fs::{File, remove_file, read_dir};
 use std::io::Write;
 
 struct LogsReturned {
@@ -23,7 +24,7 @@ pub fn create_database() -> Result<(), rusqlite::Error> {
     )?;
     conn.execute(
         "CREATE TABLE  IF NOT EXISTS logs (
-        id INTEGER CONSTRAINT chargers_pk PRIMARY KEY AUTOINCREMENT,
+        id INTEGER CONSTRAINT logs_pk PRIMARY KEY AUTOINCREMENT,
         timestamp DATETIME NOT NULL,
         charger_id INTEGER REFERENCES chargers ON UPDATE CASCADE ON DELETE CASCADE,
         level TEXT DEFAULT 'info' not null,
@@ -148,12 +149,29 @@ pub fn get_logs(
     Ok(filename)
 }
 
-pub fn delete_logs(conn: &Connection) -> Return<usize>{
-    for entry in std::fs::read_dir("./logs").unwrap() {
-        std::fs::remove_file(entry.unwrap().path());
+pub fn clear_logs(conn: &Connection) -> Result<usize> {
+    if let Ok(entries) =  read_dir("./logs") {
+        for entry in entries{
+            if let Ok(entry) = entry {
+                if let Some(file_name) = entry.path().file_name() {
+                    if file_name != OsStr::new("server.log"){
+                        if let Err(e) = remove_file(entry.path()){
+                            error!("Unable to remove file {}. Reason: {:#?}",
+                                file_name.to_str().unwrap(), e);
+                        }
+                    } else {
+                        match File::open(entry.path()){
+                            Ok(mut buffer) => {
+                                if let Err(e) = buffer.write_all(b""){
+                                    error!("Unable to clear ./logs/server.log file. Reason: {:#?}", e);
+                                }
+                            }
+                            Err(e) => {error!("Unable to open ./logs/server.log file. Reason: {:#?}", e)}
+                        }
+                    }
+                }
+            }
+        }
     }
-    match conn.execute("DELETE FROM logs where timestamp < DATETIME('now', '-1 day')", []){
-        Ok(deleted) => {ctx.text(format!("{{\"message\":\"clear_log\", \"payload\":{{\"removed\":{}}}}}", deleted))}
-        Err(e) => {error!("Unable to delete logs. Reason: {:#?}", e)}
-    }
+    conn.execute("DELETE FROM logs where timestamp < DATETIME('now', '-1 month')", [])
 }
