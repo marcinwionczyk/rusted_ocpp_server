@@ -108,53 +108,50 @@ impl Handler<server::MessageToChargeStation> for ChargeStationWebSocketSession {
         msg: server::MessageToChargeStation,
         ctx: &mut Self::Context,
     ) -> Self::Result {
-        if msg.authorize.is_some() {
-            self.default_responses.authorize = msg.authorize.unwrap();
+        if let Some(authorize_response) = msg.authorize {
+            self.default_responses.authorize = authorize_response;
         }
-        if msg.data_transfer.is_some() {
-            self.default_responses.data_transfer = msg.data_transfer.unwrap();
+        if let Some(data_transfer_response) = msg.data_transfer {
+            self.default_responses.data_transfer = data_transfer_response;
         }
-        if msg.sign_certificate.is_some() {
-            self.default_responses.sign_certificate = msg.sign_certificate.unwrap();
+        if let Some(sign_certificate_response) = msg.sign_certificate {
+            self.default_responses.sign_certificate = sign_certificate_response;
         }
-        if msg.start_transaction.is_some() {
-            self.default_responses.start_transaction = msg.start_transaction.unwrap();
+        if let Some(start_transaction_response) = msg.start_transaction {
+            self.default_responses.start_transaction = start_transaction_response;
         }
-        if msg.stop_transaction.is_some() {
-            self.default_responses.stop_transaction = msg.stop_transaction.unwrap();
+        if let Some(stop_transaction_response) = msg.stop_transaction {
+            self.default_responses.stop_transaction = stop_transaction_response;
         }
-        if msg.message.is_some() {
-            ctx.text(msg.message.unwrap())
+        if let Some(message) = msg.message {
+            ctx.text(message)
         }
     }
 }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebSocketSession {
     fn handle(&mut self, msg: Result<ws::Message, ProtocolError>, ctx: &mut Self::Context) {
-        let msg = match msg {
+        match msg {
             Err(_) => {
                 ctx.stop();
                 return;
             }
-            Ok(msg) => msg,
-        };
-        match msg {
-            ws::Message::Ping(msg) => {
-                self.hb = Instant::now();
-                ctx.pong(&msg);
-            }
-            ws::Message::Pong(_) => {
-                self.hb = Instant::now();
-            }
-            ws::Message::Text(text) => {
-                logs::add_log(
-                    &self.db_connection,
-                    &self.name,
-                    None,
-                    format!("incoming message: {}", text.clone()),
-                );
-                match unpack_ocpp_message(&text) {
-                    Ok(unpacked) => {
+            Ok(message) => match message {
+                ws::Message::Ping(msg) => {
+                    self.hb = Instant::now();
+                    ctx.pong(&msg);
+                }
+                ws::Message::Pong(_) => {
+                    self.hb = Instant::now();
+                }
+                ws::Message::Text(text) => {
+                    logs::add_log(
+                        &self.db_connection,
+                        &self.name,
+                        None,
+                        format!("incoming message: {}", text.clone()),
+                    );
+                    if let Ok(unpacked) = unpack_ocpp_message(&text) {
                         let message_type_id: u8 =
                             unpacked.get("MessageTypeId").unwrap().parse().unwrap();
                         match message_type_id {
@@ -554,7 +551,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                 let error_code_option = unpacked.get("ErrorCode");
                                 let error_description_option = unpacked.get("ErrorDescription");
                                 let error_details_option = unpacked.get("ErrorDetails");
-
                                 if message_id_option.is_some()
                                     && error_code_option.is_some()
                                     && error_description_option.is_some()
@@ -585,15 +581,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                             _ => {}
                         }
                     }
-                    _ => {}
                 }
-            }
-            ws::Message::Binary(_) => warn!("Unexpected binary"),
-            ws::Message::Close(reason) => {
-                ctx.close(reason);
-                ctx.stop();
-            }
-            _ => ctx.stop(),
-        }
+                ws::Message::Binary(_) => warn!("Unexpected binary"),
+                ws::Message::Close(reason) => {
+                    ctx.close(reason);
+                    ctx.stop();
+                }
+                _ => ctx.stop(),
+            },
+        };
     }
 }

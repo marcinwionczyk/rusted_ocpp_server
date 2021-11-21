@@ -1,6 +1,6 @@
 use std::fs;
 use std::fs::File;
-use std::io::{BufReader};
+use std::io::BufReader;
 use std::time::Instant;
 
 use actix::{Actor, Addr};
@@ -16,7 +16,6 @@ use r2d2_sqlite::SqliteConnectionManager;
 use rustls::internal::pemfile::{certs, pkcs8_private_keys};
 use rustls::{NoClientAuth};
 use serde::Serialize;
-use actix_web::middleware::Logger;
 
 mod charger_client;
 mod config;
@@ -174,7 +173,6 @@ async fn main() -> std::io::Result<()> {
     let ocpp_server = server::OcppServer::new().start();
     let http_server = HttpServer::new(move || {
         App::new()
-            .wrap(Logger::default())
             .data(ocpp_server.clone())
             .data(pool.clone())
             //.service(web::resource("/").route(web::get().to(index)))
@@ -189,9 +187,9 @@ async fn main() -> std::io::Result<()> {
         // TODO: TLS is not working at the moment
         let mut tls_config =
             rustls::ServerConfig::new(NoClientAuth::new());
-        tls_config.alpn_protocols = vec![b"http/1.1".to_vec()];
-        let cert_file = &mut BufReader::new(File::open("certs/pl-s-elem.pl.abb.com+3.pem").unwrap());
-        let key_file = &mut BufReader::new(File::open("certs/pl-s-elem.pl.abb.com+3-key.pem").unwrap());
+        tls_config.alpn_protocols =  vec![b"http/1.1".to_vec()];
+        let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
+        let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
         let cert_chain = certs(cert_file).unwrap();
         let mut keys = pkcs8_private_keys(key_file).unwrap();
         if keys.is_empty(){

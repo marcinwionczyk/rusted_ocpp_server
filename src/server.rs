@@ -130,18 +130,16 @@ impl OcppServer {
 
     fn send_message_to_charger(&self, charger: &String, message: MessageToChargeStation) {
         if let Some(session) = self.websocket_workers.get(charger) {
-            match session.do_send(message) {
-                Err(e) => {error!("{}", e.to_string())}
-                Ok(_) => {}
+            if let Err(e) = session.do_send(message) {
+                error!("{}", e.to_string());
             }
         }
     }
 
     fn send_message_to_web_client(&self, web_client: &String, message: &String, payload: Option<Value>) {
         if let Some(session) = self.webclient_workers.get(web_client) {
-            match session.do_send(MessageToWebBrowser{message: message.to_owned(), payload }) {
-                Err(e) => {error!("{}", e.to_string())}
-                Ok(_) => {}
+            if let Err(e) = session.do_send(MessageToWebBrowser{message: message.to_owned(), payload }) {
+                error!("{}", e.to_string());
             }
         }
     }

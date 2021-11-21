@@ -95,127 +95,123 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
                     serde_json::from_str(text.as_str()).expect("JSON string is wrong");
                 match json.get("message") {
                     None => {}
-                    Some(value) => {
-                        match value.as_str().unwrap().to_lowercase().as_str() {
-                            "connect" => {
-                                match serde_json::to_string(&MessageToWebBrowser {
-                                    message: "connected to the ocpp server".to_string(),
-                                    payload: None,
-                                }) {
-                                    Ok(text) => ctx.text(text),
-                                    Err(_) => {}
-                                }
-                            }
-                            "disconnect" => {
-                                match serde_json::to_string(&MessageToWebBrowser {
-                                    message: "disconnecting from the ocpp server".to_string(),
-                                    payload: None,
-                                }) {
-                                    Ok(text) => ctx.text(text),
-                                    Err(_) => {}
-                                }
-                                self.address.do_send(DisconnectWebClient {
-                                    serial_id: self.id.clone(),
-                                });
-                            }
-                            "get_current_timestamp" => {
-                                match serde_json::to_string(&MessageToWebBrowser {
-                                    message: "current_timestamp".to_string(),
-                                    payload: Some(
-                                        format!(
-                                            "\"{}\"",
-                                            Local::now()
-                                                .to_rfc3339_opts(SecondsFormat::Millis, false)
-                                        )
-                                        .parse()
-                                        .unwrap(),
-                                    ),
-                                }) {
-                                    Ok(text) => ctx.text(text),
-                                    Err(_) => {}
-                                }
-                            }
-                            "get_log" => {
-                                dotenv::from_filename("settings.env").ok();
-                                let config = crate::config::Config::from_env().unwrap();
-                                match json.get("payload") {
-                                    None => {
-                                        ctx.text("{\"message\":\"You forgot about payload json with ('name', 'start', 'end') keys. 'end' key as optional. 'start', 'end' in rfc3339 format (for example: 1996-12-19T16:39:57-08:00) \"}");
-                                    }
-                                    Some(payload) => {
-                                        let charger_sn = if payload.get("charger_sn").is_some() {
-                                            payload.get("charger_sn").unwrap().as_str().unwrap()
-                                        } else {
-                                            error!("Unable to parse charger_sn. charger_sn set to \"\"");
-                                            ""
-                                        };
-
-                                        let begin_timestamp: DateTime<Local> = if payload
-                                            .get("begin_timestamp")
-                                            .is_some()
-                                        {
-                                            match DateTime::parse_from_rfc3339(
-                                                payload
-                                                    .get("begin_timestamp")
-                                                    .unwrap()
-                                                    .as_str()
-                                                    .unwrap(),
-                                            ) {
-                                                Ok(b) => DateTime::from(b),
-                                                Err(e) => {
-                                                    error!("Unable to parse begin_timestamp. Reason: {:#?} \r\nSetting timestamp to 1970.01.01T01:00:00", e);
-                                                    chrono::Local.ymd(1970, 1, 1).and_hms(1, 0, 0)
-                                                }
-                                            }
-                                        } else {
-                                            error!("begin_timestamp not in payload. Setting timestamp to 1970.01.01T01:00:00");
-                                            chrono::Local.ymd(1970, 1, 1).and_hms(1, 0, 0)
-                                        };
-                                        let end_timestamp_param = payload.get("end_timestamp");
-                                        let end_timestamp: DateTime<Local> =
-                                            if end_timestamp_param.is_some() {
-                                                match DateTime::parse_from_rfc3339(
-                                                    end_timestamp_param.unwrap().as_str().unwrap(),
-                                                ) {
-                                                    Ok(end) => DateTime::from(end),
-                                                    Err(_) => chrono::offset::Local::now(),
-                                                }
-                                            } else {
-                                                chrono::offset::Local::now()
-                                            };
-                                        match logs::get_logs(
-                                            &self.db_connection,
-                                            charger_sn,
-                                            begin_timestamp,
-                                            end_timestamp,
-                                        ) {
-                                            Ok(filename) => {
-                                                ctx.text(format!("{{\"message\":\"get_log\", \"payload\":{{\"address\":\"http://{}:{}/logs/{}\"}}}}", config.server.host, config.server.port, filename));
-                                            }
-                                            Err(e) => {
-                                                error!("Unable to get logs from database. Reason: {:#?}", e)
-                                            }
-                                        }
-                                    }
-                                };
-                            }
-                            "clear_log" => match logs::clear_logs(&self.db_connection) {
-                                Ok(_) => {}
-                                Err(e) => {
-                                    error!("Unable to delete logs from database. Reason: {:#?}", e)
-                                }
-                            },
-                            _ => {
-                                match serde_json::to_string(&MessageToWebBrowser {
-                                    message: "unrecognized command".to_string(),
-                                    payload: None,
-                                }) {
-                                    Ok(text) => ctx.text(text),
-                                    Err(_) => {}
-                                }
+                    Some(value) => match value.as_str().unwrap().to_lowercase().as_str() {
+                        "connect" => {
+                            match serde_json::to_string(&MessageToWebBrowser {
+                                message: "connected to the ocpp server".to_string(),
+                                payload: None,
+                            }) {
+                                Ok(text) => ctx.text(text),
+                                Err(_) => {}
                             }
                         }
-                    }
+                        "disconnect" => {
+                            match serde_json::to_string(&MessageToWebBrowser {
+                                message: "disconnecting from the ocpp server".to_string(),
+                                payload: None,
+                            }) {
+                                Ok(text) => ctx.text(text),
+                                Err(_) => {}
+                            }
+                            self.address.do_send(DisconnectWebClient {
+                                serial_id: self.id.clone(),
+                            });
+                        }
+                        "get_current_timestamp" => {
+                            match serde_json::to_string(&MessageToWebBrowser {
+                                message: "current_timestamp".to_string(),
+                                payload: Some(
+                                    format!(
+                                        "\"{}\"",
+                                        Local::now().to_rfc3339_opts(SecondsFormat::Millis, false)
+                                    )
+                                    .parse()
+                                    .unwrap(),
+                                ),
+                            }) {
+                                Ok(text) => ctx.text(text),
+                                Err(_) => {}
+                            }
+                        }
+                        "get_log" => {
+                            dotenv::from_filename("settings.env").ok();
+                            let config = crate::config::Config::from_env().unwrap();
+                            let mut charger_sn = "";
+                            let mut begin_timestamp: DateTime<Local> =
+                                chrono::Local.ymd(1970, 1, 1).and_hms(1, 0, 0);
+                            let mut end_timestamp: DateTime<Local> = chrono::offset::Local::now();
+                            match json.get("payload") {
+                                None => {
+                                    ctx.text("{\"message\":\"You forgot about payload json with ('name', 'start', 'end') keys. 'end' key as optional. 'start', 'end' in rfc3339 format (for example: 1996-12-19T16:39:57-08:00) \"}");
+                                }
+                                Some(payload) => {
+                                    if let Some(charger_sn_value) = payload.get("charger_sn") {
+                                        charger_sn = charger_sn_value.as_str().unwrap_or("");
+                                    } else {
+                                        error!(
+                                            "Unable to parse charger_sn. charger_sn set to \"\""
+                                        );
+                                    };
+
+                                    if let Some(begin_timestamp_value) =
+                                        payload.get("begin_timestamp")
+                                    {
+                                        match DateTime::parse_from_rfc3339(
+                                            begin_timestamp_value.as_str().unwrap(),
+                                        ) {
+                                            Ok(datetime_as_str) => {
+                                                begin_timestamp = DateTime::from(datetime_as_str)
+                                            }
+                                            Err(e) => {
+                                                error!("Unable to parse begin_timestamp. Reason: {:#?} \r\nSetting timestamp to 1970.01.01T01:00:00", e);
+                                            }
+                                        }
+                                    } else {
+                                        error!("begin_timestamp not in payload. Setting timestamp to 1970.01.01T01:00:00");
+                                    };
+
+                                    if let Some(end_timestamp_value) = payload.get("end_timestamp")
+                                    {
+                                        if let Ok(end) = DateTime::parse_from_rfc3339(
+                                            end_timestamp_value.as_str().unwrap(),
+                                        ) {
+                                            end_timestamp = DateTime::from(end)
+                                        }
+                                    }
+
+                                    match logs::get_logs(
+                                        &self.db_connection,
+                                        charger_sn,
+                                        begin_timestamp,
+                                        end_timestamp,
+                                    ) {
+                                        Ok(filename) => {
+                                            ctx.text(format!("{{\"message\":\"get_log\", \"payload\":{{\"address\":\"http://{}:{}/logs/{}\"}}}}", config.server.host, config.server.port, filename));
+                                        }
+                                        Err(e) => {
+                                            error!(
+                                                "Unable to get logs from database. Reason: {:#?}",
+                                                e
+                                            )
+                                        }
+                                    }
+                                }
+                            };
+                        }
+                        "clear_log" => {
+                            if let Err(e) = logs::clear_logs(&self.db_connection) {
+                                error!("Unable to delete logs from database. Reason: {:#?}", e)
+                            }
+                        }
+                        _ => {
+                            if let Ok(text) = serde_json::to_string(&MessageToWebBrowser {
+                                message: "unrecognized command".to_string(),
+                                payload: None,
+                            }) {
+                                ctx.text(text);
+                            }
+                        }
+                    },
                 }
             }
             _ => {}
