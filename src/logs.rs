@@ -79,16 +79,13 @@ pub fn add_log(
     log_level_option: Option<String>,
     message: String,
 ) {
-    match add_log_priv(
+    if let Err(e) = add_log_priv(
         conn,
         charger_name.clone(),
         log_level_option.clone(),
         message.clone(),
     ) {
-        Ok(_) => {}
-        Err(e) => {
-            error!("Failed at adding log to the database. Reason: {:#?}", e);
-        }
+        error!("Failed at adding log to the database. Reason: {:#?}", e);
     }
     match log_level_option {
         None => {

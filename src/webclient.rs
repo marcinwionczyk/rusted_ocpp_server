@@ -186,7 +186,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
                                         end_timestamp,
                                     ) {
                                         Ok(filename) => {
-                                            ctx.text(format!("{{\"message\":\"get_log\", \"payload\":{{\"address\":\"http://{}:{}/logs/{}\"}}}}", config.server.host, config.server.port, filename));
+                                            ctx.text(format!("{{\"message\":\"get_log\", \"payload\":{{\"address\":\"{}://{}:{}/logs/{}\"}}}}", 
+                                                if config.server.use_tls { "https" } else { "http" }, config.server.host, config.server.port, filename));
                                         }
                                         Err(e) => {
                                             error!(
