@@ -8,6 +8,7 @@ pub struct ServerConfig {
     pub heartbeat_interval: i64,
     pub use_tls: bool,
     pub time_offset: i64,
+    pub ocpp_auth_password: String
 }
 
 #[derive(Deserialize)]

@@ -20,6 +20,36 @@ pub struct DefaultResponses {
     pub stop_transaction: responses::StopTransactionResponse,
 }
 
+impl Default for DefaultResponses {
+    fn default() -> Self {
+        DefaultResponses {
+            authorize: responses::AuthorizeResponse {
+                id_tag_info: responses::IdTagInfo {
+                    expiry_date: None,
+                    parent_id_tag: None,
+                    status: responses::IdTagInfoStatus::Accepted,
+                },
+            },
+            data_transfer: responses::DataTransferResponse {
+                data: None,
+                status: responses::DataTransferStatus::Accepted,
+            },
+            sign_certificate: responses::SignCertificateResponse {
+                status: responses::GenericStatusEnumType::Accepted,
+            },
+            start_transaction: responses::StartTransactionResponse {
+                id_tag_info: responses::IdTagInfo {
+                    expiry_date: None,
+                    parent_id_tag: None,
+                    status: responses::IdTagInfoStatus::Accepted,
+                },
+                transaction_id: 123,
+            },
+            stop_transaction: responses::StopTransactionResponse { id_tag_info: None },
+        }
+    }
+}
+
 pub struct ChargeStationWebSocketSession {
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT)
     /// otherwise the connection will b e dropped
@@ -160,10 +190,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                     &unpacked.get("Action").unwrap().as_str().replace("\"", "");
                                 match action {
                                     "Authorize" => {
-                                        if let Err(e) = serde_json::from_str(
-                                            &unpacked.get("Payload").unwrap(),
-                                        )
-                                            as Result<requests::AuthorizeRequest, serde_json::Error>
+                                        if let Err(e) =
+                                            serde_json::from_str(&unpacked.get("Payload").unwrap())
+                                                as Result<
+                                                    requests::AuthorizeRequest,
+                                                    serde_json::Error,
+                                                >
                                         {
                                             let call_error_result = wrap_call_error_result(
                                                 unpacked.get("MessageId").unwrap(),
@@ -179,14 +211,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                                     call_error_result.clone()
                                                 ),
                                             );
-                                            ctx.text(call_error_result)
+                                            ctx.text(call_error_result);
                                         } else {
                                             let call_result = wrap_call_result(
                                                 unpacked.get("MessageId").unwrap(),
                                                 serde_json::to_string(
                                                     &self.default_responses.authorize,
                                                 )
-                                                    .unwrap(),
+                                                .unwrap(),
                                             );
                                             logs::add_log(
                                                 &self.db_connection,
@@ -280,7 +312,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                             None,
                                             format!("outgoing response: {}", call_result.clone()),
                                         );
-                                        ctx.text(call_result)
+                                        ctx.text(call_result);
                                     }
                                     "Heartbeat" => {
                                         let call_result =
@@ -291,7 +323,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChargeStationWebS
                                             None,
                                             format!("outgoing response: {}", call_result.clone()),
                                         );
-                                        ctx.text(call_result)
+                                        ctx.text(call_result);
                                     }
                                     "MeterValues" => {
                                         let call_result = meter_values_response(

@@ -23,7 +23,7 @@ pub fn create_database() -> Result<(), rusqlite::Error> {
         [],
     )?;
     conn.execute(
-        "CREATE TABLE  IF NOT EXISTS logs (
+        "CREATE TABLE IF NOT EXISTS logs (
         id INTEGER CONSTRAINT logs_pk PRIMARY KEY AUTOINCREMENT,
         timestamp DATETIME NOT NULL,
         charger_id INTEGER REFERENCES chargers ON UPDATE CASCADE ON DELETE CASCADE,
@@ -35,6 +35,7 @@ pub fn create_database() -> Result<(), rusqlite::Error> {
 }
 
 pub fn add_charger(conn: &Connection, charger_name: &str) -> Result<(), rusqlite::Error> {
+    // ignore error if charger is already in database
     let _ = conn.execute(
         "INSERT INTO chargers (name) VALUES (?1)",
         params![charger_name],

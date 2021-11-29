@@ -6,7 +6,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use uuid::Uuid;
-// Code below is for handling multiple websocket sessions between Ocpp server and charge points
+
+// OcppServer in this file is handling multiple websocket connections, is managing them and passes
+// messages
+// like the postal office and a middleman between webclient and charger
+// client. It is initiated in the main.rs file
 //                ,_____________
 //                | webclient   |
 //                `____   ______'
@@ -650,7 +654,6 @@ impl Handler<MessageFromChargeStation> for OcppServer {
                 .unwrap()
                 .strip_suffix("\"")
                 .unwrap();
-
             if let Some(webclient_id) = self.awaiting_call_result.get(key) {
                 let call_result_as_a_string = format!(
                     "Call result from {}: \r\n{}",

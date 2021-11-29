@@ -1,8 +1,3 @@
-use std::fs;
-use std::fs::File;
-use std::io::BufReader;
-use std::time::Instant;
-
 use actix::{Actor, Addr};
 use actix_files::Files;
 use actix_web::{
@@ -14,9 +9,11 @@ use log::{error, info};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rustls::internal::pemfile::{certs, pkcs8_private_keys};
-use rustls::{NoClientAuth};
-use serde::Serialize;
-
+use rustls::NoClientAuth;
+use std::fs;
+use std::fs::File;
+use std::io::BufReader;
+use std::time::Instant;
 mod charger_client;
 mod config;
 mod error;
@@ -24,13 +21,9 @@ mod logs;
 mod messages;
 mod server;
 mod webclient;
+mod ws_basic_auth;
 
 const ALLOWED_SUB_PROTOCOLS: [&'static str; 1] = ["ocpp1.6"];
-
-#[derive(Serialize)]
-struct Status {
-    status: &'static str,
-}
 
 #[get("/ocpp/{serial_id}")]
 async fn ws_ocpp_index(
@@ -43,46 +36,35 @@ async fn ws_ocpp_index(
         Some(serial_id) => {
             let conn = db.get().unwrap();
             logs::add_charger(&conn, serial_id).expect("Could not add charger to the database");
+            let config = config::Config::from_env().unwrap();
+            let ocpp_pass_auth = config.server.ocpp_auth_password;
+            {
+                if !ocpp_pass_auth.is_empty() {
+                    if let Err(e) =
+                        ws_basic_auth::basic_auth(&serial_id, ocpp_pass_auth.as_str(), r.clone())
+                    {
+                        return Err(e);
+                    }
+                }
+            }
             ws::start_with_protocols(
                 charger_client::ChargeStationWebSocketSession {
                     hb: Instant::now(),
                     name: String::from(serial_id),
                     address: srv.get_ref().clone(),
                     db_connection: conn,
-                    default_responses: charger_client::DefaultResponses {
-                        authorize: messages::responses::AuthorizeResponse {
-                            id_tag_info: messages::responses::IdTagInfo {
-                                expiry_date: None,
-                                parent_id_tag: None,
-                                status: messages::responses::IdTagInfoStatus::Accepted,
-                            },
-                        },
-                        data_transfer: messages::responses::DataTransferResponse {
-                            data: None,
-                            status: messages::responses::DataTransferStatus::Accepted,
-                        },
-                        sign_certificate: messages::responses::SignCertificateResponse {
-                            status: messages::responses::GenericStatusEnumType::Accepted,
-                        },
-                        start_transaction: messages::responses::StartTransactionResponse {
-                            id_tag_info: messages::responses::IdTagInfo {
-                                expiry_date: None,
-                                parent_id_tag: None,
-                                status: messages::responses::IdTagInfoStatus::Accepted,
-                            },
-                            transaction_id: 123,
-                        },
-                        stop_transaction: messages::responses::StopTransactionResponse {
-                            id_tag_info: None,
-                        },
-                    },
+                    default_responses: charger_client::DefaultResponses::default(),
                 },
                 &ALLOWED_SUB_PROTOCOLS,
                 &r,
                 stream,
             )
         }
-        None => Err(ActixWebError::from(HttpResponse::BadRequest())),
+        None => Err(ActixWebError::from(
+            HttpResponse::BadRequest()
+                .reason("Charger serial id was not provided")
+                .finish(),
+        )),
     }
 }
 
@@ -130,8 +112,8 @@ async fn post_request(
     item: web::Json<server::MessageFromWebBrowser>,
 ) -> HttpResponse {
     match srv.send(item.into_inner()).await {
-        Ok(_) => HttpResponse::Ok().json(Status { status: "0k" }),
-        Err(_) => HttpResponse::Ok().json(Status { status: "not 0k" }),
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(_) => HttpResponse::BadRequest().finish(),
     }
 }
 
@@ -139,13 +121,9 @@ async fn post_request(
 async fn main() -> std::io::Result<()> {
     let _ = fs::create_dir("./logs");
     env_logger::init();
-    match logs::create_database() {
-        Err(e) => {
-            error!("Unable to create database logs.db. Reason: {:#?}", e);
-        }
-        _ => {}
+    if let Err(e) = logs::create_database() {
+        error!("Unable to create database logs.db. Reason: {:#?}", e);
     }
-
     let manager = SqliteConnectionManager::file("logs.db");
     let pool = r2d2::Pool::builder()
         .build(manager)
@@ -185,14 +163,13 @@ async fn main() -> std::io::Result<()> {
     });
     if config.server.use_tls {
         // TODO: TLS is not working at the moment
-        let mut tls_config =
-            rustls::ServerConfig::new(NoClientAuth::new());
-        tls_config.alpn_protocols =  vec![b"http/1.1".to_vec()];
+        let mut tls_config = rustls::ServerConfig::new(NoClientAuth::new());
+        tls_config.alpn_protocols = vec![b"http/1.1".to_vec()];
         let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
         let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
         let cert_chain = certs(cert_file).unwrap();
         let mut keys = pkcs8_private_keys(key_file).unwrap();
-        if keys.is_empty(){
+        if keys.is_empty() {
             error!("Could not locate PKCS 8 private keys.");
             std::process::exit(1);
         }
