@@ -8,8 +8,8 @@ use std::time::Duration;
 pub mod requests;
 pub mod responses;
 
-pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(60);
-pub const CLIENT_TIMEOUT: Duration = Duration::from_secs(600);
+pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(30);
+pub const CLIENT_TIMEOUT: Duration = Duration::from_secs(60);
 
 #[allow(dead_code)]
 pub enum ErrorCode {

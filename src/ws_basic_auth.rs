@@ -1,13 +1,13 @@
 use actix_web::{http, Error as ActixWebError, HttpRequest, HttpResponse};
 use log::debug;
 
-
-pub fn basic_auth(
+/// Websocket basic authentication as described in RFC 2617. I'm checking if I have AUTHORIZATION
+/// header in http request matching witch chargepoint_id and authorization_key
+pub fn ws_basic_auth(
     chargepoint_id: &str,
     authorization_key: &str,
     r: HttpRequest,
 ) -> Result<(), ActixWebError> {
-    // Basic Auth RFC 2617. First I'm checking if I have AUTHORIZATION header in http request
     if (!authorization_key.is_empty()) && (!chargepoint_id.is_empty()) {
         if let Some(authorization_header_value) = r.headers().get(http::header::AUTHORIZATION) {
             if let Ok(authorization_header) = authorization_header_value.to_str() {

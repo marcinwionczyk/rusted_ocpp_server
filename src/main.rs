@@ -22,6 +22,7 @@ mod messages;
 mod server;
 mod webclient;
 mod ws_basic_auth;
+mod json_rpc;
 
 const ALLOWED_SUB_PROTOCOLS: [&'static str; 1] = ["ocpp1.6"];
 
@@ -41,7 +42,7 @@ async fn ws_ocpp_index(
             {
                 if !ocpp_pass_auth.is_empty() {
                     if let Err(e) =
-                        ws_basic_auth::basic_auth(&serial_id, ocpp_pass_auth.as_str(), r.clone())
+                        ws_basic_auth::ws_basic_auth(&serial_id, ocpp_pass_auth.as_str(), r.clone())
                     {
                         return Err(e);
                     }
@@ -159,10 +160,8 @@ async fn main() -> std::io::Result<()> {
             .service(post_request)
             .service(ws_ocpp_index)
             .service(ws_webclient_index)
-            .service(Files::new("/", "./webclient/").index_file("index.html"))
     });
     if config.server.use_tls {
-        // TODO: TLS is not working at the moment
         let mut tls_config = rustls::ServerConfig::new(NoClientAuth::new());
         tls_config.alpn_protocols = vec![b"http/1.1".to_vec()];
         let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
