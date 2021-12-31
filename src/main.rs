@@ -1,28 +1,34 @@
 use actix::{Actor, Addr};
+use actix_cors::Cors;
 use actix_files::Files;
+use actix_http::http::header;
+use actix_identity::{CookieIdentityPolicy, Identity, IdentityService};
+use actix_web::cookie::SameSite;
 use actix_web::{
-    get, post, web, App, Error as ActixWebError, HttpRequest, HttpResponse, HttpServer, Responder,
+    get, web, App, Error as ActixWebError, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use actix_web_actors::ws;
 use dotenv;
-use log::{error, info};
+use log::{debug, error, info};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
+use rand::Rng;
 use rustls::internal::pemfile::{certs, pkcs8_private_keys};
 use rustls::NoClientAuth;
-use std::fs;
-use std::fs::File;
+use std::fs::{create_dir, File};
 use std::io::BufReader;
 use std::time::Instant;
+
 mod charger_client;
 mod config;
 mod error;
+mod json_rpc;
 mod logs;
 mod messages;
 mod server;
+mod user;
 mod webclient;
 mod ws_basic_auth;
-mod json_rpc;
 
 const ALLOWED_SUB_PROTOCOLS: [&'static str; 1] = ["ocpp1.6"];
 
@@ -91,10 +97,13 @@ async fn ws_webclient_index(
     }
 }
 
-#[get("/api/get-chargers")]
 async fn get_chargers(
+    id: Identity,
     srv: web::Data<Addr<server::OcppServer>>,
 ) -> Result<impl Responder, error::Error> {
+    if let Some(user_id) = id.identity() {
+        debug!("get chargers. user id: {}", user_id)
+    }
     match srv.send(server::GetChargers).await {
         Ok(chargers) => Ok(web::Json(chargers).with_header("Access-Control-Allow-Origin", "*")),
         Err(e) => {
@@ -107,11 +116,14 @@ async fn get_chargers(
     }
 }
 
-#[post("/api/post-request")]
 async fn post_request(
+    id: Identity,
     srv: web::Data<Addr<server::OcppServer>>,
     item: web::Json<server::MessageFromWebBrowser>,
 ) -> HttpResponse {
+    if let Some(user_id) = id.identity() {
+        debug!("post request. User id: {}", user_id);
+    }
     match srv.send(item.into_inner()).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::BadRequest().finish(),
@@ -120,7 +132,9 @@ async fn post_request(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let _ = fs::create_dir("./logs");
+    let private_key = rand::thread_rng().gen::<[u8; 32]>();
+
+    let _ = create_dir("./logs");
     env_logger::init();
     if let Err(e) = logs::create_database() {
         error!("Unable to create database logs.db. Reason: {:#?}", e);
@@ -132,32 +146,64 @@ async fn main() -> std::io::Result<()> {
 
     dotenv::from_filename("settings.env").ok();
     let config = crate::config::Config::from_env().unwrap();
-    if config.server.use_tls {
-        info!(
-            "Server is listening.\r\n \
-              Open web-browser with the url https://{host}:{port}/\r\n \
-              Connect chargers with the url wss://{host}:{port}/ocpp/",
-            host = config.server.host,
-            port = config.server.port
-        );
-    } else {
-        info!(
-            "Server is listening.\r\n \
-               Open web-browser with the url http://{host}:{port}/\r\n \
-               Connect chargers with the url ws://{host}:{port}/ocpp/",
-            host = config.server.host,
-            port = config.server.port
-        );
-    }
+    let domain_name = format!("{}:{}", config.server.host, config.server.port);
+    let http_origin = format!(
+        "{}://{}",
+        if config.server.use_tls {
+            "https"
+        } else {
+            "http"
+        },
+        domain_name.clone()
+    );
+    let ws_origin = format!(
+        "{}://{}/ocpp/",
+        if config.server.use_tls { "wss" } else { "ws" },
+        domain_name.clone()
+    );
+    info!(
+        "Server is listening.\r\n \
+              Open web-browser with the url {}/\r\n \
+              Connect chargers with the url {}",
+        http_origin.clone(),
+        ws_origin.clone()
+    );
     let ocpp_server = server::OcppServer::new().start();
     let http_server = HttpServer::new(move || {
         App::new()
             .data(ocpp_server.clone())
             .data(pool.clone())
+            .wrap(
+                Cors::default()
+                    .allowed_origin(http_origin.as_str())
+                    .allowed_methods(vec!["GET", "POST", "DELETE"])
+                    .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
+                    .allowed_header(header::CONTENT_TYPE)
+                    .max_age(3600)
+                    .supports_credentials(), // Allow the cookie auth.
+            )
+            .wrap(IdentityService::new(
+                CookieIdentityPolicy::new(&private_key)
+                    .domain(domain_name.clone())
+                    .name("krakuski")
+                    .path("/")
+                    .same_site(SameSite::Strict)
+                    .secure(true),
+            ))
             //.service(web::resource("/").route(web::get().to(index)))
+            .service(
+                web::scope("/api")
+                    .service(
+                    web::resource("/auth")
+                        .route(web::post().to(user::login))
+                        .route(web::delete().to(user::logout))
+                )
+                    .service(web::resource("/get-chargers").route(web::get().to(get_chargers)))
+                    .service(web::resource("/post-request").route(web::post().to(post_request)))
+                    .route("/", web::get().to(|| HttpResponse::Ok().body("api")))
+            )
             .service(Files::new("/logs", "./logs/"))
-            .service(get_chargers)
-            .service(post_request)
+            .service(Files::new("/", "./webclient/").index_file("index.html"))
             .service(ws_ocpp_index)
             .service(ws_webclient_index)
     });
