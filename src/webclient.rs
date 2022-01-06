@@ -4,6 +4,7 @@ use crate::messages::*;
 use crate::server;
 use crate::server::{ConnectWebClient, DisconnectWebClient, MessageToWebBrowser};
 use actix::prelude::*;
+use log::info;
 use actix_web_actors::ws;
 use actix_web_actors::ws::ProtocolError;
 use chrono::{DateTime, Local, SecondsFormat, TimeZone};
@@ -115,52 +116,52 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
                                     chrono::Local.ymd(1970, 1, 1).and_hms(1, 0, 0);
                                 let mut end_timestamp: DateTime<Local> =
                                     chrono::offset::Local::now();
-                                if let Some(charger_sn_value) =
-                                    json_rpc_request.params.get("charger_sn")
-                                {
-                                    if let Some(charger_sn_str_from_value) =
-                                        charger_sn_value.as_str()
+                                if let Some(params) = json_rpc_request.params {
+                                    if let Some(charger_sn_value) = params.get("charger_sn")
                                     {
-                                        charger_sn = charger_sn_str_from_value;
-                                    }
-                                } else {
-                                    r.error = Some(RpcErrorData::std(-32602));
-                                    ctx.text(r.dump())
-                                }
-                                if let Some(begin_timestamp_value) =
-                                    json_rpc_request.params.get("begin_timestamp")
-                                {
-                                    if let Ok(datetime_as_str) = DateTime::parse_from_rfc3339(
-                                        begin_timestamp_value.as_str().unwrap(),
-                                    ) {
-                                        begin_timestamp = DateTime::from(datetime_as_str);
+                                        if let Some(charger_sn_str_from_value) =
+                                        charger_sn_value.as_str()
+                                        {
+                                            charger_sn = charger_sn_str_from_value;
+                                        }
                                     } else {
                                         r.error = Some(RpcErrorData::std(-32602));
                                         ctx.text(r.dump())
                                     }
-                                }
-                                if let Some(end_timestamp_value) = json_rpc_request.params.get("end_timestamp"){
-                                    if let Ok(datetime_as_str) = DateTime::parse_from_rfc3339(end_timestamp_value.as_str().unwrap()){
-                                        end_timestamp = DateTime::from(datetime_as_str);
-                                    } else {
-                                        r.error = Some(RpcErrorData::std(-32602));
-                                        ctx.text(r.dump())
+                                    if let Some(begin_timestamp_value) = params.get("begin_timestamp")
+                                    {
+                                        if let Ok(datetime_as_str) = DateTime::parse_from_rfc3339(
+                                            begin_timestamp_value.as_str().unwrap(),
+                                        ) {
+                                            begin_timestamp = DateTime::from(datetime_as_str);
+                                        } else {
+                                            r.error = Some(RpcErrorData::std(-32602));
+                                            ctx.text(r.dump())
+                                        }
                                     }
-                                }
-                                match logs::get_logs(&self.db_connection, charger_sn, begin_timestamp, end_timestamp){
-                                    Ok(filename) => {
-                                        r.result = Value::from(format!("{{\"address\":\"{}://{}:{}/logs/{}\"}}",
-                                                                   if config.server.use_tls { "https" } else { "http" }, config.server.host, config.server.port, filename));
-                                        ctx.text(r.dump())
+                                    if let Some(end_timestamp_value) = params.get("end_timestamp"){
+                                        if let Ok(datetime_as_str) = DateTime::parse_from_rfc3339(end_timestamp_value.as_str().unwrap()){
+                                            end_timestamp = DateTime::from(datetime_as_str);
+                                        } else {
+                                            r.error = Some(RpcErrorData::std(-32602));
+                                            ctx.text(r.dump())
+                                        }
                                     }
-                                    Err(e) => {
-                                        r.error = Some(RpcErrorData{
-                                            code: -32603,
-                                            message: "Internal error".to_string(),
-                                            data: Value::from(format!("Unable to get logs from database. Reason: {:#?}", e))
-                                        });
-                                        ctx.text(r.dump())
+                                    match logs::get_logs(&self.db_connection, charger_sn, begin_timestamp, end_timestamp){
+                                        Ok(filename) => {
+                                            r.result = Value::from(format!("{{\"address\":\"{}://{}:{}/logs/{}\"}}",
+                                                                           if config.server.use_tls { "https" } else { "http" }, config.server.host, config.server.port, filename));
+                                            ctx.text(r.dump())
+                                        }
+                                        Err(e) => {
+                                            r.error = Some(RpcErrorData{
+                                                code: -32603,
+                                                message: "Internal error".to_string(),
+                                                data: Value::from(format!("Unable to get logs from database. Reason: {:#?}", e))
+                                            });
+                                            ctx.text(r.dump())
 
+                                        }
                                     }
                                 }
                             }
@@ -184,6 +185,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
                             }
                         }
                     } else {
+                        info!("websocket message not parsed: {}", text);
                         r.error = Some(RpcErrorData::std(-32700));
                         ctx.text(r.dump())
                     }

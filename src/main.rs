@@ -33,7 +33,7 @@ mod ws_basic_auth;
 const ALLOWED_SUB_PROTOCOLS: [&'static str; 1] = ["ocpp1.6"];
 
 #[get("/ocpp/{serial_id}")]
-async fn ws_ocpp_index(
+async fn ws_ocpp(
     r: HttpRequest,
     stream: web::Payload,
     srv: web::Data<Addr<server::OcppServer>>,
@@ -75,7 +75,6 @@ async fn ws_ocpp_index(
     }
 }
 
-#[get("/api/webclient-socket/{serial_id}")]
 async fn ws_webclient_index(
     r: HttpRequest,
     stream: web::Payload,
@@ -200,12 +199,12 @@ async fn main() -> std::io::Result<()> {
                 )
                     .service(web::resource("/get-chargers").route(web::get().to(get_chargers)))
                     .service(web::resource("/post-request").route(web::post().to(post_request)))
+                    .service(web::resource("/webclient-socket/{serial_id}").route(web::get().to(ws_webclient_index)))
                     .route("/", web::get().to(|| HttpResponse::Ok().body("api")))
             )
             .service(Files::new("/logs", "./logs/"))
             .service(Files::new("/", "./webclient/").index_file("index.html"))
-            .service(ws_ocpp_index)
-            .service(ws_webclient_index)
+            .service(ws_ocpp)
     });
     if config.server.use_tls {
         let mut tls_config = rustls::ServerConfig::new(NoClientAuth::new());
