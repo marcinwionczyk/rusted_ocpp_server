@@ -5,6 +5,7 @@ use crate::server;
 use crate::server::{ConnectWebClient, DisconnectWebClient, MessageToWebBrowser};
 use actix::prelude::*;
 use log::info;
+use uuid::Uuid;
 use actix_web_actors::ws;
 use actix_web_actors::ws::ProtocolError;
 use chrono::{DateTime, Local, SecondsFormat, TimeZone};
@@ -67,9 +68,10 @@ impl Handler<server::MessageToWebBrowser> for WebBrowserWebSocketSession {
     type Result = ();
 
     fn handle(&mut self, msg: MessageToWebBrowser, ctx: &mut Self::Context) -> Self::Result {
-        if let Ok(message_to_web_browser) = serde_json::to_string(&msg) {
-            ctx.text(message_to_web_browser)
-        }
+        let mut r = JsonRpcResponse::default();
+        r.result = Value::from(msg.message);
+        r.id = Value::from(Uuid::new_v4().to_string());
+        ctx.text(r.dump())
     }
 }
 

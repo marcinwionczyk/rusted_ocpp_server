@@ -5,7 +5,7 @@ use actix_http::http::header;
 use actix_identity::{CookieIdentityPolicy, Identity, IdentityService};
 use actix_web::cookie::SameSite;
 use actix_web::{
-    get, web, App, Error as ActixWebError, HttpRequest, HttpResponse, HttpServer, Responder,
+    web, App, Error as ActixWebError, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use actix_web_actors::ws;
 use dotenv;
@@ -32,7 +32,6 @@ mod ws_basic_auth;
 
 const ALLOWED_SUB_PROTOCOLS: [&'static str; 1] = ["ocpp1.6"];
 
-#[get("/ocpp/{serial_id}")]
 async fn ws_ocpp(
     r: HttpRequest,
     stream: web::Payload,
@@ -75,7 +74,7 @@ async fn ws_ocpp(
     }
 }
 
-async fn ws_webclient_index(
+async fn ws_webclient(
     r: HttpRequest,
     stream: web::Payload,
     srv: web::Data<Addr<server::OcppServer>>,
@@ -97,10 +96,10 @@ async fn ws_webclient_index(
 }
 
 async fn get_chargers(
-    id: Identity,
     srv: web::Data<Addr<server::OcppServer>>,
 ) -> Result<impl Responder, error::Error> {
     if let Some(user_id) = id.identity() {
+        // TODO: If I pass identity I might limit access to this API call
         debug!("get chargers. user id: {}", user_id)
     }
     match srv.send(server::GetChargers).await {
@@ -121,6 +120,7 @@ async fn post_request(
     item: web::Json<server::MessageFromWebBrowser>,
 ) -> HttpResponse {
     if let Some(user_id) = id.identity() {
+        // TODO: If I pass identity I might limit access to this API call
         debug!("post request. User id: {}", user_id);
     }
     match srv.send(item.into_inner()).await {
@@ -199,12 +199,12 @@ async fn main() -> std::io::Result<()> {
                 )
                     .service(web::resource("/get-chargers").route(web::get().to(get_chargers)))
                     .service(web::resource("/post-request").route(web::post().to(post_request)))
-                    .service(web::resource("/webclient-socket/{serial_id}").route(web::get().to(ws_webclient_index)))
+                    .service(web::resource("/webclient-socket/{serial_id}").route(web::get().to(ws_webclient)))
                     .route("/", web::get().to(|| HttpResponse::Ok().body("api")))
             )
+            .service(web::resource("/ocpp/{serial_id}").route(web::get().to(ws_ocpp)))
             .service(Files::new("/logs", "./logs/"))
             .service(Files::new("/", "./webclient/").index_file("index.html"))
-            .service(ws_ocpp)
     });
     if config.server.use_tls {
         let mut tls_config = rustls::ServerConfig::new(NoClientAuth::new());
