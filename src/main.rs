@@ -96,6 +96,7 @@ async fn ws_webclient(
 }
 
 async fn get_chargers(
+    id: Identity,
     srv: web::Data<Addr<server::OcppServer>>,
 ) -> Result<impl Responder, error::Error> {
     if let Some(user_id) = id.identity() {
