@@ -226,7 +226,6 @@ async fn main() -> std::io::Result<()> {
                 format!("{}:{}", config.server.host, config.server.port),
                 tls_config,
             )?
-            //.bind(format!("{}:{}", config.server.host, config.server.port))?
             .run()
             .await
     } else {

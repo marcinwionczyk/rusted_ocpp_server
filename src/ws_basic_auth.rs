@@ -1,5 +1,6 @@
 use actix_web::{http, Error as ActixWebError, HttpRequest, HttpResponse};
-use log::debug;
+use http_auth_basic::Credentials;
+use log::{debug, error};
 
 /// Websocket basic authentication as described in RFC 2617. I'm checking if I have AUTHORIZATION
 /// header in http request matching witch chargepoint_id and authorization_key
@@ -10,54 +11,29 @@ pub fn ws_basic_auth(
 ) -> Result<(), ActixWebError> {
     if (!authorization_key.is_empty()) && (!chargepoint_id.is_empty()) {
         if let Some(authorization_header_value) = r.headers().get(http::header::AUTHORIZATION) {
+            // authorization_header_value is &HeaderValue type and we have to extract &str from it
             if let Ok(authorization_header) = authorization_header_value.to_str() {
-                let authorization_header_string = String::from(authorization_header);
-                if let Some(index) = &authorization_header_string.find("Basic") {
-                    let base64credentials =
-                        authorization_header_string[(index + "Basic".len())..].trim();
-                    if let Ok(authorization_decoded) = base64::decode(base64credentials) {
-                        if let Ok(authorization_decoded_as_string) =
-                            String::from_utf8(authorization_decoded.clone())
+                // if we are successful extract credentials from authorization_header
+                return match Credentials::from_header(String::from(authorization_header)) {
+                    Ok(credentials) => {
+                        debug!(
+                            "user_id: {}, password: {}",
+                            credentials.user_id, credentials.password
+                        );
+                        // if we are successful compare credentials against function parameters
+                        if credentials.user_id == String::from(chargepoint_id)
+                            && credentials.password == String::from(authorization_key)
                         {
-                            let vec_authorization: Vec<&str> =
-                                authorization_decoded_as_string.split(':').collect();
-                            return if vec_authorization.len() == 2 {
-                                debug!("ChargePointId: {}", vec_authorization[0]);
-                                debug!("AuthorizationKey: {}", vec_authorization[1]);
-                                if !vec_authorization[1].eq(authorization_key)
-                                    || !vec_authorization[0].eq(chargepoint_id)
-                                {
-                                    debug!("You are not allowed to enter with this ChargePointId and/or AuthorizationKey. It does not match.");
-                                    Err(ActixWebError::from(HttpResponse::Unauthorized().reason("AUTHORIZATION header: You are not allowed to enter with this ChargePointId and/or AuthorizationKey").finish()))
-                                } else {
-                                    Ok(())
-                                }
-                            } else {
-                                debug!(
-                                    "AUTHORIZATION header decoded {} does not contain \":\" sign",
-                                    String::from_utf8(authorization_decoded).unwrap()
-                                );
-                                Err(ActixWebError::from(HttpResponse::BadRequest().reason("AUTHORIZATION header when decoded from base64 does not contain \":\" sign").finish()))
-                            };
+                            Ok(())
+                        } else {
+                            Err(ActixWebError::from(HttpResponse::Unauthorized().reason("Wrong credentials").finish()))
                         }
                     }
-                } else {
-                    debug!("AUTHORIZATION header value does not contain \"Basic\" substring");
-                    return Err(ActixWebError::from(
-                        HttpResponse::BadRequest()
-                            .reason(
-                                "AUTHORIZATION header value does not contain \"Basic\" substring",
-                            )
-                            .finish(),
-                    ));
+                    Err(e) => {
+                        error!("Authentication error: {}", e);
+                        Err(ActixWebError::from(HttpResponse::BadRequest().finish()))
+                    }
                 }
-            } else {
-                debug!("AUTHORIZATION header value does not contain \"Basic\" substring");
-                return Err(ActixWebError::from(
-                    HttpResponse::BadRequest()
-                        .reason("AUTHORIZATION header value not in a form of string")
-                        .finish(),
-                ));
             }
         } else {
             return Err(ActixWebError::from(

@@ -78,13 +78,10 @@ pub struct MessageToWebBrowser {
 pub struct MessageFromWebBrowser {
     #[serde(rename = "clientId")]
     pub client_id: String,
-    pub charger: String,
-    // target Charge point
-    pub selected: String,
-    // action
+    pub charger: String,  // target Charge point
+    pub selected: String, // action
     #[serde(rename = "messageId")]
-    pub message_id: u8,
-    // call or call_result
+    pub message_id: u8, // call or call_result
     pub payload: Value,   // OCPP message
 }
 
@@ -127,8 +124,7 @@ impl actix::Message for GetChargers {
 
 /// `OcppServer` manages websocket sessions with charge stations
 pub struct OcppServer {
-    awaiting_call_result: HashMap<String, String>,
-    // key: MessageId, value: websocket_worker_id
+    awaiting_call_result: HashMap<String, String>, // key: MessageId, value: websocket_worker_id
     websocket_workers: HashMap<String, Recipient<MessageToChargeStation>>,
     webclient_workers: HashMap<String, Recipient<MessageToWebBrowser>>,
     chargers_webclients_pair: HashMap<String, String>, // key: charger_id, value: browser_id
@@ -523,9 +519,9 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
                     "SignCertificate" => {
                         match serde_json::from_value(msg.payload.clone())
                             as Result<
-                            messages::responses::SignCertificateResponse,
-                            serde_json::Error,
-                        > {
+                                messages::responses::SignCertificateResponse,
+                                serde_json::Error,
+                            > {
                             Ok(response) => {
                                 message_to_charge_station.sign_certificate = Some(response);
                                 self.send_message_to_charger(
@@ -552,9 +548,9 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
                     "StartTransaction" => {
                         match serde_json::from_value(msg.payload.clone())
                             as Result<
-                            messages::responses::StartTransactionResponse,
-                            serde_json::Error,
-                        > {
+                                messages::responses::StartTransactionResponse,
+                                serde_json::Error,
+                            > {
                             Ok(response) => {
                                 message_to_charge_station.start_transaction = Some(response);
                                 self.send_message_to_charger(
@@ -581,9 +577,9 @@ impl Handler<MessageFromWebBrowser> for OcppServer {
                     "StopTransaction" => {
                         match serde_json::from_value(msg.payload.clone())
                             as Result<
-                            messages::responses::StopTransactionResponse,
-                            serde_json::Error,
-                        > {
+                                messages::responses::StopTransactionResponse,
+                                serde_json::Error,
+                            > {
                             Ok(response) => {
                                 message_to_charge_station.stop_transaction = Some(response);
                                 self.send_message_to_charger(
@@ -637,13 +633,7 @@ impl Handler<MessageFromChargeStation> for OcppServer {
             }
         }
         if let Some(call_error) = msg.call_error {
-            let mut key = call_error.unique_id.clone();
-            if let Some(core_suffix) = call_error.unique_id.strip_prefix("\"") {
-                key = String::from(core_suffix);
-                if let Some(core) = core_suffix.strip_suffix("\"") {
-                    key = String::from(core);
-                }
-            }
+            let key = call_error.unique_id.clone().replace("\"", "");
             if let Some(webclient_id) = self.awaiting_call_result.get(&key) {
                 let call_error_as_a_string = format!(
                     "Call error from {}:\r\n[4, \"{}\", \"{}\", \"{}\", {}]",
@@ -659,13 +649,7 @@ impl Handler<MessageFromChargeStation> for OcppServer {
             }
         }
         if let Some(call_result) = msg.call_result {
-            let mut key = call_result.unique_id.clone();
-            if let Some(core_suffix) = call_result.unique_id.strip_prefix("\"") {
-                key = String::from(core_suffix);
-                if let Some(core) = core_suffix.strip_suffix("\"") {
-                    key = String::from(core);
-                }
-            }
+            let key = call_result.unique_id.clone().replace("\"", "");
             if let Some(webclient_id) = self.awaiting_call_result.get(&key) {
                 let call_result_as_a_string = format!(
                     "Call result from {}: \r\n{}",

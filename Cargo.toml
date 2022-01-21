@@ -5,24 +5,25 @@ name = "rusted_ocpp_server"
 version = "0.1.0"
 [dependencies]
 actix = "0.10.0"
-actix-http = "2.2.1"
+actix-cors = "0.5.4"
 actix-files = "0.5.0"
+actix-http = "2.2.1"
+actix-identity = "0.3.1"
 actix-web-actors = "3.0.0"
 actix-web-httpauth = "*"
-actix-cors = "0.5.4"
-actix-identity = "0.3.1"
 awmp = "0.6.0"
 base64 = "*"
 chrono = "*"
 config = "0.11.0"
 dotenv = "0.15.0"
 env_logger = "*"
+http-auth-basic = "0.3.1"
 log = "0.4.14"
 openssl = "0.10.33"
 qstring = "0.7.2"
-rand = "0.8.4"
 r2d2 = "0.8.9"
 r2d2_sqlite = "0.19.0"
+rand = "0.8.4"
 rusqlite = "*"
 rustls = "0.18.1"
 rustls-native-certs = "*"
@@ -37,9 +38,9 @@ webpki-roots = "*"
 features = ["rustls"]
 version = "3.3.2"
 
+[dependencies.otp]
+git = "https://github.com/TimDumol/rust-otp"
+
 [dependencies.serde]
 features = ["derive"]
 version = "1.0.125"
-
-[dependencies.otp]
-git = "https://github.com/TimDumol/rust-otp"
