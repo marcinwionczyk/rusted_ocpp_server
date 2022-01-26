@@ -8,8 +8,9 @@ use actix_web::{
     web, App, Error as ActixWebError, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use actix_web_actors::ws;
-use dotenv;
-use log::{debug, error, info};
+//use dotenv;
+use crate::config::Config;
+use log::{error, info};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rand::Rng;
@@ -42,7 +43,7 @@ async fn ws_ocpp(
         Some(serial_id) => {
             let conn = db.get().unwrap();
             logs::add_charger(&conn, serial_id).expect("Could not add charger to the database");
-            let config = config::Config::from_env().unwrap();
+            let config = config::Config::from_yaml("./settings.yaml").unwrap();
             let ocpp_pass_auth = config.server.ocpp_auth_password;
             {
                 if !ocpp_pass_auth.is_empty() {
@@ -100,8 +101,11 @@ async fn get_chargers(
     srv: web::Data<Addr<server::OcppServer>>,
 ) -> Result<impl Responder, error::Error> {
     if let Some(user_id) = id.identity() {
-        // TODO: If I pass identity I might limit access to this API call
-        debug!("get chargers. user id: {}", user_id)
+        let config = Config::from_yaml("./settings.yaml").unwrap();
+        if config.user_allowed(&user_id) {
+            info!("get chargers. user id: {}", &user_id);
+            // TODO: If I pass identity I might limit access to this API call
+        }
     }
     match srv.send(server::GetChargers).await {
         Ok(chargers) => Ok(web::Json(chargers).with_header("Access-Control-Allow-Origin", "*")),
@@ -121,8 +125,12 @@ async fn post_request(
     item: web::Json<server::MessageFromWebBrowser>,
 ) -> HttpResponse {
     if let Some(user_id) = id.identity() {
-        // TODO: If I pass identity I might limit access to this API call
-        debug!("post request. User id: {}", user_id);
+        let config = Config::from_yaml("./settings.yaml").unwrap();
+        if config.user_allowed(&user_id) {
+            info!("post request. user id: {}", &user_id);
+            // TODO: If I pass identity I might limit access to this API call
+
+        }
     }
     match srv.send(item.into_inner()).await {
         Ok(_) => HttpResponse::Ok().finish(),
@@ -144,8 +152,8 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("Failed to create pool.");
 
-    dotenv::from_filename("settings.env").ok();
-    let config = crate::config::Config::from_env().unwrap();
+    // dotenv::from_filename("settings.env").ok();
+    let config = Config::from_yaml("./settings.yaml").expect("cannot find settings.yaml file");
     let domain_name = format!("{}:{}", config.server.host, config.server.port);
     let http_origin = format!(
         "{}://{}",

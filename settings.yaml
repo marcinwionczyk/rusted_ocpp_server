@@ -1,0 +1,10 @@
+SERVER:
+  - HOST: 192.168.0.102
+  - PORT: 8443
+  - USE TLS: true
+  - HEARTBEAT INTERVAL: 3600
+  - TIME OFFSET: 0
+  - OCPP AUTH PASSWORD:
+ALLOWED USERS:
+  - marcin.wionczyk@pl.abb.com
+  - piotr.stopa@pl.abb.com
