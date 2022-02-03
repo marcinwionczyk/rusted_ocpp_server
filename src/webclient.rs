@@ -111,8 +111,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebBrowserWebSock
                                 ctx.text(r.dump())
                             }
                             "get_log" => {
-                                dotenv::from_filename("settings.env").ok();
-                                let config = crate::config::Config::from_env().unwrap();
+                                let config = crate::config::Config::from_yaml("./settings.yaml").unwrap();
                                 let mut charger_sn = "";
                                 let mut begin_timestamp: DateTime<Local> =
                                     chrono::Local.ymd(1970, 1, 1).and_hms(1, 0, 0);

@@ -1,5 +1,4 @@
 use chrono::{DateTime, Duration as ChronoDuration, SecondsFormat, Utc};
-use dotenv;
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -215,8 +214,7 @@ pub fn boot_notification_response(message_id: &String, payload: &String) -> Stri
         as Result<requests::BootNotificationRequest, serde_json::Error>
     {
         Ok(_) => {
-            dotenv::from_filename("settings.env").ok();
-            let config = crate::config::Config::from_env().unwrap();
+            let config = crate::config::Config::from_yaml("./settings.yaml").unwrap();
             let at_now: DateTime<Utc> =
                 Utc::now() + ChronoDuration::hours(config.server.time_offset);
             let boot_response: responses::BootNotificationResponse =
@@ -235,7 +233,7 @@ pub fn boot_notification_response(message_id: &String, payload: &String) -> Stri
 }
 
 pub fn heartbeat_response(message_id: &String) -> String {
-    let config = crate::config::Config::from_env().unwrap();
+    let config = crate::config::Config::from_yaml("./settings.yaml").unwrap();
     let at_now: DateTime<Utc> = Utc::now() + ChronoDuration::hours(config.server.time_offset);
     let heartbeat_resp: responses::HeartbeatResponse = responses::HeartbeatResponse {
         current_time: at_now.to_rfc3339_opts(SecondsFormat::Millis, false),
